@@ -1,0 +1,143 @@
+{% extends "layout.html" %}
+
+
+{% block body %}
+  {% with preseedsactive="active" %}
+    {% if user.admin %}
+      {% include "admin-menu.html" %}
+    {% else %}
+      {% include "user-menu.html" %}
+    {% endif %}
+
+  <section id="content">
+    {% include "flash.html" %}
+    <div class="row">
+    <div class="small-12 small-centered columns">
+      <h2> Preseeds </h2>
+      <table id="preseed-list">
+        <thead aligned="center">
+          <tr>
+            <th>Filename</th>
+	    <th>Description</th>
+	    <th>Owner</th>
+            <th>Type</th>
+            <th>Date</th>
+            <th>Known good</th>
+            <th>Public</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for preseed in preseeds %}
+            <tr>
+              <td>
+                <a href="{{ url_for('.get_preseed_admin', id=preseed.id) }}">
+		  {{ preseed.filename }}
+		</a>
+              </td>
+	      <td>
+		{{ preseed.description }}
+	      </td>
+	      <td>
+		{{ preseed.user.username }}
+	      </td>
+              <td>
+                {{ preseed.file_type }}
+              </td>
+              <td>
+                {{ preseed.date.strftime("%Y-%m-%d %H:%M") }}
+              </td>
+              <td>
+                {% if preseed.known_good %}
+                  <input type="checkbox" readonly disabled checked/>
+                {% else %}
+                  <input type="checkbox" readonly disabled/>
+                {% endif %}
+              </td>
+              <td>
+                {% if preseed.public %}
+                  <input type="checkbox" readonly disabled checked/>
+                {% else %}
+                  <input type="checkbox" readonly disabled/>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <a class="button" data-reveal-id="new-modal" href=""#"">
+        <i class="fa fa-plus" aria-hidden="true"></i>
+      </a>
+      <div aria-hidden="true" class="reveal-modal xlarge" data-reveal id="new-modal" role="dialog">
+        <h2> Upload Preseed </h2>
+        <form action="{{ url_for('.create_preseeds_admin') }}" method="POST" enctype="multipart/form-data">
+        <div class="row">
+          <div class="small-12 columns">
+	    <label>
+	      Filename
+              <input name="filename" type="text">
+	    </label>
+          </div>
+        </div>
+        <div class="row">
+          <div class="small-12 columns">
+	    <label>
+	      Description
+              <input name="description" type="text">
+	    </label>
+          </div>
+        </div>
+        <div class="row">
+          <div class="small-12 columns">
+	    <label>
+	      Content
+              <textarea name="file_content" rows="10" style="width: 100%;"></textarea>
+	    </label>
+          </div>
+        </div>
+        <div class="row">
+          <div class="small-12 columns">
+            <label>
+              Type
+              <select name="file_type">
+                <option value="kickstart">Kickstart</option>
+		<option value="preseed">Preseed</option>
+              </select>
+          </div>
+        </div>
+        <div class="row">
+          <div class="small-12 columns">
+            <label>
+              Known Good
+              <select name="known_good">
+                <option value="0">No</option>
+                <option value="1">Yes</option>
+              </select>
+          </div>
+        </div>
+        <div class="row">
+          <div class="small-12 columns">
+            <label>
+              Public
+              <select name="public">
+                <option value="0">Private</option>
+                <option value="1">Public</option>
+              </select>
+          </div>
+        </div>
+        <div class="row">
+          <div class="small-12 columns">
+              <center>
+            <input class="button" name="button" value="Save" type="submit">
+            </center>
+          </div>
+        </div>
+      </form>
+      </div>
+        </div>
+    </div>
+    <script>
+      $("#preseed-list").dataTable();
+    </script>
+  </section>
+  {% endwith %}
+{% endblock %}

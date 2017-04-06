@@ -1,0 +1,38 @@
+header {
+  margin-bottom: 2.5em;
+}
+
+footer {
+  margin-top: 2.5em;
+}
+
+form {
+  margin: 0;
+}
+
+fieldset {
+  padding: 2em;
+}
+
+input[type="checkbox"] {
+  margin: 0;
+}
+
+a.ellipsis {
+  margin-left: 1em;
+}
+
+.alert-box {
+  margin-top: 1em;
+}
+
+.side-nav {
+}
+
+table {
+	width: 100%;
+}
+
+.icon-button {
+  font-size: 18px !important;
+}

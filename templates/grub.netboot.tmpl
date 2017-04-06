@@ -1,0 +1,17 @@
+#default=0
+#timeout=0
+#
+#title linux
+#	root (nd)
+#	kernel {{machine.kernel.filename}} {{machine.kernel_opts_all}}
+#	initrd {{machine.initrd.filename}}
+
+set default="linux"
+set timeout=3
+
+menuentry "linux" {
+	linux (tftp)/{{machine.kernel.filename}} {{machine.kernel_opts_all}}
+{% if machine.initrd.filename %}
+	initrd (tftp)/{{machine.initrd.filename}}
+{% end %}
+}

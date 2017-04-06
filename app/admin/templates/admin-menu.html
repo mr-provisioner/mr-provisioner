@@ -1,0 +1,32 @@
+<header>
+  <nav class="top-bar">
+    <ul class="title-area">
+      <li class="name"> <h1> <a href="{{ url_for('.index') }}">Mlab Provisioner</a></h1></li>
+    </ul>
+    <section class="top-bar-section">
+      <ul class="right">
+        <li class={{ imagesactive }}>
+          <a href="{{ url_for('.get_images_admin') }}">Images</a>
+        </li>
+        <li class={{ preseedsactive }}>
+          <a href="{{ url_for('.get_preseeds_admin') }}">Preseeds</a>
+        </li>
+        <li class={{ bmcactive }}>
+          <a href="{{ url_for('.get_bmc_admin') }}">BMC</a>
+        </li>
+        <li class={{ machineactive }}>
+          <a href="{{ url_for('.get_machines_admin') }}">Machines</a>
+        </li>
+        <li class={{ usersactive }}>
+          <a href="{{ url_for('.get_users_admin') }}">Users</a>
+        </li>
+        <li class={{ accountactive }}>
+          <a href="{{ url_for('.change_password_user') }}"><i class="fa fa-user" aria-hidden="true">&nbsp;</i>{{ user.username }}</a>
+        </li>
+        <li>
+          <a href="{{ url_for('.logout') }}">Logout</a>
+        </li>
+      </ul>
+    </section>
+  </nav>
+</header>

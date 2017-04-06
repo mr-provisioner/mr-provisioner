@@ -1,0 +1,127 @@
+{% extends "layout.html" %}
+
+
+{% block body %}
+  {% with imagesactive="active" %}
+    {% if user.admin %}
+      {% include "admin-menu.html" %}
+    {% else %}
+      {% include "user-menu.html" %}
+    {% endif %}
+
+  <section id="content">
+    {% include "flash.html" %}
+    <div class="row">
+    <div class="small-12 small-centered columns">
+      <h2> Images </h2>
+      <table id="image-list">
+        <thead aligned="center">
+          <tr>
+            <th>Filename</th>
+            <th>Description</th>
+	    <th>Owner</th>
+            <th>Type</th>
+            <th>Date</th>
+            <th>Known good</th>
+            <th>Public</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for image in images %}
+            <tr>
+              <td>
+                <a href="{{ url_for('.get_image_admin', id=image.id) }}"> {{ image.filename }} </a>
+              </td>
+              <td>
+                {{ image.description }}
+              </td>
+	      <td>
+		{{ image.user.username }}
+	      </td>
+              <td>
+                {{ image.file_type }}
+              </td>
+              <td>
+                {{ image.date.strftime("%Y-%m-%d %H:%M") }}
+              </td>
+              <td>
+                {% if image.known_good %}
+                  <input type="checkbox" readonly disabled checked/>
+                {% else %}
+                  <input type="checkbox" readonly disabled/>
+                {% endif %}
+              </td>
+              <td>
+                {% if image.public %}
+                  <input type="checkbox" readonly disabled checked/>
+                {% else %}
+                  <input type="checkbox" readonly disabled/>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <a class="button" data-reveal-id="new-modal" href=""#"">
+        <i class="fa fa-plus" aria-hidden="true"></i>
+      </a>
+      <div aria-hidden="true" class="reveal-modal small" data-reveal id="new-modal" role="dialog">
+        <h2> Upload File </h2>
+        <form action="{{ url_for('.create_images_admin') }}" method="POST" enctype="multipart/form-data">
+        <div class="row">
+          <div class="small-12 columns">
+            <input name="description" placeholder="Description" type="text">
+          </div>
+        </div>
+        <div class="row">
+          <div class="small-12 columns">
+            <input name="image" type="file">
+          </div>
+        </div>
+        <div class="row">
+          <div class="small-12 columns">
+            <label>
+              Type
+              <select name="file_type">
+                <option value="Kernel">Kernel</option>
+                <option value="Initrd">Initrd</option>
+              </select>
+          </div>
+        </div>
+        <div class="row">
+          <div class="small-12 columns">
+            <label>
+              Known Good
+              <select name="known_good">
+                <option value="0">No</option>
+                <option value="1">Yes</option>
+              </select>
+          </div>
+        </div>
+        <div class="row">
+          <div class="small-12 columns">
+            <label>
+              Public
+              <select name="public">
+                <option value="0">Private</option>
+                <option value="1">Public</option>
+              </select>
+          </div>
+        </div>
+        <div class="row">
+          <div class="small-12 columns">
+              <center>
+            <input class="button" name="button" value="Upload" type="submit">
+            </center>
+          </div>
+        </div>
+      </form>
+      </div>
+        </div>
+    </div>
+    <script>
+      $("#image-list").dataTable();
+    </script>
+  </section>
+  {% endwith %}
+{% endblock %}

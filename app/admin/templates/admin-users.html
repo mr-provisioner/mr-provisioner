@@ -1,0 +1,88 @@
+{% extends "layout.html" %}
+
+
+{% block body %}
+  {% with usersactive="active" %}
+    {% if user.admin %}
+      {% include "admin-menu.html" %}
+    {% else %}
+      {% include "user-menu.html" %}
+    {% endif %}
+
+  <section id="content">
+    {% include "flash.html" %}
+    <div class="row">
+    <div class="small-12 small-centered columns">
+      <h2> Users </h2>
+      <table id="user-list">
+        <thead aligned="center">
+          <tr>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Admin</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+            <tr>
+              <td>
+                <a href="{{ url_for('.get_user_admin', id=u.id) }}">
+				  {{ u.username }}
+			    </a>
+              </td>
+              <td>
+                {{ u.email }}
+              </td>
+              <td>
+                {% if u.admin %}
+                <input type="checkbox" readonly disabled checked/>
+                {% else %}
+                <input type="checkbox" readonly disabled/>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <a class="button" data-reveal-id="new-modal" href=""#"">
+        <i class="fa fa-plus" aria-hidden="true"></i>
+      </a>
+      <div aria-hidden="true" class="reveal-modal small" data-reveal id="new-modal" role="dialog">
+        <h2> New User</h2>
+        <form action="{{ url_for('.create_users_admin') }}" method="POST">
+        <div class="row">
+          <div class="small-12 columns">
+            <input name="username" placeholder="Username" type="text">
+          </div>
+        </div>
+        <div class="row">
+          <div class="small-12 columns">
+            <input name="email" placeholder="user@examaple.org" type="text">
+          </div>
+        </div>
+        <div class="row">
+          <div class="small-12 columns">
+            <label>
+              Admin
+              <select name="admin">
+                <option value="1">Yes</option>
+                <option value="0">No</option>
+              </select>
+          </div>
+        <div class="row">
+          <div class="small-12 columns">
+              <center>
+            <input class="button" name="button" value="Add User" type="submit">
+            </center>
+          </div>
+        </div>
+      </form>
+      </div>
+        </div>
+    </div>
+    <script>
+      $("#user-list").dataTable();
+    </script>
+  </section>
+  {% endwith %}
+{% endblock %}

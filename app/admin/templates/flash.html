@@ -1,0 +1,26 @@
+{% with flash_success = get_flashed_messages(category_filter=["success"]) %}
+{% with flash_warning = get_flashed_messages(category_filter=["warning"]) %}
+{% with flash_error = get_flashed_messages(category_filter=["error"]) %}
+
+<div class="row">
+  <div class="small-12 small-centered columns">
+    {%- if flash_error %}
+      {%- for msg in flash_error %}
+        <div class="alert-box alert">
+          {{ msg }}
+        </div>
+      {% endfor -%}
+    {% endif -%}
+    {%- if flash_success %}
+      {%- for msg in flash_success %}
+        <div class="alert-box success">
+          {{ msg }}
+        </div>
+      {% endfor -%}
+    {% endif -%}
+  </div>
+</div>
+
+{% endwith %}
+{% endwith %}
+{% endwith %}

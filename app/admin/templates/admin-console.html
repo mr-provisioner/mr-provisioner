@@ -1,0 +1,86 @@
+{% extends "layout.html" %}
+
+{% block head %}
+  <link rel="stylesheet" href="{{ url_for('.static', filename='assets/css/xterm.css') }}"/>
+  <script src="{{ url_for('.static', filename='assets/js/vendor/xterm.js') }}"></script>
+{% endblock %}
+
+{% block body %}
+  {% with machineactive="active" %}
+    {% if user.admin %}
+      {% include "admin-menu.html" %}
+    {% else %}
+      {% include "user-menu.html" %}
+    {% endif %}
+
+  <section id='content'>
+    {% include "flash.html" %}
+    <div class="row">
+      <div class="small-12 small-centered columns">
+        <nav class="breadcrumbs">
+		<a href="{{ url_for('.get_machines_admin') }}">Machines</a>
+		<a href="{{ url_for('.get_machine_admin', id=m.id) }}">{{ m.name }}</a>
+        </nav>
+      </div>
+    </div>
+    <div class="row">
+      <div class="small-12 small-centered columns">
+        <h2>Console for {{ m.name }}</h2>
+        <div id="terminal"></div>
+      </div>
+      <div class="small-12 small-centered columns">
+        <a id="download-button" href="#">Download!</a>
+      </div>
+    </div>
+  </section>
+ <script>
+      var logLimitChars = 16*1024*1024; // XXX: try this with 128 or so...
+      var term = new Terminal();
+      var https = (window.location.protocol === "https:");
+      var log = "";
+      // XXX: take the port from some config instead of hardcoding it to the arbitrary 8866
+      var ws = new WebSocket((https ? "wss" : "ws" ) + "://" + {% if wss_ext_host %}"{{ wss_ext_host }}"{% else %}window.location.hostname{% endif %} + ":{{ wss_ext_port }}/ws?token={{ console.token }}");
+      ws.binaryType = "arraybuffer";
+
+      function logText(strData) {
+        log += strData;
+
+        var excessChars = log.length - logLimitChars;
+
+        if (excessChars > 0) {
+          log = log.slice(excessChars);
+        }
+      }
+
+      document.getElementById('download-button').addEventListener("click", function(ev) {
+        ev.preventDefault();
+        window.open("data:text/plain;base64," + encodeURIComponent(window.btoa(log)));
+      });
+
+      term.open(document.getElementById('terminal'));
+
+      ws.onmessage = function(msg) {
+        if (msg.data instanceof ArrayBuffer) {
+          var strData = String.fromCharCode.apply(null, new Uint8Array(msg.data));
+          term.write(strData);
+          logText(strData);
+        } else {
+          alert(msg.data);
+        }
+      }
+
+      // XXX: consider appending some flash-like alert divs instead
+      ws.onclose = function(msg) {
+        alert("WebSocket closed!");
+      }
+
+      ws.onerror = function(msg) {
+        alert("WebSocket error!");
+      }
+
+      term.on('data', function(data) {
+        ws.send(new TextEncoder().encode(data))
+      })
+ </script>
+  {% endwith %}
+{% endblock %}

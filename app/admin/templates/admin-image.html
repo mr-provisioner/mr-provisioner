@@ -1,0 +1,149 @@
+{% extends "layout.html" %}
+
+
+{% block body %}
+  {% with imagesactive="active" %}
+    {% if user.admin %}
+      {% include "admin-menu.html" %}
+    {% else %}
+      {% include "user-menu.html" %}
+    {% endif %}
+
+  <section id='content'>
+    {% include "flash.html" %}
+    <div class="row">
+      <div class="small-12 small-centered columns">
+        <nav class="breadcrumbs">
+          <a href="{{ url_for('.get_images_admin') }}">Images</a>
+          <a href="{{ url_for('.get_image_admin', id=image.id) }}">{{ image.file_type }}</a>
+        </nav>
+      </div>
+    </div>
+    <div class="row">
+      <div class="small-12 small-centered columns">
+      <h2>Manage File</h2>
+      <dl>
+        <dt>Description</dt>
+        <dd> {{ image.description }}</dd>
+        <dt>Filename</dt>
+        <dd> {{ image.filename }}</dd>
+        <dt>Owner</dt>
+        <dd> {{ image.user.username }}</dd>
+        <dt>Date uploaded</dt>
+        <dd>{{ image.date.strftime("%Y-%m-%d %H:%M") }}</dd>
+        <dt>File Type</dt>
+        <dd>{{ image.file_type }}</dd>
+        <dt>Known_good</dt>
+        <dd>
+           {% if image.known_good %}
+             <input type="checkbox" readonly disabled checked/>
+           {% else %}
+             <input type="checkbox" readonly disabled/>
+           {% endif %}
+        </dd>
+        <dt>Public</dt>
+        <dd>
+           {% if image.public %}
+             <input type="checkbox" readonly disabled checked/>
+           {% else %}
+             <input type="checkbox" readonly disabled/>
+           {% endif %}
+        </dd>
+      </dl>
+
+      {% if user.admin or user.id==image.user_id %}
+        <a class="button" data-reveal-id="edit-modal" href=""#"">
+          <i class="fa fa-edit" aria-hidden="true"></i>
+        </a>
+        <a class='button alert' data-reveal-id='delete-modal' href='#'>
+          <i class="fa fa-trash" aria-hidden="true"></i>
+        </a>
+        <div aria-hidden="true" class="reveal-modal small" data-reveal id="delete-modal" role="dialog">
+          <h2> Confirm deletion</h2>
+          <form action="{{ url_for('.delete_image', id=image.id) }}" method="POST">
+            <div class="row">
+              <p>Are you sure you want to delete file <b>{{ image.filename }}</b> and all associated data?</p>
+            </div>
+            <div class="row">
+              <input class="button alert" type="submit" value="Delete File"/>
+            </div>
+          </form>
+        </div>
+        <div aria-hidden="true" class="reveal-modal small" data-reveal id="edit-modal" role="dialog">
+          <h2> Edit Image Metadata </h2>
+          <form action="{{ url_for('.edit_image_metadata', id=image.id) }}" method="POST">
+          <div class="row">
+            <div class="small-12 columns">
+              <label>
+                Description
+                <input name="description" type="text" value="{{ image.description }}">
+              </label>
+            </div>
+          </div>
+          <div class="row">
+            <div class="small-12 columns">
+              <label>
+                File Type
+                <select name='file_type'>
+                  {%- if image.file_type == 'Kernel' %}
+                    <option value="Kernel" selected="selected">Kernel</option>
+                  {% else %}
+                    <option value="Kernel">Kernel</option>
+                  {% endif -%}
+                  {%- if image.file_type == 'Initrd' %}
+                    <option value="Initrd" selected="selected">Initrd</option>
+                  {% else %}
+                    <option value="Initrd">Initrd</option>
+                  {% endif -%}
+
+                </select>
+              </label>
+            </div>
+          </div>
+          <div class="row">
+            <div class="small-12 columns">
+              <label>
+                Known Good
+                <select name="known_good">
+                {%- if image.known_good %}
+                  <option value="1" selected="selected">Yes</option>
+                  <option value="0">No</option>
+                {% else %}
+                  <option value="1">Yes</option>
+                  <option value="0" selected="selected">No</option>
+                {% endif -%}
+                </select>
+                </label>
+            </div>
+          </div>
+          <div class="row">
+            <div class="small-12 columns">
+              <label>
+                Public
+                <select name="public">
+                {%- if image.public %}
+                  <option value="1" selected="selected">Yes</option>
+                  <option value="0">No</option>
+                {% else %}
+                  <option value="1">Yes</option>
+                  <option value="0" selected="selected">No</option>
+                {% endif -%}
+                </select>
+              </label>
+            </div>
+          </div>
+          <div class="row">
+            <div class="small-12 columns">
+                <center>
+              <input class="button" name="button" value="Save Metadata" type="submit">
+              </center>
+            </div>
+          </div>
+        </form>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+ </section>
+  {% endwith %}
+{% endblock %}

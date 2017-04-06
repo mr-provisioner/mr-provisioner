@@ -1,0 +1,70 @@
+{% extends "layout.html" %}
+
+
+{% block body %}
+ {% with accountactive="active" %}
+
+  {% if user.admin %}
+    {% include "admin-menu.html" %}
+  {% else %}
+    {% include "user-menu.html" %}
+  {% endif %}
+
+  <section id="content">
+  {% include "flash.html" %}
+
+  <div class="row">
+    <div class="small-2 columns">
+      <ul class="side-nav">
+        <li>
+          <a href="{{ url_for('.change_password_user') }}">Password</a>
+        </li>
+        <li class="active">
+          <a href="{{ url_for('.tokens') }}">Tokens</a>
+        </li>
+      </ul>
+    </div>
+    <div class="small-8 small-centered columns">
+      <table id="token-list">
+        <thead>
+          <th>Token</th>
+          <th>Description</th>
+          <th></th>
+        </thead>
+        <tbody>
+          {% for token in tokens %}
+            <tr>
+              <td>
+                {{ token.token }}
+              </td>
+              <td>
+                {{ token.desc }}
+              </td>
+              <td>
+                <form action="{{ url_for('.delete_token') }}" method="POST">
+                  <input type="hidden" name="id" value={{token.id}} />
+                  <input class="button small" type="submit" value="Delete" />
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <h2>Add token</h2>
+      <form action="{{ url_for('.tokens') }}" method="POST">
+        <div class="row collapse">
+          <div class="small-10 columns">
+            <input type="text" placeholder="Description..." name="desc"/>
+          </div>
+          <div class="small-2 columns">
+            <input type="submit" class="button postfix" value="Generate"/>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+  </section>
+ {% endwith %}
+{% endblock %}
+

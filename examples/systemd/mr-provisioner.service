@@ -1,0 +1,18 @@
+[Unit]
+Description=mr-provisioner http backend
+Requires=network-online.target
+Requires=mr-provisioner-ws.service
+After=network-online.target
+
+[Service]
+# Override log level specified in config.ini
+Environment=APP_LOG_LEVEL=INFO
+ExecStart=/opt/mr-provisioner/env/bin/python /opt/mr-provisioner/run.py \
+	-c /etc/mr-provisioner.ini \
+	tornado -h 0.0.0.0 -p 5000
+
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

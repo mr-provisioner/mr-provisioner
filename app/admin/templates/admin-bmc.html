@@ -1,0 +1,143 @@
+{% extends "layout.html" %}
+
+
+{% block body %}
+  {% with bmcactive="active" %}
+    {% if user.admin %}
+      {% include "admin-menu.html" %}
+    {% else %}
+      {% include "user-menu.html" %}
+    {% endif %}
+
+  <section id='content'>
+    {% include "flash.html" %}
+    {%- if user.admin %}
+    <div class="row">
+      <div class="small-12 small-centered columns">
+        <nav class="breadcrumbs">
+          <a href="{{ url_for('.get_bmc_admin') }}">BMCs</a>
+          <a href="{{ url_for('.bmc_admin', id=bmc.id) }}">{{ bmc.ip }}</a>
+        </nav>
+      </div>
+    </div>
+    {% endif %}
+    <div class="row">
+      <div class="small-12 small-centered columns">
+        <h2>{% if user.admin %} Manage {% endif %} {{ bmc.ip }}</h2>
+        <dl>
+          <dt>Name</dt>
+          <dd>{{ bmc.name }}</dd>
+          <dt>IP</dt>
+          <dd><a href="https://{{ bmc.ip }}"> {{ bmc.ip }}</a></dd>
+          <dt>Username</dt>
+          <dd>{{ bmc.username }}</dd>
+          <dt>Password</dt>
+          <dd>{{ bmc.password }}</dd>
+          <dt>Privilege Level</dt>
+          <dd>{{ bmc.privilege_level }}</dd>
+          <dt>BMC Type</dt>
+          <dd>{{ bmc.bmc_type }}</dd>
+        </dl>
+
+      {% if user.admin %}
+        <a class="button" data-reveal-id="edit-modal" href=""#"">
+          <i class="fa fa-edit" aria-hidden="true"></i>
+        </a>
+        <a class='button alert' data-reveal-id='delete-modal' href='#'>
+          <i class="fa fa-trash" aria-hidden="true"></i>
+        </a>
+        <div aria-hidden="true" class="reveal-modal small" data-reveal id="delete-modal" role="dialog">
+          <h2> Confirm deletion</h2>
+          <form action="{{ url_for('.delete_bmc', id=bmc.id) }}" method="POST">
+            <div class="row">
+              <p>Are you sure you want to delete BMC <b>{{ bmc.ip }}</b> ? </p>
+            </div>
+            <div class="row">
+              <input class="button alert" type="submit" value="Delete BMC"/>
+            </div>
+          </form>
+        </div>
+        <div aria-hidden="true" class="reveal-modal small" data-reveal id="edit-modal" role="dialog">
+          <h2> Edit BMC </h2>
+          <form action="{{ url_for('.edit_bmc', id=bmc.id) }}" method="POST">
+          <div class="row">
+            <div class="small-12 columns">
+              <label>
+                Name
+                <input name="name" type="text" value="{{ bmc.name }}">
+              </label>
+            </div>
+          </div>
+          <div class="row">
+            <div class="small-12 columns">
+              <label>
+                IP
+                <input name="ip" type="text" value="{{ bmc.ip }}">
+              </label>
+            </div>
+          </div>
+          <div class="row">
+            <div class="small-12 columns">
+              <label>
+                Username
+                <input name="username" type="text" value="{{ bmc.username }}">
+              </label>
+            </div>
+          </div>
+          <div class="row">
+            <div class="small-12 columns">
+              <label>
+                Password
+                <input name="password" value="{{ bmc.password }}" type="text">
+              </label>
+            </div>
+          </div>
+          <div class="row">
+            <div class="small-12 columns">
+              <label>
+                Privilege Level
+                <select name="privilege_level">
+                {% if bmc.privilege_level == "admin" %}
+          	<option value="admin" selected="selected">Admin</option>
+                {% else %}
+          	<option value="admin">Admin</option>
+                {%endif %}
+                {% if bmc.privilege_level == "user" %}
+          	<option value="user" selected="selected">User</option>
+                {% else %}
+          	<option value="user">User</option>
+                {%endif %}
+                </select>
+              </label>
+            </div>
+          </div>
+          <div class="row">
+            <div class="small-12 columns">
+              <label>
+                BMC Type
+                <select name="bmc_type">
+                  {% for bmc_type in bmc_types %}
+                  <option value="{{bmc_type.name}}"
+          	  {% if bmc.bmc_type == bmc_type.name %}
+          	  selected="selected"
+          	  {% endif %}
+          	  >{{bmc_type.name}}</option>
+                  {% endfor %}
+                </select>
+              </label>
+            </div>
+          </div>
+          <div class="row">
+            <div class="small-12 columns">
+                <center>
+              <input class="button" name="button" value="Save BMC" type="submit">
+              </center>
+            </div>
+          </div>
+        </form>
+      {% endif %}
+      </div>
+    </div>
+ </section>
+  {% endwith %}
+{% endblock %}

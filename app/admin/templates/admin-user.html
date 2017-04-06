@@ -1,0 +1,118 @@
+{% extends "layout.html" %}
+
+
+{% block body %}
+  {% with usersactive="active" %}
+    {% if user.admin %}
+      {% include "admin-menu.html" %}
+    {% else %}
+      {% include "user-menu.html" %}
+    {% endif %}
+
+  <section id="content">
+    {% include "flash.html" %}
+    <div class="row">
+      <div class="small-12 small-centered columns">
+        <nav class="breadcrumbs">
+          <a href="{{ url_for('.get_users_admin') }}">Users</a>
+          <a href="{{ url_for('.get_user_admin', id=u.id) }}">{{ u.username }}</a>
+        </nav>
+      </div>
+    </div>
+    <div class="row">
+      <div class="small-12 small-centered columns">
+      <h2>User Data</h2>
+      <dl>
+        <dt>Username</dt>
+        <dd> {{ u.username }}</dd>
+        <dt>Email</dt>
+        <dd>{{ u.email }}</dd>
+        <dt>Admin</dt>
+        <dd>
+           {% if u.admin %}
+             <input type="checkbox" readonly disabled checked/>
+           {% else %}
+             <input type="checkbox" readonly disabled/>
+           {% endif %}
+        </dd>
+      </dl>
+
+      <a class="button" data-reveal-id="edit-modal" href=""#"">
+        <i class="fa fa-edit" aria-hidden="true"></i>
+      </a>
+      <a class="button secondary" data-reveal-id="password-modal" href=""#"">
+        <i class="fa fa-key" aria-hidden="true"></i>
+      </a>
+      <a class='button alert' data-reveal-id='delete-modal' href='#'>
+        <i class="fa fa-trash" aria-hidden="true"></i>
+      </a>
+      <div aria-hidden="true" class="reveal-modal small" data-reveal id="delete-modal" role="dialog">
+        <h2> Confirm deletion</h2>
+        <form action="{{ url_for('.delete_users', id=u.id) }}" method="POST">
+          <div class="row">
+            <p>Are you sure you want to delete user <b>{{ u.username }}</b> and all associated data?</p>
+          </div>
+          <div class="row">
+            <input class="button alert" type="submit" value="Delete User"/>
+          </div>
+        </form>
+      </div>
+      <div aria-hidden="true" class="reveal-modal small" data-reveal id="password-modal" role="dialog">
+        <h2> Change Password </h2>
+        <form action="{{ url_for('.new_password') }}" method="POST">
+          <input name="id" type="hidden" value="{{ u.id }}">
+          <label>New Password</label>
+          <input name="new_pass" placeholder="" type="password"/>
+          <label>Confirm Password</label>
+          <input name="new_pass_confirm" placeholder="" type="password"/>
+          <input class="button small" type="submit" value="Change password"/>
+        </form>
+      </div>
+      <div aria-hidden="true" class="reveal-modal small" data-reveal id="edit-modal" role="dialog">
+        <h2> Edit User {{ u.username }}</h2>
+        <form action="{{ url_for('.edit_user', id=u.id) }}" method="POST">
+        <div class="row">
+          <div class="small-12 columns">
+            <label>
+              Username
+              <input name="username" type="text" value="{{ u.username }}">
+            </label>
+          </div>
+        </div>
+        <div class="row">
+          <div class="small-12 columns">
+            <label>
+              Email
+              <input name="email" type="text" value="{{ u.email }}">
+            </label>
+          </div>
+        </div>
+        <div class="row">
+          <div class="small-12 columns">
+            <label>
+              Admin
+              <select name="admin">
+                {%- if u.admin %}
+                  <option value="1" selected="selected">Yes</option>
+                  <option value="0">No</option>
+                {% else %}
+                  <option value="1">Yes</option>
+                  <option value="0" selected="selected">No</option>
+                {% endif -%}
+              </select>
+          </div>
+
+        <div class="row">
+          <div class="small-12 columns">
+              <center>
+            <input class="button" name="button" value="Save User" type="submit">
+            </center>
+          </div>
+        </div>
+      </form>
+      </div>
+        </div>
+      </div>
+ </section>
+  {% endwith %}
+{% endblock %}

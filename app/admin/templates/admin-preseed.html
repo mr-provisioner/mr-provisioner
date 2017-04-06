@@ -1,0 +1,170 @@
+{% extends "layout.html" %}
+
+
+{% block body %}
+  {% with preseedsactive="active" %}
+    {% if user.admin %}
+      {% include "admin-menu.html" %}
+    {% else %}
+      {% include "user-menu.html" %}
+    {% endif %}
+
+  <section id='content'>
+    {% include "flash.html" %}
+    <div class="row">
+      <div class="small-12 small-centered columns">
+        <nav class="breadcrumbs">
+          <a href="{{ url_for('.get_preseeds_admin') }}">Preseeds</a>
+          <a href="{{ url_for('.get_preseed_admin', id=preseed.id) }}">{{ preseed.file_type }}</a>
+        </nav>
+      </div>
+    </div>
+    <div class="row">
+      <div class="small-12 small-centered columns">
+      <h2>Manage Preseed</h2>
+      <dl>
+        <dt>Filename</dt>
+        <dd> {{ preseed.filename }}</dd>
+        <dt>Description</dt>
+        <dd> {{ preseed.description }}</dd>
+        <dt>Owner</dt>
+        <dd> {{ preseed.user.username }}</dd>
+        <dt>Date uploaded</dt>
+        <dd>{{ preseed.date.strftime("%Y-%m-%d %H:%M") }}</dd>
+        <dt>File Type</dt>
+        <dd>{{ preseed.file_type }}</dd>
+        <dt>Known_good</dt>
+        <dd>
+           {% if preseed.known_good %}
+             <input type="checkbox" readonly disabled checked/>
+           {% else %}
+             <input type="checkbox" readonly disabled/>
+           {% endif %}
+        </dd>
+        <dt>Public</dt>
+        <dd>
+           {% if preseed.public %}
+             <input type="checkbox" readonly disabled checked/>
+           {% else %}
+             <input type="checkbox" readonly disabled/>
+           {% endif %}
+        </dd>
+        <dt>Content<dt>
+        <dd>
+	<pre>{{ preseed.file_content }}</pre>
+        </dd>
+      </dl>
+
+      {% if user.admin or user.id==preseed.user_id %}
+        <a class="button" data-reveal-id="edit-modal" href=""#"">
+          <i class="fa fa-edit" aria-hidden="true"></i>
+        </a>
+        <a class='button alert' data-reveal-id='delete-modal' href='#'>
+          <i class="fa fa-trash" aria-hidden="true"></i>
+        </a>
+        <div aria-hidden="true" class="reveal-modal small" data-reveal id="delete-modal" role="dialog">
+          <h2> Confirm deletion</h2>
+          <form action="{{ url_for('.delete_preseed', id=preseed.id) }}" method="POST">
+            <div class="row">
+              <p>Are you sure you want to delete preseed <b>{{ preseed.filename }}</b> and all associated data?</p>
+            </div>
+            <div class="row">
+              <input class="button alert" type="submit" value="Delete Preseed"/>
+            </div>
+          </form>
+        </div>
+        <div aria-hidden="true" class="reveal-modal xlarge" data-reveal id="edit-modal" role="dialog">
+          <h2> Edit Preseed </h2>
+          <form action="{{ url_for('.edit_preseed', id=preseed.id) }}" method="POST">
+          <div class="row">
+            <div class="small-12 columns">
+              <label>
+                Filename
+                <input name="filename" type="text" value="{{ preseed.filename }}">
+              </label>
+            </div>
+          </div>
+          <div class="row">
+            <div class="small-12 columns">
+              <label>
+                Description
+                <input name="description" type="text" value="{{ preseed.description }}">
+              </label>
+            </div>
+          </div>
+          <div class="row">
+            <div class="small-12 columns">
+              <label>
+                Content
+                <div style="font-family: monospace;">
+                you can use jinja syntax for inserting your ssh key: {% raw %}{{ ssh_key }}{% endraw %}
+                </div>
+                <textarea name="file_content" rows="10" style="width: 100%;font-family: monospace;">{{ preseed.file_content }}</textarea>
+              </label>
+            </div>
+          </div>
+          <div class="row">
+            <div class="small-12 columns">
+              <label>
+                File Type
+                <select name='file_type'>
+                  {%- if preseed.file_type == 'kickstart' %}
+                    <option value="kickstart" selected="selected">Kickstart</option>
+                  {% else %}
+                    <option value="kickstart">Kickstart</option>
+                  {% endif -%}
+                  {%- if preseed.file_type == 'preseed' %}
+                    <option value="preseed" selected="selected">Preseed</option>
+                  {% else %}
+                    <option value="preseed">preseed</option>
+                  {% endif -%}
+                </select>
+              </label>
+            </div>
+          </div>
+          <div class="row">
+            <div class="small-12 columns">
+              <label>
+                Known Good
+                <select name="known_good">
+                {%- if preseed.known_good %}
+                  <option value="1" selected="selected">Yes</option>
+                  <option value="0">No</option>
+                {% else %}
+                  <option value="1">Yes</option>
+                  <option value="0" selected="selected">No</option>
+                {% endif -%}
+                </select>
+              </div>
+            </div>
+            <div class="row">
+              <div class="small-12 columns">
+                <label>
+                  Public
+                  <select name="public">
+                  {%- if preseed.public %}
+                    <option value="1" selected="selected">Yes</option>
+                    <option value="0">No</option>
+                  {% else %}
+                    <option value="1">Yes</option>
+                    <option value="0" selected="selected">No</option>
+                  {% endif -%}
+                  </select>
+                </label>
+              </div>
+            </div>
+          <div class="row">
+            <div class="small-12 columns">
+              <center>
+                <input class="button" name="button" value="Save Preseed" type="submit">
+              </center>
+            </div>
+          </div>
+        </form>
+        </div>
+      {% endif %}
+        </div>
+      </div>
+ </section>
+  {% endwith %}
+{% endblock %}

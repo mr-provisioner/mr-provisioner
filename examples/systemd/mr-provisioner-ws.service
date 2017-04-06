@@ -1,0 +1,15 @@
+[Unit]
+Description=ws-subprocess for mr-provisioner
+Requires=network-online.target
+After=network-online.target
+
+[Service]
+ExecStart=/usr/local/bin/ws-subprocess \
+	-controller-url "http://localhost:5000/admin/ws-subprocess" \
+	-listen "0.0.0.0:8866"
+
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

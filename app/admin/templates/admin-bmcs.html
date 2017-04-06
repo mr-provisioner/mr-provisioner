@@ -1,0 +1,118 @@
+{% extends "layout.html" %}
+
+
+{% block body %}
+  {% with bmcactive="active" %}
+    {% if user.admin %}
+      {% include "admin-menu.html" %}
+    {% else %}
+      {% include "user-menu.html" %}
+    {% endif %}
+
+  <section id="content">
+    {% include "flash.html" %}
+    <div class="row">
+    <div class="small-12 small-centered columns">
+      <h2> BMCs </h2>
+      <table id="bmc-list">
+        <thead aligned="center">
+          <tr>
+	    <th>Name</th>
+            <th>IP</th>
+            <th>Type</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for bmc in bmcs %}
+            <tr>
+	      <td>
+                <a href="{{ url_for('.bmc_admin', id=bmc.id) }}">{{ bmc.name }}</a>
+	      </td>
+              <td>
+		<a href="{{ url_for('.bmc_admin', id=bmc.id) }}">{{ bmc.ip }}</a>
+              </td>
+              <td>
+                {{ bmc.bmc_type }}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <a class="button" data-reveal-id="new-modal" href=""#"">
+        <i class="fa fa-plus" aria-hidden="true"></i>
+      </a>
+      <div aria-hidden="true" class="reveal-modal small" data-reveal id="new-modal" role="dialog">
+        <h2> New BMC </h2>
+        <form action="{{ url_for('.create_bmc_admin') }}" method="POST">
+        <div class="row">
+          <div class="small-12 columns">
+            <label>
+              Name
+              <input name="name" type="text" value="">
+            </label>
+          </div>
+        </div>
+        <div class="row">
+          <div class="small-12 columns">
+            <label>
+              IP
+              <input name="ip" type="text" value="">
+            </label>
+          </div>
+        </div>
+        <div class="row">
+          <div class="small-12 columns">
+            <label>
+              Username
+              <input name="username" type="text" value="">
+            </label>
+          </div>
+        </div>
+        <div class="row">
+          <div class="small-12 columns">
+            <label>
+              Password
+              <input name="password" value="" type="text">
+            </label>
+          </div>
+        </div>
+        <div class="row">
+          <div class="small-12 columns">
+            <label>
+              Privilege Level
+	      <select name="privilege_level">
+		<option value="admin">Admin</option>
+		<option value="user">User</option>
+	      </select>
+            </label>
+          </div>
+        </div>
+        <div class="row">
+          <div class="small-12 columns">
+            <label>
+              BMC Type
+	      <select name="bmc_type">
+                {% for bmc_type in bmc_types %}
+                <option value="{{bmc_type.name}}">{{bmc_type.name}}</option>
+                {% endfor %}
+	      </select>
+            </label>
+          </div>
+        </div>
+        <div class="row">
+          <div class="small-12 columns">
+              <center>
+            <input class="button" name="button" value="Save BMC" type="submit">
+            </center>
+          </div>
+        </div>
+      </form>
+      </div>
+        </div>
+    </div>
+    <script>
+      $("#bmc-list").dataTable();
+    </script>
+  </section>
+  {% endwith %}
+{% endblock %}
