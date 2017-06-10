@@ -1,1 +1,1 @@
-TBD: add a link to the docs
+Read the documentation at https://mr-provisioner.readthedocs.io/
