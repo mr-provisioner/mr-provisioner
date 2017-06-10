@@ -1,4 +1,3 @@
- - test (& fix) static file serving for tftp files, preseeds, etc
  - consider moving /admin/ws-subprocess into its own blueprint (as it can also be useful w/o the admin UI)
    -> if so, also update the .service file and the docs!
  - set up linter (and make code lint-clean)

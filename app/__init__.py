@@ -14,7 +14,7 @@ from app.config import apply_config
 db = SQLAlchemy()
 
 def create_app(config_path=None):
-    app = Flask(__name__)# XXX: ???, instance_path=CONF.tftp_path)
+    app = Flask(__name__)
 
     apply_config(app, config_path)
 
