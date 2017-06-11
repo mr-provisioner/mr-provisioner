@@ -24,6 +24,9 @@ Set up a virtual environment to run the application::
 
     virtualenv env
 
+NOTE: Make sure to specify python 3 if your system doesn't use it by detault
+(-p PYTHON_EXE)
+
 After that, activate the virtual env::
 
     source env/bin/activate
@@ -53,13 +56,14 @@ Create a new database and user for `mr-provisioner` if you haven't already set o
     psql
 
     CREATE DATABASE <dbname>;
-    CREATE ROLE <username> WITH PASSWORD '<password>' WITH LOGIN;
+    CREATE ROLE <username> WITH PASSWORD '<password>' LOGIN;
     GRANT ALL PRIVILEGES ON DATABASE <dbname> TO <username>;
 
 Create the required tables by running the database migrations::
 
     ./run.py -c /path/to/your/config.ini db upgrade
 
+After this, a first user called `admin` with password `linaro` will be available.
 
 Run the app
 -----------
@@ -72,7 +76,7 @@ Start up `ws-subprocess`_::
 
 Start up `tftp-http-proxy`_::
 
-    /path/to/tftp-http-proxy -http-base-url "http://localhost:5000/tftp" -http-append-path false
+    /path/to/tftp-http-proxy -http-base-url "http://localhost:5000/tftp"
 
 And finally, start up `mr-provisioner`::
 
