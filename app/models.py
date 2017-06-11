@@ -78,7 +78,7 @@ class Machine(db.Model):
                "initrd: %d, netboot_enabled: %b, bmc_id %d>" % (self.name,
                                                                 self.mac,
                                                                 self.kernel_id,
-                                                                self.kernel_opt,
+                                                                self.kernel_opts,
                                                                 self.initrd_id,
                                                                 self.netboot_enabled,
                                                                 self.bmc_id)
@@ -95,15 +95,8 @@ class Machine(db.Model):
     def preseed(self):
         return Preseed.query.get(self.preseed_id) if self.preseed_id else None
 
-    @property
-    def kernel_opts_all(self):
-        # XXX: how to figure out the ip on which the machines will find the api?
-        # -> use DNS or rely on forwarding
-        # XXX: do I need the name of eth0 for each machine also on the database?
-        # -> whut?
-        # XXX: make the nameserver configurable? Doesn't kickstart need that also?
-        # -> ofc the nameserver is configurable - but ideally it'd be DHCP giving out the DNS info
-        preseed_opts = self.preseed.kernel_opts(self) if self.preseed_id else ""
+    def kernel_opts_all(self, config):
+        preseed_opts = self.preseed.kernel_opts(self, config) if self.preseed_id else ""
         return preseed_opts + " " + self.kernel_opts
 
     @property
@@ -425,18 +418,22 @@ class Preseed(db.Model):
                                                                                self.user_id,
                                                                                self.known_good)
 
-    def preseed_url(self, machine):
-        # XXX: use some config for the externally visible IP
-        return "%s/preseed/%s" % ("http://172.27.80.1:5000", machine.id)
+    def preseed_url(self, machine, config):
+        return "%s/preseed/%s" % (config['CONTROLLER_ACCESS_URI'], machine.id)
 
-    def kernel_opts(self, machine):
+    def kernel_opts(self, machine, config):
         if self.file_type == "preseed":
-            options = "auto=true priority=critical url=%s interface=auto" % (self.preseed_url(machine))
-            # XXX: use some config for the externally visible DNS, and, if empty, don't set it
-            if True:
-                options += " netcfg/get_nameservers=%s" % ("8.8.4.4")
+            options = "auto=true priority=critical url=%s interface=auto" % (self.preseed_url(machine, config))
+
+            if config['PRESEED_DNS']:
+                options += " netcfg/get_nameservers=%s" % (config['PRESEED_DNS'])
+
         elif self.file_type == "kickstart":
-            options = "ks=%s kssendmac" % self.preseed_url(machine) # XXX: ksdevice=ethX?
+            options = "ks=%s kssendmac" % self.preseed_url(machine, config)
+
+            if config['PRESEED_DNS']:
+                options += " dns=%s" % (config['PRESEED_DNS'])
+
         return options
 
     def serialize(self):

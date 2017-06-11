@@ -3,14 +3,14 @@
 #
 #title linux
 #	root (nd)
-#	kernel {{machine.kernel.filename}} {{machine.kernel_opts_all}}
+#	kernel {{machine.kernel.filename}} {{machine.kernel_opts_all(config)}}
 #	initrd {{machine.initrd.filename}}
 
 set default="linux"
 set timeout=3
 
 menuentry "linux" {
-	linux (tftp)/{{machine.kernel.filename}} {{machine.kernel_opts_all}}
+	linux (tftp)/{{machine.kernel.filename}} {{machine.kernel_opts_all(config)}}
 {% if machine.initrd.filename %}
 	initrd (tftp)/{{machine.initrd.filename}}
 {% endif %}

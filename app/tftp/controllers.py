@@ -30,7 +30,7 @@ def render_config(is_pxelinux, machine):
         template_file = "pxelinux.local.tmpl" if is_pxelinux else "grub.local.tmpl"
 
     template = app.config['TFTP_JINJA_ENV'].get_template(template_file)
-    return template.render(machine=machine)
+    return template.render(machine=machine, config=app.config)
 
 
 def handle_config_request(client_ip, filename):

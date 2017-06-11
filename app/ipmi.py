@@ -8,9 +8,7 @@ class IPMIError(Exception):
     pass
 
 
-# XXX: add this to the config (but make sure it's an absolute path (or use readlink/abspath on it)
 IPMITOOL_CMD = '/usr/bin/ipmitool'
-# IPMITOOL_CMD = '/usr/local/bin/ipmitool'
 
 ALLOWED_BOOTDEVS = ['pxe', 'disk', 'bios']
 ALLOWED_POWER_STATES = ['on', 'off', 'cycle', 'reset', 'soft']
@@ -18,6 +16,11 @@ ALLOWED_POWER_STATES = ['on', 'off', 'cycle', 'reset', 'soft']
 # chassis bootdev [pxe|disk|bios]
 # chassis power status
 # chassis power [on|off|cycle|reset|soft]
+
+
+def set_ipmitool(cmd):
+    global IPMITOOL_CMD
+    IPMITOOL_CMD = cmd
 
 
 def build_command(cmd, *, host=None, username=None, password=None, privilege_level=None,
