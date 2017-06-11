@@ -4,4 +4,4 @@ timeout 1
 label linux
 	kernel {{machine.kernel.filename}}
 	ipappend 2
-	append {% if machine.initrd.filename %}initrd={{machine.initrd.filename}}{% end %} {{machine.kernel_opts_all}}
+	append {% if machine.initrd.filename %}initrd={{machine.initrd.filename}}{% endif %} {{machine.kernel_opts_all}}

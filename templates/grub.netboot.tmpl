@@ -13,5 +13,5 @@ menuentry "linux" {
 	linux (tftp)/{{machine.kernel.filename}} {{machine.kernel_opts_all}}
 {% if machine.initrd.filename %}
 	initrd (tftp)/{{machine.initrd.filename}}
-{% end %}
+{% endif %}
 }
