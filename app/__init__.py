@@ -1,17 +1,15 @@
 #!/usr/bin/env python
 
-import logging
-import sys
-
 from flask import Flask, url_for, redirect
 from flask_sqlalchemy import SQLAlchemy
-from flask_cors import CORS, cross_origin
+from flask_cors import CORS
 from flask_script import Manager
 from flask_migrate import Migrate, MigrateCommand
 
 from app.config import apply_config
 
 db = SQLAlchemy()
+
 
 def create_app(config_path=None):
     app = Flask(__name__)
@@ -22,7 +20,7 @@ def create_app(config_path=None):
 
     db.init_app(app)
 
-    migrate = Migrate(app, db)
+    Migrate(app, db)
 
     from app.admin.controllers import mod as admin_module
     from app.preseed.controllers import mod as preseed_module
@@ -65,6 +63,7 @@ def tornado(host, port):
     http_server = HTTPServer(WSGIContainer(manager.app))
     http_server.listen(port, address=host)
     IOLoop.instance().start()
+
 
 if __name__ == '__main__':
     manager.run()

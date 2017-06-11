@@ -1,6 +1,7 @@
 from app.bmc_types import register_bmc_type, BMCType, BMCError
 from app.ipmi import get_power, set_power, set_bootdev, deactivate_sol, get_sol_command, IPMIError
 
+
 class PlainBMC(BMCType):
     @property
     def name(self):

@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from app.bmc_types import resolve_bmc_type, BMCError
 import binascii
 
+
 class BMC(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     ip = db.Column(db.String, unique=True, nullable=False)
@@ -26,17 +27,18 @@ class BMC(db.Model):
     def serialize(self):
         """Return object data in serialized format"""
         return {
-                'ip' : self.ip,
-                'name' : self.name,
-                'username': self.username,
-                'password' : self.password,
-                'privilege_level' : self.privilege_level,
-                'bmc_type' : self.bmc_type
-                }
+            'ip': self.ip,
+            'name': self.name,
+            'username': self.username,
+            'password': self.password,
+            'privilege_level': self.privilege_level,
+            'bmc_type': self.bmc_type
+        }
 
     @property
     def type_inst(self):
         return resolve_bmc_type(self.bmc_type)
+
 
 class Machine(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -55,29 +57,32 @@ class Machine(db.Model):
     bmc_id = db.Column(db.Integer, db.ForeignKey("BMC.id"))
     bmc_info = db.Column(db.String)
 
-    def __init__(self, name, mac, pdu, pdu_port, serial, serial_port, kernel_id, kernel_opts, preseed_id, initrd_id, netboot_enabled, bmc_id, bmc_info):
-         self.name = name
-         self.mac = mac
-         self.pdu = pdu
-         self.pdu_port = pdu_port
-         self.serial = serial
-         self.serial_port = serial_port
-         self.kernel_id = kernel_id
-         self.kernel_opts = kernel_opts
-         self.preseed_id = preseed_id
-         self.initrd_id = initrd_id
-         self.netboot_enabled = netboot_enabled
-         self.bmc_id = bmc_id
-         self.bmc_info = bmc_info
+    def __init__(self, name, mac, pdu, pdu_port, serial, serial_port, kernel_id, kernel_opts,
+                 preseed_id, initrd_id, netboot_enabled, bmc_id, bmc_info):
+        self.name = name
+        self.mac = mac
+        self.pdu = pdu
+        self.pdu_port = pdu_port
+        self.serial = serial
+        self.serial_port = serial_port
+        self.kernel_id = kernel_id
+        self.kernel_opts = kernel_opts
+        self.preseed_id = preseed_id
+        self.initrd_id = initrd_id
+        self.netboot_enabled = netboot_enabled
+        self.bmc_id = bmc_id
+        self.bmc_info = bmc_info
 
     def __repr__(self):
-        return '<name: %s, mac: %s, kernel: %d, kernel_opts: %s, initrd: %d, netboot_enabled: %b, bmc_id %d>' % (self.name,
-                                                                                                                 self.mac,
-                                                                                                                 self.kernel_id,
-                                                                                                                 self.kernel_opt,
-                                                                                                                 self.initrd_id,
-                                                                                                                 self.netboot_enabled,
-                                                                                                                 self.bmc_id)
+        return "<name: %s, mac: %s, kernel: %d, kernel_opts: %s," \
+               "initrd: %d, netboot_enabled: %b, bmc_id %d>" % (self.name,
+                                                                self.mac,
+                                                                self.kernel_id,
+                                                                self.kernel_opt,
+                                                                self.initrd_id,
+                                                                self.netboot_enabled,
+                                                                self.bmc_id)
+
     @property
     def kernel(self):
         return Image.query.get(self.kernel_id) if self.kernel_id else None
@@ -92,15 +97,14 @@ class Machine(db.Model):
 
     @property
     def kernel_opts_all(self):
-        #XXX: how to figure out the ip on which the machines will find the api?
+        # XXX: how to figure out the ip on which the machines will find the api?
         # -> use DNS or rely on forwarding
-        #XXX: do I need the name of eth0 for each machine also on the database?
+        # XXX: do I need the name of eth0 for each machine also on the database?
         # -> whut?
-        #XXX: make the nameserver configurable? Doesn't kickstart need that also?
+        # XXX: make the nameserver configurable? Doesn't kickstart need that also?
         # -> ofc the nameserver is configurable - but ideally it'd be DHCP giving out the DNS info
         preseed_opts = self.preseed.kernel_opts(self) if self.preseed_id else ""
         return preseed_opts + " " + self.kernel_opts
-
 
     @property
     def bmc(self):
@@ -166,7 +170,7 @@ class Machine(db.Model):
         bmc = self.bmc
         return bmc.type_inst.get_sol_command(self)
 
-    def check_permission(self, user, min_priv_level = 'any'):
+    def check_permission(self, user, min_priv_level='any'):
         # XXX: min_priv_level is something like 'any', 'assignee', 'admin'
         if user.admin:
             return True
@@ -184,25 +188,26 @@ class Machine(db.Model):
     def serialize(self):
         """Return object data in serialized format"""
         return {
-                'name'  : self.name,
-                'mac' : self.mac,
-                'bmc' : self.bmc,
-                'pdu' : self.pdu,
-                'pdu_port' : self.pdu_port,
-                'serial' : self.serial,
-                'serial_port': self.serial_port,
-                'kernel'  : self.kernel,
-                'kernel_opts' : self.kernel_opts,
-                'initrd' : self.initrd,
-                'netboot_enabled' : self.netboot_enabled
-                }
+            'name': self.name,
+            'mac': self.mac,
+            'bmc': self.bmc,
+            'pdu': self.pdu,
+            'pdu_port': self.pdu_port,
+            'serial': self.serial,
+            'serial_port': self.serial_port,
+            'kernel': self.kernel,
+            'kernel_opts': self.kernel_opts,
+            'initrd': self.initrd,
+            'netboot_enabled': self.netboot_enabled
+        }
 
     @staticmethod
     def by_mac(mac):
         try:
-            return db.session.query(Machine).filter_by(mac= mac).one()
+            return db.session.query(Machine).filter_by(mac=mac).one()
         except db.NoResultsFound:
             return None
+
 
 class ConsoleToken(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -218,12 +223,15 @@ class ConsoleToken(db.Model):
 
     @staticmethod
     def cleanup():
-        old_entries = db.session.query(ConsoleToken).filter(ConsoleToken.created_at <= (datetime.utcnow() - timedelta(minutes=5))).delete()
+        db.session.query(ConsoleToken).filter(
+            ConsoleToken.created_at <= (datetime.utcnow() - timedelta(minutes=5))
+        ).delete()
         db.session.commit()
 
     @staticmethod
     def gen_token():
         return binascii.hexlify(urandom(24)).decode('utf-8')
+
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -243,18 +251,25 @@ class User(db.Model):
         self.admin = admin
 
     def __repr__(self):
-        return '<username: %s, email: %s, ldap: %b, ssh_key: %s, password: %s, admin: %b>' % (self.username, self.email, self.ldap, self.ssh_key, self.password, self.admin)
+        return "<username: %s, email: %s, ldap: %b, ssh_key: %s, " \
+               "password: %s, admin: %b>" % (self.username,
+                                             self.email,
+                                             self.ldap,
+                                             self.ssh_key,
+                                             self.password,
+                                             self.admin)
 
     def serialize(self):
         """Return object data in serialized format"""
         return {
-                'username' : self.name,
-                'email' : self.email,
-                'ldap' : self.ldap,
-                'ssh_key' : self.ssh_key,
-                'password' : self.password,
-                'admin' : self.admin
-                }
+            'username': self.name,
+            'email': self.email,
+            'ldap': self.ldap,
+            'ssh_key': self.ssh_key,
+            'password': self.password,
+            'admin': self.admin
+        }
+
 
 class Token(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -275,11 +290,12 @@ class Token(db.Model):
     def serialize(self):
         """Return object data in serialized format"""
         return {
-                'id' : self.id,
-                'user_id' : self.user_id,
-                'token' : self.token,
-                'desc' : self.desc,
-                }
+            'id': self.id,
+            'user_id': self.user_id,
+            'token': self.token,
+            'desc': self.desc,
+        }
+
 
 class MachineUsers(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -296,21 +312,27 @@ class MachineUsers(db.Model):
         self.permissions = permissions
         self.reason = reason
 
-
     def __repr__(self):
-        return '<machine_id: %d, user_id: %d, permissions: %d, start_date: %s, reason: %s>' % (self.machine_id, self.user_id, self.permissions, self.start_date, self.reason)
+        return "<machine_id: %d, user_id: %d, permissions: %d, " \
+               "start_date: %s, reason: %s>" % (self.machine_id,
+                                                self.user_id,
+                                                self.permissions,
+                                                self.start_date,
+                                                self.reason)
 
     def serialize(self):
         return {
-                'machine_id' : self.machine_id,
-                'user_id' : self.user_id,
-                'permissions' : self.permissions,
-		'start_date' : self.start_date.strftime("%Y-%m-%d"),
-                'reason' : self.reason
-                }
+            'machine_id': self.machine_id,
+            'user_id': self.user_id,
+            'permissions': self.permissions,
+            'start_date': self.start_date.strftime("%Y-%m-%d"),
+            'reason': self.reason
+        }
+
     @property
     def assigned_user(self):
         return User.query.get(self.user_id)
+
 
 class AuditLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -321,16 +343,22 @@ class AuditLog(db.Model):
     end_date = db.Column(db.DateTime, nullable=False)
 
     def __repr__(self):
-        return '<machine_name: %s, user_name: %s, permissions: %d, start_date: %s, end_date: %s>' % (self.machine_name, self.user_name, self.permissions, self.start_date, self.end_date)
+        return "<machine_name: %s, user_name: %s, permissions: %d, " \
+               "start_date: %s, end_date: %s>" % (self.machine_name,
+                                                  self.user_name,
+                                                  self.permissions,
+                                                  self.start_date,
+                                                  self.end_date)
 
     def serialize(self):
         return {
-                'machine_name' : self.machine_name,
-                'user_name' : self.user_name,
-                'permissions' : self.permissions,
-		'start_date' : self.start_date,
-		'end_date' : self.end_date
-                }
+            'machine_name': self.machine_name,
+            'user_name': self.user_name,
+            'permissions': self.permissions,
+            'start_date': self.start_date,
+            'end_date': self.end_date
+        }
+
 
 class Image(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -341,7 +369,6 @@ class Image(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
     known_good = db.Column(db.Boolean, nullable=False)
     public = db.Column(db.Boolean, nullable=False)
-
 
     def __init__(self, filename, description, file_type, user_id, known_good, public):
         self.date = datetime.now()
@@ -357,18 +384,19 @@ class Image(db.Model):
 
     def serialize(self):
         return {
-                'filename' : self.filename,
-                'description' : self.description,
-                'file_type': self.file_type,
-                'date' : self.date.strftime("%Y-%m-%d %H:%M"),
-                'user_id' : self.user_id,
-                'known_good' : self.known_good,
-                'public' : self.public
-                }
+            'filename': self.filename,
+            'description': self.description,
+            'file_type': self.file_type,
+            'date': self.date.strftime("%Y-%m-%d %H:%M"),
+            'user_id': self.user_id,
+            'known_good': self.known_good,
+            'public': self.public
+        }
 
     @property
     def user(self):
         return User.query.get(self.user_id)
+
 
 class Preseed(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -392,7 +420,10 @@ class Preseed(db.Model):
         self.public = public
 
     def __repr__(self):
-        return '<filename: %s, file_type: %s, user_id: %d, known_good: %s>' % (self.filename, self.file_type, self.user_id, self.known_good)
+        return "<filename: %s, file_type: %s, user_id: %d, known_good: %s>" % (self.filename,
+                                                                               self.file_type,
+                                                                               self.user_id,
+                                                                               self.known_good)
 
     def preseed_url(self, machine):
         # XXX: use some config for the externally visible IP
@@ -410,14 +441,14 @@ class Preseed(db.Model):
 
     def serialize(self):
         return {
-                'filename' : self.filename,
-                'file_content' : self.file_content,
-                'type': self.type,
-                'date' : self.date.strftime("%Y-%m-%d %H:%M"),
-                'user_id' : self.user_id,
-                'known_good' : self.known_good,
-                'public' : self.public
-                }
+            'filename': self.filename,
+            'file_content': self.file_content,
+            'type': self.type,
+            'date': self.date.strftime("%Y-%m-%d %H:%M"),
+            'user_id': self.user_id,
+            'known_good': self.known_good,
+            'public': self.public
+        }
 
     @property
     def user(self):

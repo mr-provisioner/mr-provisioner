@@ -1,5 +1,6 @@
-from flask import Blueprint, Flask, jsonify, json, abort, request, g, send_from_directory, render_template, flash, url_for, session, redirect, safe_join, Response
-from flask_sqlalchemy import SQLAlchemy
+from flask import Blueprint, request, g, render_template, flash, url_for, \
+    session, redirect, Response
+from sqlalchemy import true
 
 import logging
 import json
@@ -13,13 +14,14 @@ from sqlalchemy.exc import IntegrityError
 
 from app import db
 from app.models import User, Token, Machine, Image, Preseed, BMC, MachineUsers, ConsoleToken
-from app.bmc_types import resolve_bmc_type, list_bmc_types, BMCError
+from app.bmc_types import list_bmc_types, BMCError
 import app.admin.validation as validations
 
 from flask import current_app as app
 
 mod = Blueprint('admin', __name__, template_folder='templates', static_folder='static')
 logger = logging.getLogger('admin')
+
 
 @mod.before_request
 def authenticate():
@@ -34,15 +36,17 @@ def authenticate():
     else:
         try:
             user = User.query.filter_by(username=session['username']).first()
-            if not 'username' in session or not user:
+            if 'username' not in session or not user:
                 return redirect(url_for('.login'))
             g.user = user
         except KeyError:
             return redirect(url_for('.login'))
 
+
 @mod.route('/login', methods=['GET'])
 def login():
     return render_template('login.html')
+
 
 @mod.route('/login', methods=['POST'])
 def login_post():
@@ -54,14 +58,17 @@ def login_post():
     session['username'] = request.form['user']
     return redirect(url_for('.index'))
 
+
 @mod.route('/logout')
 def logout():
     session.pop('username', None)
     return redirect(url_for('.index'))
 
+
 @mod.route('/')
 def index():
     return redirect(url_for('.get_machines_admin'))
+
 
 def flash_form_errors(form):
     for field in form:
@@ -72,6 +79,7 @@ def flash_form_errors(form):
 @mod.route('/user/password', methods=['GET'])
 def change_password_user():
     return render_template("account-password.html", user=g.user)
+
 
 @mod.route('/user/password', methods=['POST'])
 def new_password_user():
@@ -87,6 +95,7 @@ def new_password_user():
 
     return render_template("account-password.html", user=g.user)
 
+
 @mod.route('/user/sshkey', methods=['POST'])
 def change_sshkey_user():
     logger.info("SSH Key change for user %s" % g.user.username)
@@ -100,6 +109,7 @@ def change_sshkey_user():
         flash_form_errors(form)
 
     return render_template("account-password.html", user=g.user)
+
 
 @mod.route('/password', methods=['POST'])
 def new_password():
@@ -120,10 +130,12 @@ def new_password():
 
     return redirect(url_for(".get_user_admin", id=form.id.data))
 
+
 @mod.route('/tokens', methods=['GET'])
 def tokens():
     tokens = Token.query.filter_by(user_id=g.user.id).all()
     return render_template("account-token.html", tokens=tokens, user=g.user)
+
 
 @mod.route('/tokens/delete', methods=['POST'])
 def delete_token():
@@ -137,6 +149,7 @@ def delete_token():
         flash('Invalid token', 'error')
     return redirect(url_for('.tokens'))
 
+
 @mod.route('/tokens', methods=['POST'])
 def create_token():
     logger.info("Adding token")
@@ -145,7 +158,7 @@ def create_token():
     db.session.commit()
     return redirect(url_for('.tokens'))
 
-# Admin Users
+
 @mod.route('/users', methods=['GET'])
 def get_users_admin():
 
@@ -155,7 +168,8 @@ def get_users_admin():
 
     users = []
     users = User.query.all()
-    return render_template("admin-users.html",users=users, user=g.user)
+    return render_template("admin-users.html", users=users, user=g.user)
+
 
 @mod.route('/users/create', methods=['POST'])
 def create_users_admin():
@@ -168,12 +182,12 @@ def create_users_admin():
     form = validations.CreateUserForm(request.form)
     if form.validate():
         password = b64encode(os.urandom(8)).decode('utf-8')
-        new = User(username = form.username.data,
-                   email = form.email.data,
-                   password = pbkdf2_sha256.hash(password),
-                   ldap = False,
-                   ssh_key = "",
-                   admin = form.admin.data)
+        new = User(username=form.username.data,
+                   email=form.email.data,
+                   password=pbkdf2_sha256.hash(password),
+                   ldap=False,
+                   ssh_key="",
+                   admin=form.admin.data)
         try:
             db.session.add(new)
             db.session.commit()
@@ -186,6 +200,7 @@ def create_users_admin():
 
     return redirect(url_for('.get_users_admin'))
 
+
 @mod.route('/users/<id>', methods=['GET'])
 def get_user_admin(id):
 
@@ -194,7 +209,8 @@ def get_user_admin(id):
         return redirect(url_for('.new_password_user'))
 
     u = User.query.get(id)
-    return render_template("admin-user.html",u=u, user=g.user)
+    return render_template("admin-user.html", u=u, user=g.user)
+
 
 @mod.route('/users/<id>/delete', methods=['POST'])
 def delete_users(id):
@@ -213,6 +229,7 @@ def delete_users(id):
     flash('User deleted', 'success')
     return redirect(url_for('.get_users_admin'))
 
+
 @mod.route('/users/<id>/edit', methods=['POST'])
 def edit_user(id):
 
@@ -225,7 +242,7 @@ def edit_user(id):
     if form.validate():
         u = User.query.get(id)
         if not u:
-            flash("The user does not exist","error")
+            flash("The user does not exist", "error")
             return redirect(url_for('.get_users_admin'))
 
         u.username = form.username.data
@@ -240,18 +257,18 @@ def edit_user(id):
     else:
         flash_form_errors(form)
 
-    return redirect(url_for('.get_user_admin',id=id))
+    return redirect(url_for('.get_user_admin', id=id))
 
 
-# Admin Preseeds
 @mod.route('/preseeds', methods=['GET'])
 def get_preseeds_admin():
     if g.user.admin:
         preseeds = Preseed.query.all()
     else:
-        preseeds = Preseed.query.filter((Preseed.public==True) | (Preseed.user_id==g.user.id))
+        preseeds = Preseed.query.filter((Preseed.public == true()) | (Preseed.user_id == g.user.id))
 
-    return render_template("admin-preseeds.html",preseeds=preseeds, user=g.user)
+    return render_template("admin-preseeds.html", preseeds=preseeds, user=g.user)
+
 
 @mod.route('/preseeds/create', methods=['POST'])
 def create_preseeds_admin():
@@ -261,19 +278,19 @@ def create_preseeds_admin():
         random_suffix = binascii.hexlify(os.urandom(4)).decode('utf-8')
         filename = "%s.%s" % (secure_filename(form.filename.data), random_suffix)
 
-        new_preseed = Preseed(filename = os.path.join(secure_filename(g.user.username), filename),
-                              description = form.description.data,
-                              file_content = form.file_content.data,
-                              file_type = form.file_type.data,
-                              user_id = g.user.id,
-                              known_good = form.known_good.data,
-                              public = form.public.data)
+        new_preseed = Preseed(filename=os.path.join(secure_filename(g.user.username), filename),
+                              description=form.description.data,
+                              file_content=form.file_content.data,
+                              file_type=form.file_type.data,
+                              user_id=g.user.id,
+                              known_good=form.known_good.data,
+                              public=form.public.data)
 
         db.session.add(new_preseed)
         try:
             db.session.commit()
             flash('Preseed saved successfully', 'success')
-        except IntegrityError  as e:
+        except IntegrityError as e:
             db.session.rollback()
             flash("IntegrityError, please retry", 'info')
     else:
@@ -281,11 +298,13 @@ def create_preseeds_admin():
 
     return redirect(url_for('.get_preseeds_admin'))
 
+
 @mod.route('/preseeds/<id>', methods=['GET'])
 def get_preseed_admin(id):
     preseed = Preseed.query.get(id)
 
-    return render_template("admin-preseed.html",preseed=preseed, user=g.user)
+    return render_template("admin-preseed.html", preseed=preseed, user=g.user)
+
 
 @mod.route('/preseeds/<id>/edit', methods=['POST'])
 def edit_preseed(id):
@@ -315,7 +334,8 @@ def edit_preseed(id):
     else:
         flash_form_errors(form)
 
-    return redirect(url_for('.get_preseed_admin',id=id))
+    return redirect(url_for('.get_preseed_admin', id=id))
+
 
 @mod.route('/preseeds/<id>/delete', methods=['POST'])
 def delete_preseed(id):
@@ -341,14 +361,15 @@ def delete_preseed(id):
 
     return redirect(url_for('.get_preseeds_admin'))
 
-# Admin Images
+
 @mod.route('/images', methods=['GET'])
 def get_images_admin():
     if g.user.admin:
         images = Image.query.all()
     else:
-        images = Image.query.filter((Image.public==True) | (Image.user_id==g.user.id))
-    return render_template("admin-images.html",images=images, user=g.user)
+        images = Image.query.filter((Image.public == true()) | (Image.user_id == g.user.id))
+    return render_template("admin-images.html", images=images, user=g.user)
+
 
 @mod.route('/images/create', methods=['POST'])
 def create_images_admin():
@@ -368,18 +389,18 @@ def create_images_admin():
 
         path = os.path.join(secure_filename(g.user.username), filename)
         logger.info("known good %s" % form.known_good.data)
-        new_image = Image(description = form.description.data,
-                    filename = path,
-                    file_type = form.file_type.data,
-                    known_good = form.known_good.data,
-                    user_id = g.user.id,
-                    public=form.public.data)
+        new_image = Image(description=form.description.data,
+                          filename=path,
+                          file_type=form.file_type.data,
+                          known_good=form.known_good.data,
+                          user_id=g.user.id,
+                          public=form.public.data)
         db.session.add(new_image)
         try:
             db.session.commit()
             f.save(os.path.join(app.config['TFTP_ROOT'], path))
             flash('File uploaded successfully', 'success')
-        except IntegrityError  as e:
+        except IntegrityError as e:
             db.session.rollback()
             flash("IntegrityError, try again.", 'info')
     else:
@@ -387,10 +408,12 @@ def create_images_admin():
 
     return redirect(url_for('.get_images_admin'))
 
+
 @mod.route('/images/<id>', methods=['GET'])
 def get_image_admin(id):
     image = Image.query.get(id)
-    return render_template("admin-image.html",image=image, user=g.user)
+    return render_template("admin-image.html", image=image, user=g.user)
+
 
 @mod.route('/images/<id>/edit', methods=['POST'])
 def edit_image_metadata(id):
@@ -419,7 +442,8 @@ def edit_image_metadata(id):
     else:
         flash_form_errors(form)
 
-    return redirect(url_for('.get_image_admin',id=id))
+    return redirect(url_for('.get_image_admin', id=id))
+
 
 @mod.route('/images/<id>/delete', methods=['POST'])
 def delete_image(id):
@@ -453,8 +477,6 @@ def delete_image(id):
     return redirect(url_for('.get_images_admin'))
 
 
-# Admin BMC
-
 @mod.route('/bmc', methods=['GET'])
 def get_bmc_admin():
     if not g.user.admin:
@@ -463,7 +485,8 @@ def get_bmc_admin():
 
     bmc = BMC.query.all()
 
-    return render_template("admin-bmcs.html",bmcs=bmc, user=g.user, bmc_types=list_bmc_types())
+    return render_template("admin-bmcs.html", bmcs=bmc, user=g.user, bmc_types=list_bmc_types())
+
 
 @mod.route('/bmc/create', methods=['POST'])
 def create_bmc_admin():
@@ -493,12 +516,14 @@ def create_bmc_admin():
 
     return redirect(url_for('.get_bmc_admin'))
 
+
 @mod.route('/bmc/<id>', methods=['GET'])
 def bmc_admin(id):
 
     bmc = BMC.query.get(id)
 
-    return render_template("admin-bmc.html",bmc=bmc, user=g.user, bmc_types=list_bmc_types())
+    return render_template("admin-bmc.html", bmc=bmc, user=g.user, bmc_types=list_bmc_types())
+
 
 @mod.route('/bmc/<id>/edit', methods=['POST'])
 def edit_bmc(id):
@@ -525,7 +550,8 @@ def edit_bmc(id):
     else:
         flash_form_errors(form)
 
-    return redirect(url_for('.bmc_admin',id=id))
+    return redirect(url_for('.bmc_admin', id=id))
+
 
 @mod.route('/bmc/<id>/delete', methods=['POST'])
 def delete_bmc(id):
@@ -548,11 +574,17 @@ def delete_bmc(id):
     flash('BMC deleted', 'success')
     return redirect(url_for('.get_bmc_admin'))
 
+
 @mod.route('/machines', methods=['GET'])
 def get_machines_admin():
     machines = Machine.query.all()
 
-    return render_template("admin-machines.html",machines=machines, preseeds=Preseed.query.all(), bmcs=BMC.query.all(), user=g.user)
+    return render_template("admin-machines.html",
+                           machines=machines,
+                           preseeds=Preseed.query.all(),
+                           bmcs=BMC.query.all(),
+                           user=g.user)
+
 
 @mod.route('/machines/create', methods=['POST'])
 def create_machines_admin():
@@ -568,18 +600,18 @@ def create_machines_admin():
         # XXX: Think about adding a new object for PDU and Serial
         logger.info("after validation")
         new_machine = Machine(name=form.name.data,
-                      mac=form.mac.data,
-                      bmc_id=form.bmc_id.data,
-                      bmc_info=form.bmc_info.data,
-                      pdu=form.pdu.data,
-                      pdu_port=form.pdu_port.data,
-                      serial=form.serial.data,
-                      serial_port=form.serial_port.data,
-                      kernel_id=form.kernel_id.data,
-                      kernel_opts=form.kernel_opts.data,
-                      initrd_id=form.initrd_id.data,
-                      preseed_id=form.preseed_id.data,
-                      netboot_enabled=form.netboot_enabled.data)
+                              mac=form.mac.data,
+                              bmc_id=form.bmc_id.data,
+                              bmc_info=form.bmc_info.data,
+                              pdu=form.pdu.data,
+                              pdu_port=form.pdu_port.data,
+                              serial=form.serial.data,
+                              serial_port=form.serial_port.data,
+                              kernel_id=form.kernel_id.data,
+                              kernel_opts=form.kernel_opts.data,
+                              initrd_id=form.initrd_id.data,
+                              preseed_id=form.preseed_id.data,
+                              netboot_enabled=form.netboot_enabled.data)
         db.session.add(new_machine)
         try:
             db.session.commit()
@@ -592,10 +624,18 @@ def create_machines_admin():
 
     return redirect(url_for('.get_machines_admin'))
 
+
 @mod.route('/machines/<id>', methods=['GET'])
 def get_machine_admin(id):
     machine = Machine.query.get(id)
-    return render_template("admin-machine.html",m=machine, user=g.user, images=Image.query.all(), bmcs=BMC.query.all(), preseeds=Preseed.query.all(), users=User.query.all())
+    return render_template("admin-machine.html",
+                           m=machine,
+                           user=g.user,
+                           images=Image.query.all(),
+                           bmcs=BMC.query.all(),
+                           preseeds=Preseed.query.all(),
+                           users=User.query.all())
+
 
 @mod.route('/machines/<id>/edit', methods=['POST'])
 def edit_machine(id):
@@ -609,7 +649,7 @@ def edit_machine(id):
 
         if not g.user.admin and not (g.user.id in map(lambda u: u.id, machine.assignees)):
             flash('Permission denied', 'error')
-            return redirect(url_for('.get_machine_admin',id=id))
+            return redirect(url_for('.get_machine_admin', id=id))
 
         if g.user.admin:
             machine.name = form.name.data
@@ -630,10 +670,10 @@ def edit_machine(id):
         try:
             if machine.bmc:
                 machine.bmc.type_inst.validate_bmc_info(machine.bmc_info)
-        except BMCTypeError as e:
+        except BMCError as e:
             db.session.rollback()
             flash(str(e), 'error')
-            return redirect(url_for('.get_machine_admin',id=id))
+            return redirect(url_for('.get_machine_admin', id=id))
 
         try:
             db.session.commit()
@@ -643,8 +683,8 @@ def edit_machine(id):
             flash('Integrity Error: machine name and MAC should be unique', 'error')
 
         # XXX: Add to log table assignment
-        if(g.user.admin):
-            if(request.form['assignee']==""):
+        if g.user.admin:
+            if request.form['assignee'] == "":
                 # remove from the DB if it exists
                 assignment = MachineUsers.query.filter_by(machine_id=id).first()
                 if assignment:
@@ -657,11 +697,11 @@ def edit_machine(id):
                     assignment.user_id = int(request.form['assignee'])
                     assignment.reason = request.form['reason']
                 else:
-                   assignment = MachineUsers(machine_id = id,
-                                              user_id = int(request.form['assignee']),
-                                              permissions = 0,
-                                              reason = request.form['reason'])
-                   db.session.add(assignment)
+                    assignment = MachineUsers(machine_id=id,
+                                              user_id=int(request.form['assignee']),
+                                              permissions=0,
+                                              reason=request.form['reason'])
+                    db.session.add(assignment)
                 try:
                     db.session.commit()
                     flash('Reservation done successfully', 'success')
@@ -672,7 +712,7 @@ def edit_machine(id):
     else:
         flash_form_errors(form)
 
-    return redirect(url_for('.get_machine_admin',id=id))
+    return redirect(url_for('.get_machine_admin', id=id))
 
 
 @mod.route('/machines/<id>/reboot', methods=['GET', 'POST'])
@@ -691,7 +731,8 @@ def reboot_machine(id):
     machine.reboot()
     flash('Successfully rebooted machine', 'success')
 
-    return redirect(url_for('.get_machine_admin',id=id))
+    return redirect(url_for('.get_machine_admin', id=id))
+
 
 @mod.route('/machines/<id>/pxe_reboot', methods=['GET', 'POST'])
 def pxe_reboot_machine(id):
@@ -710,7 +751,8 @@ def pxe_reboot_machine(id):
     machine.pxe_reboot()
     flash('Successfully PXE-rebooted machine', 'success')
 
-    return redirect(url_for('.get_machine_admin',id=id))
+    return redirect(url_for('.get_machine_admin', id=id))
+
 
 @mod.route('/machines/<id>/delete', methods=['POST'])
 def delete_machine(id):
@@ -730,6 +772,7 @@ def delete_machine(id):
 
     return redirect(url_for('.get_machines_admin'))
 
+
 @mod.route('/machines/<id>/console', methods=['GET'])
 def get_console(id):
     machine = Machine.query.get(id)
@@ -740,10 +783,16 @@ def get_console(id):
         'args': args,
     }
 
-    sol_token = ConsoleToken(command_response = json.dumps(command_response))
+    sol_token = ConsoleToken(command_response=json.dumps(command_response))
     db.session.add(sol_token)
     db.session.commit()
-    return render_template("admin-console.html", m=machine, console=sol_token, user=g.user, wss_ext_host=app.config['WSS_EXT_HOST'], wss_ext_port=app.config['WSS_EXT_PORT'])
+    return render_template("admin-console.html",
+                           m=machine,
+                           console=sol_token,
+                           user=g.user,
+                           wss_ext_host=app.config['WSS_EXT_HOST'],
+                           wss_ext_port=app.config['WSS_EXT_PORT'])
+
 
 @mod.route('/machines/<id>/resetconsole', methods=['GET'])
 def reset_console(id):
@@ -761,7 +810,8 @@ def reset_console(id):
     machine.deactivate_sol()
     flash('Successfully deactivated console', 'success')
 
-    return redirect(url_for('.get_machine_admin',id=id))
+    return redirect(url_for('.get_machine_admin', id=id))
+
 
 @mod.route('/ws-subprocess', methods=['GET'])
 def get_ws_subprocess_command():

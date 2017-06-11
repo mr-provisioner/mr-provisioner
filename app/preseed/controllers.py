@@ -1,14 +1,13 @@
-from flask import Blueprint, Flask, Response
+from flask import Blueprint, Response
 
 import logging
 import jinja2
 
-from app.models import User, Machine, Image
-
-from flask import current_app as app
+from app.models import User, Machine
 
 mod = Blueprint('preseed', __name__, template_folder='templates')
 logger = logging.getLogger('preseed')
+
 
 @mod.route('/<machine_id>', methods=['GET'])
 def get_preseed(machine_id):
