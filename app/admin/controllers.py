@@ -583,6 +583,7 @@ def get_machines_admin():
                            machines=machines,
                            preseeds=Preseed.query.all(),
                            bmcs=BMC.query.all(),
+                           images=Image.query.all(),
                            user=g.user)
 
 

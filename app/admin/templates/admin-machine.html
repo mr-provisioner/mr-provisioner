@@ -31,13 +31,13 @@
         <dd>{{ m.mac }}</dd>
         <dt>BMC</dt>
         <dd>{% if m.bmc %}
-				{% if user.admin %}
-								<a href="{{ url_for('.bmc_admin', id=m.bmc_id) }}">{{ m.bmc.ip }}</a>
+        {% if user.admin %}
+        <a href="{{ url_for('.bmc_admin', id=m.bmc_id) }}">{{ m.bmc.ip }}</a>
           &nbsp;
           <a href="http://{{ m.bmc.ip }}">(open BMC web)</a>
-				{% else %}
+          {% else %}
           <a href="http://{{ m.bmc.ip }}">{{ m.bmc.ip }}</a>
-				{% endif %}
+          {% endif %}
         {% endif %}</dd>
 	<dt>BMC Info</dt>
 	<dd>{{ m.bmc_info }}</dd>

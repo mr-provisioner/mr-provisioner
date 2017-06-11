@@ -153,7 +153,7 @@
               <select name="kernel_id" style="width: 100%;">
                 <option value="">(None)</option>
                 {% for image in images|selectattr("file_type", "equalto", "Kernel") %}
-                  <option value="{{ image.id }}">{{ image.filename }}{% if image.known_good %} (known good){% endif %}</option>
+                  <option value="{{ image.id }}">{{ image.description }} - {{ image.filename }}{% if image.known_good %} (blessed){% endif %}</option>
                 {% endfor %}
               </select>
             </label>
@@ -174,7 +174,7 @@
               <select name="initrd_id" style="width: 100%;">
                 <option value="">(None)</option>
                 {% for image in images|selectattr("file_type", "equalto", "Initrd") %}
-                  <option value="{{ image.id }}">{{ image.filename }}{% if image.known_good %} (known good){% endif %}</option>
+                  <option value="{{ image.id }}">{{ image.description }} - {{ image.filename }}{% if image.known_good %} (blessed){% endif %}</option>
                 {% endfor %}
               </select>
             </label>
