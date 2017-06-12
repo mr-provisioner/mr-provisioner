@@ -97,7 +97,7 @@ class Machine(db.Model):
 
     def kernel_opts_all(self, config):
         preseed_opts = self.preseed.kernel_opts(self, config) if self.preseed_id else ""
-        return preseed_opts + " " + self.kernel_opts
+        return preseed_opts + " " + (self.kernel_opts if self.kernel_opts else "")
 
     @property
     def bmc(self):
