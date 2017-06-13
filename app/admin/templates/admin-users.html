@@ -81,7 +81,14 @@
         </div>
     </div>
     <script>
-      $("#user-list").dataTable();
+      $("#user-list").dataTable({
+        "lengthMenu": [[25, 50, -1],[25, 50, "All"]],
+        "aoColumns": [
+          null,
+          null,
+          {"orderDataType": "dom-text", type: 'string'},
+        ],
+      });
     </script>
   </section>
   {% endwith %}

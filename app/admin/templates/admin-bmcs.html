@@ -111,7 +111,9 @@
         </div>
     </div>
     <script>
-      $("#bmc-list").dataTable();
+      $("#bmc-list").dataTable({
+        "lengthMenu": [[25, 50, -1],[25, 50, "All"]]
+      });
     </script>
   </section>
   {% endwith %}

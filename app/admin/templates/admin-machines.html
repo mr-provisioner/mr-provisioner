@@ -216,7 +216,22 @@
         </div>
     </div>
     <script>
-      $("#machine-list").dataTable();
+      $("#machine-list").dataTable({
+        "lengthMenu": [[25, 50, -1],[25, 50, "All"]],
+        "aoColumns": [
+          null,
+          null,
+          null,
+          {%- if user.admin %}
+          null,
+          null,
+          null,
+          null,
+          {% endif -%}
+          {"orderDataType": "dom-text", type: 'string'},
+          null,
+        ]
+      });
       $("select[name='bmc_id']").select2({theme: "foundation"});
       $("select[name='preseed_id']").select2({theme: "foundation"});
       $("select[name='kernel_id']").select2({theme: "foundation"});

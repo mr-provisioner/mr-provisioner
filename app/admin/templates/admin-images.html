@@ -120,7 +120,18 @@
         </div>
     </div>
     <script>
-      $("#image-list").dataTable();
+      $("#image-list").dataTable({
+        "lengthMenu": [[25, 50, -1],[25, 50, "All"]],
+        "aoColumns": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          {"orderDataType": "dom-text", type: 'string'},
+          {"orderDataType": "dom-text", type: 'string'},
+        ],
+      });
     </script>
   </section>
   {% endwith %}
