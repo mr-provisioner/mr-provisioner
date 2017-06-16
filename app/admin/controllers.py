@@ -22,9 +22,24 @@ mod = Blueprint('admin', __name__, template_folder='templates', static_folder='s
 logger = logging.getLogger('admin')
 
 
+@mod.context_processor
+def inject_ui():
+    return {
+        'banner_name': app.config['BANNER_NAME']
+    }
+
+
+@mod.context_processor
+def inject_user():
+    return {
+        'user': g.user
+    }
+
+
 @mod.before_request
 def authenticate():
     logger.info("endpoint request: %s", request.endpoint)
+    g.user = None
 
     # Skip authentication for some endpoints
     if request.endpoint == 'admin.static' or \
@@ -77,7 +92,7 @@ def flash_form_errors(form):
 
 @mod.route('/user/password', methods=['GET'])
 def change_password_user():
-    return render_template("account-password.html", user=g.user)
+    return render_template("account-password.html")
 
 
 @mod.route('/user/password', methods=['POST'])
@@ -92,7 +107,7 @@ def new_password_user():
     else:
         flash_form_errors(form)
 
-    return render_template("account-password.html", user=g.user)
+    return render_template("account-password.html")
 
 
 @mod.route('/user/sshkey', methods=['POST'])
@@ -107,7 +122,7 @@ def change_sshkey_user():
     else:
         flash_form_errors(form)
 
-    return render_template("account-password.html", user=g.user)
+    return render_template("account-password.html")
 
 
 @mod.route('/password', methods=['POST'])
@@ -133,7 +148,7 @@ def new_password():
 @mod.route('/tokens', methods=['GET'])
 def tokens():
     tokens = Token.query.filter_by(user_id=g.user.id).all()
-    return render_template("account-token.html", tokens=tokens, user=g.user)
+    return render_template("account-token.html", tokens=tokens)
 
 
 @mod.route('/tokens/delete', methods=['POST'])
@@ -167,7 +182,7 @@ def get_users_admin():
 
     users = []
     users = User.query.all()
-    return render_template("admin-users.html", users=users, user=g.user)
+    return render_template("admin-users.html", users=users)
 
 
 @mod.route('/users/create', methods=['POST'])
@@ -208,7 +223,7 @@ def get_user_admin(id):
         return redirect(url_for('.new_password_user'))
 
     u = User.query.get(id)
-    return render_template("admin-user.html", u=u, user=g.user)
+    return render_template("admin-user.html", u=u)
 
 
 @mod.route('/users/<id>/delete', methods=['POST'])
@@ -261,7 +276,7 @@ def edit_user(id):
 
 @mod.route('/preseeds', methods=['GET'])
 def get_preseeds_admin():
-    return render_template("admin-preseeds.html", preseeds=Preseed.all_visible(g.user), user=g.user)
+    return render_template("admin-preseeds.html", preseeds=Preseed.all_visible(g.user))
 
 
 @mod.route('/preseeds/create', methods=['POST'])
@@ -297,7 +312,7 @@ def create_preseeds_admin():
 def get_preseed_admin(id):
     preseed = Preseed.query.get(id)
 
-    return render_template("admin-preseed.html", preseed=preseed, user=g.user)
+    return render_template("admin-preseed.html", preseed=preseed)
 
 
 @mod.route('/preseeds/<id>/edit', methods=['POST'])
@@ -358,7 +373,7 @@ def delete_preseed(id):
 
 @mod.route('/images', methods=['GET'])
 def get_images_admin():
-    return render_template("admin-images.html", images=Image.all_visible(g.user), user=g.user)
+    return render_template("admin-images.html", images=Image.all_visible(g.user))
 
 
 @mod.route('/images/create', methods=['POST'])
@@ -402,7 +417,7 @@ def create_images_admin():
 @mod.route('/images/<id>', methods=['GET'])
 def get_image_admin(id):
     image = Image.query.get(id)
-    return render_template("admin-image.html", image=image, user=g.user)
+    return render_template("admin-image.html", image=image)
 
 
 @mod.route('/images/<id>/edit', methods=['POST'])
@@ -475,7 +490,7 @@ def get_bmc_admin():
 
     bmc = BMC.query.all()
 
-    return render_template("admin-bmcs.html", bmcs=bmc, user=g.user, bmc_types=list_bmc_types())
+    return render_template("admin-bmcs.html", bmcs=bmc, bmc_types=list_bmc_types())
 
 
 @mod.route('/bmc/create', methods=['POST'])
@@ -512,7 +527,7 @@ def bmc_admin(id):
 
     bmc = BMC.query.get(id)
 
-    return render_template("admin-bmc.html", bmc=bmc, user=g.user, bmc_types=list_bmc_types())
+    return render_template("admin-bmc.html", bmc=bmc, bmc_types=list_bmc_types())
 
 
 @mod.route('/bmc/<id>/edit', methods=['POST'])
@@ -573,8 +588,7 @@ def get_machines_admin():
                            machines=machines,
                            preseeds=Preseed.query.all(),
                            bmcs=BMC.query.all(),
-                           images=Image.query.all(),
-                           user=g.user)
+                           images=Image.query.all())
 
 
 @mod.route('/machines/create', methods=['POST'])
@@ -621,7 +635,6 @@ def get_machine_admin(id):
     machine = Machine.query.get(id)
     return render_template("admin-machine.html",
                            m=machine,
-                           user=g.user,
                            images=Image.all_visible(g.user),
                            bmcs=BMC.query.all(),
                            preseeds=Preseed.all_visible(g.user),
@@ -780,7 +793,6 @@ def get_console(id):
     return render_template("admin-console.html",
                            m=machine,
                            console=sol_token,
-                           user=g.user,
                            wss_ext_host=app.config['WSS_EXT_HOST'],
                            wss_ext_port=app.config['WSS_EXT_PORT'])
 

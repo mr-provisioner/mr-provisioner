@@ -53,6 +53,7 @@ def apply_config(app, config_file):
 
     # Config settings used by app itself
     app.config.update(
+        BANNER_NAME=config.get('ui', 'banner_name', fallback='mr-provisioner'),
         TFTP_JINJA_ENV=tftp_jinja_env,
         TFTP_ROOT=config.get('files', 'TFTPRoot'),
         WSS_EXT_HOST=config.get('wssubprocess', 'ext_host', fallback=''),
