@@ -34,7 +34,7 @@
         {% if user.admin %}
         <a href="{{ url_for('.bmc_admin', id=m.bmc_id) }}">{{ m.bmc.ip }}</a>
           &nbsp;
-          <a href="http://{{ m.bmc.ip }}">(open BMC web)</a>
+          <a href="http://{{ m.bmc.ip }}">(access BMC<i class="fa fa-external-link" style="margin-left: 0.3em; margin-right: 2px;"></i>)</a>
           {% else %}
           <a href="http://{{ m.bmc.ip }}">{{ m.bmc.ip }}</a>
           {% endif %}
