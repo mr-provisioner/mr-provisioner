@@ -1,0 +1,126 @@
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1"
+ width="900px" height="392px"
+ viewBox="0 0 900 392"
+ xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"
+ stroke-width="1" text-rendering="geometricPrecision">
+<polygon fill="white" points="110,7 188,7 188,16 110,16"/>
+<text x="150" y="16" textLength="77" font-family="Helvetica" font-size="12" fill="black" text-anchor="middle">
+
+mr-provisioner
+</text>
+<polygon fill="white" points="408,7 490,7 490,16 408,16"/>
+<text x="450" y="16" textLength="80" font-family="Helvetica" font-size="12" fill="black" text-anchor="middle">
+
+ws-subprocess
+</text>
+<polygon fill="white" points="726,7 772,7 772,16 726,16"/>
+<text x="750" y="16" textLength="44" font-family="Helvetica" font-size="12" fill="black" text-anchor="middle">
+
+Browser
+</text>
+<line x1="150" y1="22" x2="150" y2="65" stroke="black"/>
+<line x1="450" y1="22" x2="450" y2="65" stroke="black"/>
+<line x1="750" y1="22" x2="750" y2="65" stroke="black"/>
+<line x1="750" y1="33" x2="150" y2="48" stroke="black"/>
+<polygon fill="black" points="150,48 160,54 160,42"/>
+<polygon fill="white" points="370,30 529,30 529,39 370,39"/>
+<text x="371" y="39" textLength="157" font-family="Helvetica" font-size="12" fill="black">
+HTTP GET /admin/console/...
+</text>
+<line x1="150" y1="65" x2="150" y2="119" stroke="black"/>
+<line x1="450" y1="65" x2="450" y2="119" stroke="black"/>
+<line x1="750" y1="65" x2="750" y2="119" stroke="black"/>
+<polygon fill="white" points="8,65 280,65 280,98 8,98"/>
+<polygon fill="white" points="8,77 292,77 292,98 8,98"/>
+<polygon fill="white" points="280,65 292,77 280,77"/>
+<line x1="8" y1="65" x2="280" y2="65" stroke="black"/>
+<line x1="8" y1="98" x2="292" y2="98" stroke="black"/>
+<line x1="8" y1="65" x2="8" y2="98" stroke="black"/>
+<line x1="292" y1="77" x2="292" y2="98" stroke="black"/>
+<line x1="280" y1="65" x2="292" y2="77" stroke="black"/>
+<line x1="280" y1="65" x2="280" y2="77" stroke="black"/>
+<line x1="292" y1="77" x2="280" y2="77" stroke="black"/>
+<polygon fill="white" points="71,66 228,66 228,75 71,75"/>
+<text x="72" y="75" textLength="155" font-family="Helvetica" font-size="12" fill="black">
+create random console token
+</text>
+<polygon fill="white" points="44,77 255,77 255,86 44,86"/>
+<text x="45" y="86" textLength="209" font-family="Helvetica" font-size="12" fill="black">
+insert token into database with required
+</text>
+<polygon fill="white" points="119,88 180,88 180,97 119,97"/>
+<text x="120" y="97" textLength="59" font-family="Helvetica" font-size="12" fill="black">
+information
+</text>
+<line x1="150" y1="119" x2="150" y2="162" stroke="black"/>
+<line x1="450" y1="119" x2="450" y2="162" stroke="black"/>
+<line x1="750" y1="119" x2="750" y2="162" stroke="black"/>
+<line x1="150" y1="130" x2="750" y2="145" stroke="black"/>
+<polygon fill="black" points="750,145 740,151 740,139"/>
+<polygon fill="white" points="268,127 631,127 631,136 268,136"/>
+<text x="269" y="136" textLength="361" font-family="Helvetica" font-size="12" fill="black">
+HTTP response, embedding console token and ws-subprocess URL
+</text>
+<line x1="150" y1="162" x2="150" y2="205" stroke="black"/>
+<line x1="450" y1="162" x2="450" y2="205" stroke="black"/>
+<line x1="750" y1="162" x2="750" y2="205" stroke="black"/>
+<line x1="750" y1="173" x2="450" y2="188" stroke="black"/>
+<polygon fill="black" points="450,188 460,194 460,182"/>
+<polygon fill="white" points="467,170 732,170 732,179 467,179"/>
+<text x="468" y="179" textLength="263" font-family="Helvetica" font-size="12" fill="black">
+HTTP WebSocket request, ?token=console token
+</text>
+<line x1="150" y1="205" x2="150" y2="248" stroke="black"/>
+<line x1="450" y1="205" x2="450" y2="248" stroke="black"/>
+<line x1="750" y1="205" x2="750" y2="248" stroke="black"/>
+<line x1="450" y1="216" x2="150" y2="231" stroke="black"/>
+<polygon fill="black" points="150,231 160,237 160,225"/>
+<polygon fill="white" points="156,213 443,213 443,222 156,222"/>
+<text x="157" y="222" textLength="285" font-family="Helvetica" font-size="12" fill="black">
+HTTP GET /admin/ws-console/... (authenticate token)
+</text>
+<line x1="150" y1="248" x2="150" y2="291" stroke="black"/>
+<line x1="450" y1="248" x2="450" y2="291" stroke="black"/>
+<line x1="750" y1="248" x2="750" y2="291" stroke="black"/>
+<line x1="150" y1="259" x2="450" y2="274" stroke="black"/>
+<polygon fill="black" points="450,274 440,280 440,268"/>
+<polygon fill="white" points="147,256 452,256 452,265 147,265"/>
+<text x="148" y="265" textLength="303" font-family="Helvetica" font-size="12" fill="black">
+HTTP response, valid token, command to run for console
+</text>
+<line x1="150" y1="291" x2="150" y2="334" stroke="black"/>
+<line x1="450" y1="291" x2="450" y2="334" stroke="black"/>
+<line x1="750" y1="291" x2="750" y2="334" stroke="black"/>
+<polygon fill="white" points="308,291 580,291 580,313 308,313"/>
+<polygon fill="white" points="308,303 592,303 592,313 308,313"/>
+<polygon fill="white" points="580,291 592,303 580,303"/>
+<line x1="308" y1="291" x2="580" y2="291" stroke="black"/>
+<line x1="308" y1="313" x2="592" y2="313" stroke="black"/>
+<line x1="308" y1="291" x2="308" y2="313" stroke="black"/>
+<line x1="592" y1="303" x2="592" y2="313" stroke="black"/>
+<line x1="580" y1="291" x2="592" y2="303" stroke="black"/>
+<line x1="580" y1="291" x2="580" y2="303" stroke="black"/>
+<line x1="592" y1="303" x2="580" y2="303" stroke="black"/>
+<polygon fill="white" points="321,292 578,292 578,301 321,301"/>
+<text x="322" y="301" textLength="255" font-family="Helvetica" font-size="12" fill="black">
+run console command and attach stdin/stdout to
+</text>
+<polygon fill="white" points="420,303 479,303 479,312 420,312"/>
+<text x="421" y="312" textLength="57" font-family="Helvetica" font-size="12" fill="black">
+websocket
+</text>
+<line x1="150" y1="334" x2="150" y2="377" stroke="black"/>
+<line x1="450" y1="334" x2="450" y2="377" stroke="black"/>
+<line x1="750" y1="334" x2="750" y2="377" stroke="black"/>
+<line x1="450" y1="345" x2="750" y2="360" stroke="black"/>
+<polygon fill="black" points="750,360 740,366 740,354"/>
+<polygon fill="white" points="453,342 745,342 745,351 453,351"/>
+<text x="454" y="351" textLength="290" font-family="Helvetica" font-size="12" fill="black">
+HTTP WebSocket established, start piping stdin/stdout
+</text>
+<line x1="150" y1="356" x2="150" y2="392" stroke="black"/>
+<line x1="450" y1="356" x2="450" y2="392" stroke="black"/>
+<line x1="750" y1="356" x2="750" y2="392" stroke="black"/>
+</svg>

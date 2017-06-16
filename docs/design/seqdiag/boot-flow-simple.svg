@@ -1,0 +1,228 @@
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1"
+ width="1200px" height="832px"
+ viewBox="0 0 1200 832"
+ xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"
+ stroke-width="1" text-rendering="geometricPrecision">
+<polygon fill="white" points="110,7 188,7 188,16 110,16"/>
+<text x="150" y="16" textLength="77" font-family="Helvetica" font-size="12" fill="black" text-anchor="middle">
+
+mr-provisioner
+</text>
+<polygon fill="white" points="417,7 481,7 481,16 417,16"/>
+<text x="450" y="16" textLength="63" font-family="Helvetica" font-size="12" fill="black" text-anchor="middle">
+
+TFTP proxy
+</text>
+<polygon fill="white" points="713,7 785,7 785,16 713,16"/>
+<text x="750" y="16" textLength="71" font-family="Helvetica" font-size="12" fill="black" text-anchor="middle">
+
+DHCP server
+</text>
+<polygon fill="white" points="1033,7 1065,7 1065,16 1033,16"/>
+<text x="1050" y="16" textLength="31" font-family="Helvetica" font-size="12" fill="black" text-anchor="middle">
+
+Client
+</text>
+<line x1="150" y1="22" x2="150" y2="65" stroke="black"/>
+<line x1="450" y1="22" x2="450" y2="65" stroke="black"/>
+<line x1="750" y1="22" x2="750" y2="65" stroke="black"/>
+<line x1="1050" y1="22" x2="1050" y2="65" stroke="black"/>
+<line x1="1050" y1="33" x2="750" y2="48" stroke="black"/>
+<polygon fill="black" points="750,48 760,54 760,42"/>
+<polygon fill="white" points="852,30 946,30 946,39 852,39"/>
+<text x="853" y="39" textLength="92" font-family="Helvetica" font-size="12" fill="black">
+DHCPREQUEST
+</text>
+<line x1="150" y1="65" x2="150" y2="108" stroke="black"/>
+<line x1="450" y1="65" x2="450" y2="108" stroke="black"/>
+<line x1="750" y1="65" x2="750" y2="108" stroke="black"/>
+<line x1="1050" y1="65" x2="1050" y2="108" stroke="black"/>
+<line x1="750" y1="76" x2="1050" y2="91" stroke="black"/>
+<polygon fill="black" points="1050,91 1040,97 1040,85"/>
+<polygon fill="white" points="807,73 991,73 991,82 807,82"/>
+<text x="808" y="82" textLength="182" font-family="Helvetica" font-size="12" fill="black">
+DHCPACK, bootfile=grub-aa64.efi
+</text>
+<line x1="150" y1="108" x2="150" y2="151" stroke="black"/>
+<line x1="450" y1="108" x2="450" y2="151" stroke="black"/>
+<line x1="750" y1="108" x2="750" y2="151" stroke="black"/>
+<line x1="1050" y1="108" x2="1050" y2="151" stroke="black"/>
+<line x1="1050" y1="119" x2="450" y2="134" stroke="black"/>
+<polygon fill="black" points="450,134 460,140 460,128"/>
+<polygon fill="white" points="673,116 826,116 826,125 673,125"/>
+<text x="674" y="125" textLength="151" font-family="Helvetica" font-size="12" fill="black">
+TFTP RRQ for grub-aa64.efi
+</text>
+<line x1="150" y1="151" x2="150" y2="194" stroke="black"/>
+<line x1="450" y1="151" x2="450" y2="194" stroke="black"/>
+<line x1="750" y1="151" x2="750" y2="194" stroke="black"/>
+<line x1="1050" y1="151" x2="1050" y2="194" stroke="black"/>
+<line x1="450" y1="162" x2="150" y2="177" stroke="black"/>
+<polygon fill="black" points="150,177 160,183 160,171"/>
+<polygon fill="white" points="240,159 359,159 359,168 240,168"/>
+<text x="241" y="168" textLength="117" font-family="Helvetica" font-size="12" fill="black">
+HTTP GET for /tftp/... 
+</text>
+<line x1="150" y1="194" x2="150" y2="237" stroke="black"/>
+<line x1="450" y1="194" x2="450" y2="237" stroke="black"/>
+<line x1="750" y1="194" x2="750" y2="237" stroke="black"/>
+<line x1="1050" y1="194" x2="1050" y2="237" stroke="black"/>
+<line x1="150" y1="205" x2="450" y2="220" stroke="black"/>
+<polygon fill="black" points="450,220 440,226 440,214"/>
+<polygon fill="white" points="188,202 411,202 411,211 188,211"/>
+<text x="189" y="211" textLength="221" font-family="Helvetica" font-size="12" fill="black">
+HTTP resp; body (grub-aa64.efi contents)
+</text>
+<line x1="150" y1="237" x2="150" y2="280" stroke="black"/>
+<line x1="450" y1="237" x2="450" y2="280" stroke="black"/>
+<line x1="750" y1="237" x2="750" y2="280" stroke="black"/>
+<line x1="1050" y1="237" x2="1050" y2="280" stroke="black"/>
+<line x1="450" y1="248" x2="1050" y2="263" stroke="black"/>
+<polygon fill="black" points="1050,263 1040,269 1040,257"/>
+<polygon fill="white" points="650,245 848,245 848,254 650,254"/>
+<text x="651" y="254" textLength="196" font-family="Helvetica" font-size="12" fill="black">
+TFTP DATA (grub-aa64.efi contents)
+</text>
+<line x1="150" y1="280" x2="150" y2="312" stroke="black"/>
+<line x1="450" y1="280" x2="450" y2="312" stroke="black"/>
+<line x1="750" y1="280" x2="750" y2="312" stroke="black"/>
+<line x1="1050" y1="280" x2="1050" y2="312" stroke="black"/>
+<line x1="75" y1="285" x2="1125" y2="285" stroke="black" stroke-dasharray="2,2"/>
+<polygon fill="white" points="553,288 646,288 646,297 553,297"/>
+<text x="554" y="297" textLength="91" font-family="Helvetica" font-size="12" fill="black">
+Bootloader starts
+</text>
+<line x1="150" y1="312" x2="150" y2="355" stroke="black"/>
+<line x1="450" y1="312" x2="450" y2="355" stroke="black"/>
+<line x1="750" y1="312" x2="750" y2="355" stroke="black"/>
+<line x1="1050" y1="312" x2="1050" y2="355" stroke="black"/>
+<line x1="1050" y1="323" x2="450" y2="338" stroke="black"/>
+<polygon fill="black" points="450,338 460,344 460,332"/>
+<polygon fill="white" points="666,320 833,320 833,329 666,329"/>
+<text x="667" y="329" textLength="165" font-family="Helvetica" font-size="12" fill="black">
+TFTP RRQ for /grub/01-&lt;mac&gt;
+</text>
+<line x1="150" y1="355" x2="150" y2="398" stroke="black"/>
+<line x1="450" y1="355" x2="450" y2="398" stroke="black"/>
+<line x1="750" y1="355" x2="750" y2="398" stroke="black"/>
+<line x1="1050" y1="355" x2="1050" y2="398" stroke="black"/>
+<line x1="450" y1="366" x2="150" y2="381" stroke="black"/>
+<polygon fill="black" points="150,381 160,387 160,375"/>
+<polygon fill="white" points="242,363 357,363 357,372 242,372"/>
+<text x="243" y="372" textLength="113" font-family="Helvetica" font-size="12" fill="black">
+HTTP GET for /tftp/...
+</text>
+<line x1="150" y1="398" x2="150" y2="441" stroke="black"/>
+<line x1="450" y1="398" x2="450" y2="441" stroke="black"/>
+<line x1="750" y1="398" x2="750" y2="441" stroke="black"/>
+<line x1="1050" y1="398" x2="1050" y2="441" stroke="black"/>
+<line x1="150" y1="409" x2="450" y2="424" stroke="black"/>
+<polygon fill="black" points="450,424 440,430 440,418"/>
+<polygon fill="white" points="159,406 439,406 439,415 159,415"/>
+<text x="160" y="415" textLength="278" font-family="Helvetica" font-size="12" fill="black">
+HTTP resp; body (&lt;mac&gt;-specific bootloader config)
+</text>
+<line x1="150" y1="441" x2="150" y2="484" stroke="black"/>
+<line x1="450" y1="441" x2="450" y2="484" stroke="black"/>
+<line x1="750" y1="441" x2="750" y2="484" stroke="black"/>
+<line x1="1050" y1="441" x2="1050" y2="484" stroke="black"/>
+<line x1="450" y1="452" x2="1050" y2="467" stroke="black"/>
+<polygon fill="black" points="1050,467 1040,473 1040,461"/>
+<polygon fill="white" points="622,449 877,449 877,458 622,458"/>
+<text x="623" y="458" textLength="253" font-family="Helvetica" font-size="12" fill="black">
+TFTP DATA (&lt;mac&gt;-specific bootloader config)
+</text>
+<line x1="150" y1="484" x2="150" y2="527" stroke="black"/>
+<line x1="450" y1="484" x2="450" y2="527" stroke="black"/>
+<line x1="750" y1="484" x2="750" y2="527" stroke="black"/>
+<line x1="1050" y1="484" x2="1050" y2="527" stroke="black"/>
+<line x1="1050" y1="495" x2="450" y2="510" stroke="black"/>
+<polygon fill="black" points="450,510 460,516 460,504"/>
+<polygon fill="white" points="592,492 907,492 907,501 592,501"/>
+<text x="593" y="501" textLength="313" font-family="Helvetica" font-size="12" fill="black">
+TFTP RRQ for some-kernel (specified in bootloader config)
+</text>
+<line x1="150" y1="527" x2="150" y2="570" stroke="black"/>
+<line x1="450" y1="527" x2="450" y2="570" stroke="black"/>
+<line x1="750" y1="527" x2="750" y2="570" stroke="black"/>
+<line x1="1050" y1="527" x2="1050" y2="570" stroke="black"/>
+<line x1="450" y1="538" x2="150" y2="553" stroke="black"/>
+<polygon fill="black" points="150,553 160,559 160,547"/>
+<polygon fill="white" points="242,535 357,535 357,544 242,544"/>
+<text x="243" y="544" textLength="113" font-family="Helvetica" font-size="12" fill="black">
+HTTP GET for /tftp/...
+</text>
+<line x1="150" y1="570" x2="150" y2="613" stroke="black"/>
+<line x1="450" y1="570" x2="450" y2="613" stroke="black"/>
+<line x1="750" y1="570" x2="750" y2="613" stroke="black"/>
+<line x1="1050" y1="570" x2="1050" y2="613" stroke="black"/>
+<line x1="150" y1="581" x2="450" y2="596" stroke="black"/>
+<polygon fill="black" points="450,596 440,602 440,590"/>
+<polygon fill="white" points="213,578 386,578 386,587 213,587"/>
+<text x="214" y="587" textLength="171" font-family="Helvetica" font-size="12" fill="black">
+HTTP resp; body (kernel binary)
+</text>
+<line x1="150" y1="613" x2="150" y2="656" stroke="black"/>
+<line x1="450" y1="613" x2="450" y2="656" stroke="black"/>
+<line x1="750" y1="613" x2="750" y2="656" stroke="black"/>
+<line x1="1050" y1="613" x2="1050" y2="656" stroke="black"/>
+<line x1="450" y1="624" x2="1050" y2="639" stroke="black"/>
+<polygon fill="black" points="1050,639 1040,645 1040,633"/>
+<polygon fill="white" points="676,621 823,621 823,630 676,630"/>
+<text x="677" y="630" textLength="145" font-family="Helvetica" font-size="12" fill="black">
+TFTP DATA (kernel binary)
+</text>
+<line x1="150" y1="656" x2="150" y2="699" stroke="black"/>
+<line x1="450" y1="656" x2="450" y2="699" stroke="black"/>
+<line x1="750" y1="656" x2="750" y2="699" stroke="black"/>
+<line x1="1050" y1="656" x2="1050" y2="699" stroke="black"/>
+<polygon fill="white" points="908,656 1180,656 1180,678 908,678"/>
+<polygon fill="white" points="908,668 1192,668 1192,678 908,678"/>
+<polygon fill="white" points="1180,656 1192,668 1180,668"/>
+<line x1="908" y1="656" x2="1180" y2="656" stroke="black"/>
+<line x1="908" y1="678" x2="1192" y2="678" stroke="black"/>
+<line x1="908" y1="656" x2="908" y2="678" stroke="black"/>
+<line x1="1192" y1="668" x2="1192" y2="678" stroke="black"/>
+<line x1="1180" y1="656" x2="1192" y2="668" stroke="black"/>
+<line x1="1180" y1="656" x2="1180" y2="668" stroke="black"/>
+<line x1="1192" y1="668" x2="1180" y2="668" stroke="black"/>
+<polygon fill="white" points="970,663 1129,663 1129,672 970,672"/>
+<text x="971" y="672" textLength="157" font-family="Helvetica" font-size="12" fill="black">
+... repeat for initrd, if specified
+</text>
+<line x1="150" y1="699" x2="150" y2="731" stroke="black"/>
+<line x1="450" y1="699" x2="450" y2="731" stroke="black"/>
+<line x1="750" y1="699" x2="750" y2="731" stroke="black"/>
+<line x1="1050" y1="699" x2="1050" y2="731" stroke="black"/>
+<line x1="75" y1="704" x2="1125" y2="704" stroke="black" stroke-dasharray="2,2"/>
+<polygon fill="white" points="561,707 638,707 638,716 561,716"/>
+<text x="562" y="716" textLength="75" font-family="Helvetica" font-size="12" fill="black">
+Installer starts
+</text>
+<line x1="150" y1="731" x2="150" y2="774" stroke="black"/>
+<line x1="450" y1="731" x2="450" y2="774" stroke="black"/>
+<line x1="750" y1="731" x2="750" y2="774" stroke="black"/>
+<line x1="1050" y1="731" x2="1050" y2="774" stroke="black"/>
+<line x1="1050" y1="742" x2="150" y2="757" stroke="black"/>
+<polygon fill="black" points="150,757 160,763 160,751"/>
+<polygon fill="white" points="437,739 762,739 762,748 437,748"/>
+<text x="438" y="748" textLength="323" font-family="Helvetica" font-size="12" fill="black">
+HTTP GET for preseed/config url specified on kernel cmdline
+</text>
+<line x1="150" y1="774" x2="150" y2="817" stroke="black"/>
+<line x1="450" y1="774" x2="450" y2="817" stroke="black"/>
+<line x1="750" y1="774" x2="750" y2="817" stroke="black"/>
+<line x1="1050" y1="774" x2="1050" y2="817" stroke="black"/>
+<line x1="150" y1="785" x2="1050" y2="800" stroke="black"/>
+<polygon fill="black" points="1050,800 1040,806 1040,794"/>
+<polygon fill="white" points="462,782 737,782 737,791 462,791"/>
+<text x="463" y="791" textLength="273" font-family="Helvetica" font-size="12" fill="black">
+HTTP resp; body (machine-specific preseed/config)
+</text>
+<line x1="150" y1="796" x2="150" y2="832" stroke="black"/>
+<line x1="450" y1="796" x2="450" y2="832" stroke="black"/>
+<line x1="750" y1="796" x2="750" y2="832" stroke="black"/>
+<line x1="1050" y1="796" x2="1050" y2="832" stroke="black"/>
+</svg>

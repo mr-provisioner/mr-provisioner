@@ -1,0 +1,38 @@
+msc {
+	hscale="2", arcgradient=15;
+
+	"mr-provisioner","TFTP proxy","Kea DHCP server",Client;
+
+	Client=>"Kea DHCP server"             [ label="DHCPDISCOVER" ];
+	"Kea DHCP server"=>"mr-provisioner"   [ label="HTTP GET for /dhcp/seen (mac/host seen notification)" ];
+	"Kea DHCP server"=>"mr-provisioner"   [ label="HTTP GET for /dhcp/..." ];
+	"mr-provisioner"=>"Kea DHCP server"   [ label="HTTP resp; body (machine-specific DHCP response)" ];
+	"Kea DHCP server"=>Client             [ label="DHCPOFFER" ];
+
+	Client=>"Kea DHCP server"             [ label="DHCPREQUEST" ];
+	"Kea DHCP server"=>"mr-provisioner"   [ label="HTTP GET for /dhcp/..." ];
+	"mr-provisioner"=>"Kea DHCP server"   [ label="HTTP resp; body (machine-specific DHCP response)" ];
+	"Kea DHCP server"=>Client             [ label="DHCPACK, (machine-specific DHCP response)" ];
+
+	Client=>"TFTP proxy"              [ label="TFTP RRQ for bootfile" ];
+	"TFTP proxy"=>"mr-provisioner"    [ label="HTTP GET for /tftp/... " ];
+	"mr-provisioner"=>"TFTP proxy"    [ label="HTTP resp; body (bootfile contents)" ];
+	"TFTP proxy"=>Client              [ label="TFTP DATA (bootfile contents)" ];
+
+	---                               [ label="Bootloader starts" ];
+	Client=>"TFTP proxy"              [ label="TFTP RRQ for /grub/01-<mac>" ];
+	"TFTP proxy"=>"mr-provisioner"    [ label="HTTP GET for /tftp/..." ];
+	"mr-provisioner"=>"TFTP proxy"    [ label="HTTP resp; body (<mac>-specific bootloader config)" ];
+	"TFTP proxy"=>Client              [ label="TFTP DATA (<mac>-specific bootloader config)" ];
+
+	Client=>"TFTP proxy"              [ label="TFTP RRQ for some-kernel (specified in bootloader config)" ];
+	"TFTP proxy"=>"mr-provisioner"    [ label="HTTP GET for /tftp/..." ];
+	"mr-provisioner"=>"TFTP proxy"    [ label="HTTP resp; body (kernel binary)" ];
+	"TFTP proxy"=>Client              [ label="TFTP DATA (kernel binary)" ];
+
+	Client note Client                [ label="... repeat for initrd, if specified" ];
+
+	---                               [ label="Installer starts" ];
+	Client=>"mr-provisioner"          [ label="HTTP GET for preseed/config url specified on kernel cmdline" ];
+	"mr-provisioner"=>Client          [ label="HTTP resp; body (machine-specific preseed/config)" ];
+}

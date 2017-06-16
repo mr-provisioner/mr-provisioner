@@ -1,0 +1,30 @@
+msc {
+	hscale="2", arcgradient=15;
+
+	"mr-provisioner","TFTP proxy","DHCP server",Client;
+
+	Client=>"DHCP server"             [ label="DHCPREQUEST" ];
+	"DHCP server"=>Client             [ label="DHCPACK, bootfile=grub-aa64.efi" ];
+
+	Client=>"TFTP proxy"              [ label="TFTP RRQ for grub-aa64.efi" ];
+	"TFTP proxy"=>"mr-provisioner"    [ label="HTTP GET for /tftp/... " ];
+	"mr-provisioner"=>"TFTP proxy"    [ label="HTTP resp; body (grub-aa64.efi contents)" ];
+	"TFTP proxy"=>Client              [ label="TFTP DATA (grub-aa64.efi contents)" ];
+
+	---                               [ label="Bootloader starts" ];
+	Client=>"TFTP proxy"              [ label="TFTP RRQ for /grub/01-<mac>" ];
+	"TFTP proxy"=>"mr-provisioner"    [ label="HTTP GET for /tftp/..." ];
+	"mr-provisioner"=>"TFTP proxy"    [ label="HTTP resp; body (<mac>-specific bootloader config)" ];
+	"TFTP proxy"=>Client              [ label="TFTP DATA (<mac>-specific bootloader config)" ];
+
+	Client=>"TFTP proxy"              [ label="TFTP RRQ for some-kernel (specified in bootloader config)" ];
+	"TFTP proxy"=>"mr-provisioner"    [ label="HTTP GET for /tftp/..." ];
+	"mr-provisioner"=>"TFTP proxy"    [ label="HTTP resp; body (kernel binary)" ];
+	"TFTP proxy"=>Client              [ label="TFTP DATA (kernel binary)" ];
+
+	Client note Client                [ label="... repeat for initrd, if specified" ];
+
+	---                               [ label="Installer starts" ];
+	Client=>"mr-provisioner"          [ label="HTTP GET for preseed/config url specified on kernel cmdline" ];
+	"mr-provisioner"=>Client          [ label="HTTP resp; body (machine-specific preseed/config)" ];
+}

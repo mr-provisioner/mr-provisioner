@@ -1,0 +1,14 @@
+msc {
+	hscale="1.5", arcgradient=15;
+
+	"mr-provisioner","ws-subprocess",Browser;
+
+	Browser=>"mr-provisioner"                 [ label="HTTP GET /admin/console/..." ];
+	"mr-provisioner" note "mr-provisioner"    [ label="create random console token\ninsert token into database with required information" ];
+	"mr-provisioner"=>Browser                 [ label="HTTP response, embedding console token and ws-subprocess URL" ];
+	Browser=>"ws-subprocess"                  [ label="HTTP WebSocket request, ?token=console token" ];
+	"ws-subprocess"=>"mr-provisioner"         [ label="HTTP GET /admin/ws-console/... (authenticate token)" ];
+	"mr-provisioner"=>"ws-subprocess"         [ label="HTTP response, valid token, command to run for console" ];
+	"ws-subprocess" note "ws-subprocess"      [ label="run console command and attach stdin/stdout to websocket" ];
+	"ws-subprocess"=>Browser                  [ label="HTTP WebSocket established, start piping stdin/stdout" ];
+}
