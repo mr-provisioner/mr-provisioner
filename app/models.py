@@ -3,6 +3,7 @@ from base64 import b64encode
 from os import urandom
 from datetime import datetime, timedelta
 from app.bmc_types import resolve_bmc_type, BMCError
+from sqlalchemy import true
 import binascii
 
 
@@ -390,6 +391,13 @@ class Image(db.Model):
     def user(self):
         return User.query.get(self.user_id)
 
+    @staticmethod
+    def all_visible(user):
+        if(user.admin):
+            return db.session.query(Image).all()
+        else:
+            return db.session.query(Image).filter((Image.public == true()) | (Image.user_id == user.id)).all()
+
 
 class Preseed(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -450,3 +458,10 @@ class Preseed(db.Model):
     @property
     def user(self):
         return User.query.get(self.user_id)
+
+    @staticmethod
+    def all_visible(user):
+        if(user.admin):
+            return db.session.query(Preseed).all()
+        else:
+            return db.session.query(Preseed).filter((Preseed.public == true()) | (Preseed.user_id == user.id)).all()

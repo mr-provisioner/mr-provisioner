@@ -1,6 +1,5 @@
 from flask import Blueprint, request, g, render_template, flash, url_for, \
     session, redirect, Response
-from sqlalchemy import true
 
 import logging
 import json
@@ -262,12 +261,7 @@ def edit_user(id):
 
 @mod.route('/preseeds', methods=['GET'])
 def get_preseeds_admin():
-    if g.user.admin:
-        preseeds = Preseed.query.all()
-    else:
-        preseeds = Preseed.query.filter((Preseed.public == true()) | (Preseed.user_id == g.user.id))
-
-    return render_template("admin-preseeds.html", preseeds=preseeds, user=g.user)
+    return render_template("admin-preseeds.html", preseeds=Preseed.all_visible(g.user), user=g.user)
 
 
 @mod.route('/preseeds/create', methods=['POST'])
@@ -364,11 +358,7 @@ def delete_preseed(id):
 
 @mod.route('/images', methods=['GET'])
 def get_images_admin():
-    if g.user.admin:
-        images = Image.query.all()
-    else:
-        images = Image.query.filter((Image.public == true()) | (Image.user_id == g.user.id))
-    return render_template("admin-images.html", images=images, user=g.user)
+    return render_template("admin-images.html", images=Image.all_visible(g.user), user=g.user)
 
 
 @mod.route('/images/create', methods=['POST'])
@@ -632,9 +622,9 @@ def get_machine_admin(id):
     return render_template("admin-machine.html",
                            m=machine,
                            user=g.user,
-                           images=Image.query.all(),
+                           images=Image.all_visible(g.user),
                            bmcs=BMC.query.all(),
-                           preseeds=Preseed.query.all(),
+                           preseeds=Preseed.all_visible(g.user),
                            users=User.query.all())
 
 
