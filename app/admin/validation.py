@@ -106,11 +106,17 @@ class ChangePreseedForm(Form):
     known_good = BooleanField("Known good?", false_values=('false', '', '0'))
     public = BooleanField("Public?", false_values=('false', '', '0'))
 
+class InterfaceForm(Form):
+    index = IntegerField("Interface index", [Optional()])
+    mac = StringField("MAC", [InputRequired(), MacAddress(message='Must provide a valid MAC address')])
+    ipv4 = StringField("static IPv4", [Optional(), IPAddress(ipv4=True)])
 
 class CreateMachineForm(Form):
     name = StringField("Name", [InputRequired(), Length(min=3, max=256)])
     mac = StringField("MAC address", [Optional(),
                                       MacAddress(message='Must provide a valid MAC address')])
+    # interfaces = FieldList(FormField(InterfaceForm), min_entries=0, max_entries=255)
+    # XXX: macs
     bmc_id = SelectField("BMC", coerce=opt_int, validators=[Optional()])
     bmc_info = StringField("BMC info", [Optional()])
     pdu = StringField("PDU", [Length(max=256)])
@@ -136,6 +142,8 @@ class ChangeMachineForm(Form):
     name = StringField("Name", [Optional(), Length(min=3, max=256)])
     mac = StringField("MAC address", [Optional(),
                                       MacAddress(message='Must provide a valid MAC address')])
+    # interfaces = FieldList(FormField(InterfaceForm), min_entries=0, max_entries=255)
+    # XXX: no macs here...
     bmc_id = SelectField("BMC", coerce=opt_int, validators=[Optional()])
     bmc_info = StringField("BMC info", [Optional()])
     pdu = StringField("PDU", [Length(max=256)])
