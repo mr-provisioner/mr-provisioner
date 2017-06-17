@@ -1,0 +1,28 @@
+{% macro render_field(field) %}
+<div class="row">
+  <div class="small-12 columns">
+    <label>
+      {% if field.type == "BooleanField" %}
+        {{ field(**kwargs)|safe }} {{ field.label }}
+      {% elif field.type == "FieldList" %}
+        <fieldset>
+          <legend>{{ field.label }}</legend>
+          {% for item in field %}
+            {{ item(**kwargs)|safe }}
+          {% endfor %}
+        </fieldset>
+      {% elif field.type == "FormField" %}
+        {% for item in field %}
+          {{ item(**kwargs)|safe }}
+        {% endfor %}
+      {% else %}
+        {{ field.label }}
+        {{ field(**kwargs)|safe }}
+      {% endif %}
+    </label>
+    {% if field.errors %}
+    <small class="error">{{ ", ".join(field.errors) }}</small>
+    {% endif %}
+  </div>
+</div>
+{% endmacro %}

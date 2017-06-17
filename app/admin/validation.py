@@ -1,10 +1,15 @@
-from wtforms import Form, BooleanField, StringField, PasswordField, IntegerField, Field, TextField
+from wtforms import Form, BooleanField, StringField, PasswordField, IntegerField, Field, TextField, SelectField, \
+    FormField, FieldList
 from flask_wtf.file import FileField, FileRequired
 
 from wtforms.validators import ValidationError, AnyOf, Email, EqualTo, IPAddress, InputRequired, \
     Length, MacAddress, NumberRange, Optional, Regexp
 
-from app.models import Image
+from app.models import User, Token, Machine, Image, Preseed, BMC, MachineUsers, ConsoleToken
+
+
+def opt_int(s):
+    return None if s == '' else int(s)
 
 
 class ValidImage(object):
@@ -23,7 +28,10 @@ class ValidImage(object):
             raise ValidationError(self.message)
 
 
-class OptionalIntegerField(Field):
+class OptionalIntegerField(IntegerField):
+    def _value(self):
+        return str(self.data) if self.data is not None else ''
+
     def process_formdata(self, valuelist):
         if valuelist and len(valuelist) > 0:
             self.data = int(valuelist[0]) if len(valuelist[0]) > 0 else None
@@ -84,10 +92,10 @@ class ChangeMetadataImageForm(Form):
 
 
 class CreateMachineForm(Form):
-    name = StringField("Name", [InputRequired(),
-                                Length(min=3, max=256)])
-    mac = StringField("MAC address", [InputRequired(), MacAddress(message='Must provide a valid MAC address')])
-    bmc_id = OptionalIntegerField("BMC", [Optional()])
+    name = StringField("Name", [InputRequired(), Length(min=3, max=256)])
+    mac = StringField("MAC address", [Optional(),
+                                      MacAddress(message='Must provide a valid MAC address')])
+    bmc_id = SelectField("BMC", coerce=opt_int, validators=[Optional()])
     bmc_info = StringField("BMC info", [Optional()])
     pdu = StringField("PDU", [Length(max=256)])
     pdu_port = OptionalIntegerField("PDU port", [Optional(),
@@ -95,21 +103,24 @@ class CreateMachineForm(Form):
     serial = StringField("Serial Console", [Length(max=256)])
     serial_port = OptionalIntegerField("Serial port", [Optional(),
                                                        NumberRange(max=256)])
-    kernel_id = OptionalIntegerField("Kernel", [Optional(),
-                                                ValidImage(image_type="Kernel")])
-    kernel_opts = StringField("Kernel opts", [Length(max=256)])
-    initrd_id = OptionalIntegerField("Initrd", [Optional(),
-                                                ValidImage(image_type="Initrd")])
-    preseed_id = OptionalIntegerField("Preseed", [Optional()])
-    netboot_enabled = BooleanField("Is netboot enabled?", [InputRequired()], false_values=('false', '', '0'))
-    reason = StringField("Reason for Assignment", [Length(max=256)])
-    assignee = OptionalIntegerField("Assignee", [Optional()])
+
+    @staticmethod
+    def populate_choices(form, g):
+        bmcs = BMC.query.all() if g.user.admin else []
+        form.bmc_id.choices = [("", "(None)")] + \
+            [(bmc.id, "%s - %s - %s" % (bmc.name, bmc.ip, bmc.bmc_type)) for bmc in bmcs]
+
+
+class AssigneeForm(Form):
+    user_id = SelectField("Assign to", coerce=opt_int, validators=[Optional()])
+    reason = StringField("Reason", [Length(max=256)])
 
 
 class ChangeMachineForm(Form):
     name = StringField("Name", [Optional(), Length(min=3, max=256)])
-    mac = StringField("MAC address", [Optional(), MacAddress(message='Must provide a valid MAC address')])
-    bmc_id = OptionalIntegerField("BMC", [Optional()])
+    mac = StringField("MAC address", [Optional(),
+                                      MacAddress(message='Must provide a valid MAC address')])
+    bmc_id = SelectField("BMC", coerce=opt_int, validators=[Optional()])
     bmc_info = StringField("BMC info", [Optional()])
     pdu = StringField("PDU", [Length(max=256)])
     pdu_port = OptionalIntegerField("PDU port", [Optional(),
@@ -117,15 +128,32 @@ class ChangeMachineForm(Form):
     serial = StringField("Serial Console", [Length(max=256)])
     serial_port = OptionalIntegerField("Serial port", [Optional(),
                                                        NumberRange(max=256)])
-    kernel_id = OptionalIntegerField("Kernel", [Optional(),
-                                                ValidImage(image_type="Kernel")])
+    kernel_id = SelectField("Kernel", coerce=opt_int, validators=[Optional(),
+                                                                  ValidImage(image_type="Kernel")])
     kernel_opts = StringField("Kernel opts", [Length(max=256)])
-    initrd_id = OptionalIntegerField("Initrd", [Optional(),
-                                                ValidImage(image_type="Initrd")])
-    preseed_id = OptionalIntegerField("Preseed", [Optional()])
-    netboot_enabled = BooleanField("Is netboot enabled?", [InputRequired()], false_values=('false', '', '0'))
+    initrd_id = SelectField("Initrd", coerce=opt_int, validators=[Optional(),
+                                                                  ValidImage(image_type="Initrd")])
+    preseed_id = SelectField("Preseed", coerce=opt_int, validators=[Optional()])
+    netboot_enabled = BooleanField("Netboot enabled?", false_values=('false', '', '0'))
     reason = StringField("Reason for Assignment", [Length(max=256)])
-    assignee = OptionalIntegerField("Assignee", [Optional()])
+    assignee = FormField(AssigneeForm, [Optional()])
+
+    @staticmethod
+    def populate_choices(form, g, machine):
+        bmcs = BMC.query.all() if g.user.admin else []
+        images = Image.all_visible(g.user)
+        preseeds = Preseed.all_visible(g.user)
+        users = User.query.all()
+        form.bmc_id.choices = [("", "(None)")] + \
+            [(bmc.id, "%s - %s - %s" % (bmc.name, bmc.ip, bmc.bmc_type)) for bmc in bmcs]
+        form.kernel_id.choices = [("", "(None)")] + \
+            [(i.id, "%s - %s" % (i.description, i.filename)) for i in images if i.file_type == "Kernel"]
+        form.initrd_id.choices = [("", "(None)")] + \
+            [(i.id, "%s - %s" % (i.description, i.filename)) for i in images if i.file_type == "Initrd"]
+        form.preseed_id.choices = [("", "(None)")] + \
+            [(p.id, "%s - %s%s" % (p.description, p.filename, " (known good)" if p.known_good else "")) for p in preseeds]
+        form.assignee.user_id.choices = [("", "(None)")] + \
+            [(u.id, u.username) for u in User.query.all()]
 
 
 class CreateBMCForm(Form):

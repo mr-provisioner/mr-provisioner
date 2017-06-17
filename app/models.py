@@ -58,8 +58,8 @@ class Machine(db.Model):
     bmc_id = db.Column(db.Integer, db.ForeignKey("BMC.id"))
     bmc_info = db.Column(db.String)
 
-    def __init__(self, name, mac, pdu, pdu_port, serial, serial_port, kernel_id, kernel_opts,
-                 preseed_id, initrd_id, netboot_enabled, bmc_id, bmc_info):
+    def __init__(self, name, mac, pdu=None, pdu_port=None, serial=None, serial_port=None, kernel_id=None, kernel_opts="",
+                 preseed_id=None, initrd_id=None, netboot_enabled=False, bmc_id=None, bmc_info=""):
         self.name = name
         self.mac = mac
         self.pdu = pdu

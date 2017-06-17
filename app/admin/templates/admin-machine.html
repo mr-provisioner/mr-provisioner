@@ -1,5 +1,5 @@
 {% extends "layout.html" %}
-
+{% from "_formhelpers.html" import render_field %}
 
 {% block body %}
   {% with machineactive="active" %}
@@ -15,7 +15,7 @@
       <div class="small-12 small-centered columns">
         <nav class="breadcrumbs">
           <a href="{{ url_for('.get_machines_admin') }}">Machines</a>
-          <a href="{{ url_for('.get_machine_admin', id=m.id) }}">{{ m.name }}</a>
+          <a href="{{ url_for('.machine_admin', id=m.id) }}">{{ m.name }}</a>
         </nav>
       </div>
     </div>
@@ -124,181 +124,30 @@
       {% endif %}
       <div aria-hidden="true" class="reveal-modal medium" data-reveal id="edit-modal" role="dialog">
         <h2> Edit Machine - {{ m.name }} </h2>
-        <form action="{{ url_for('.edit_machine', id=m.id) }}" method="POST">
-	{% if user.admin %}
+        <form action="{{ url_for('.machine_admin', id=m.id) }}" method="POST">
+        {% if user.admin %}
+        {{ render_field(form.name) }}
+        {{ render_field(form.mac) }}
+        {{ render_field(form.bmc_id, style="width: 100%;") }}
+        {{ render_field(form.bmc_info) }}
+        {{ render_field(form.pdu) }}
+        {{ render_field(form.pdu_port) }}
+        {{ render_field(form.serial) }}
+        {{ render_field(form.serial_port) }}
+        {% endif %}
+        {{ render_field(form.kernel_id, style="width: 100%;") }}
+        {{ render_field(form.kernel_opts) }}
+        {{ render_field(form.initrd_id, style="width: 100%;") }}
+        {{ render_field(form.preseed_id, style="width: 100%;") }}
+        {{ render_field(form.netboot_enabled) }}
         <div class="row">
-          <div class="small-12 columns">
-            <label>
-              Name
-              <input name="name" type="text" value="{{ m.name }}">
-            </label>
-          </div>
-        </div>
-        <div class="row">
-          <div class="small-12 columns">
-            <label>
-              MAC
-              <input name="mac" type="text" value="{{ m.mac }}">
-            </label>
-          </div>
-        </div>
-        <div class="row">
-          <div class="small-12 columns">
-            <label>
-              BMC IP
-              <select name="bmc_id" style="width: 100%;">
-                <option value="">(None)</option>
-                {% for bmc in bmcs %}
-		  {% if bmc.id == m.bmc_id %}
-		  <option value="{{ bmc.id }}" selected="selected">{{bmc.name}} - {{ bmc.ip }}</option>
-		  {% else %}
-		  <option value="{{ bmc.id }}">{{bmc.name}} - {{ bmc.ip }} - {{ bmc.bmc_type }}</option>
-		  {% endif %}
-                {% endfor %}
-	      </select>
-            </label>
-          </div>
-        </div>
-        <div class="row">
-          <div class="small-12 columns">
-            <label>
-              BMC Info
-	      <input name="bmc_info" value="{{ m.bmc_info if m.bmc_info }}" type="text">
-            </label>
-          </div>
-        </div>
-        <div class="row">
-          <div class="small-12 columns">
-            <label>
-              PDU
-              <input name="pdu" value="{{ m.pdu if m.pdu }}" type="text">
-            </label>
-          </div>
-        </div>
-	<div class="row">
-	  <div class="small-12 columns">
-	    <label>PDU port
-	      <input name="pdu_port" value="{{ m.pdu_port if m.pdu_port }}" type="text">
-	    </label>
-	  </div>
-	</div>
-        <div class="row">
-          <div class="small-12 columns">
-            <label>
-              Serial device
-              <input name="serial" value="{{ m.serial if m.serial }}" type="text">
-            </label>
-          </div>
-        </div>
-        <div class="row">
-          <div class="small-12 columns">
-            <label>
-              Serial port
-              <input name="serial_port" value="{{ m.serial_port if m.serial_port }}"  type="text">
-            </label>
-          </div>
-        </div>
-	{% endif %}
-        <div class="row">
-          <div class="small-12 columns">
-            <label>
-              Kernel
-              <select name="kernel_id" style="width: 100%;">
-                <option value="">(None)</option>
-                {% for image in images|selectattr("file_type", "equalto", "Kernel") %}
-                  {% if image.id == m.kernel_id or image.id == m.initrd_id %}
-                  <option value="{{ image.id }}" selected="selected">{{ image.description }} ({{ image.filename }}){% if image.known_good %} (blessed){% endif %}</option>
-                  {% else %}
-                  <option value="{{ image.id }}">{{ image.description }} - {{ image.filename }}{% if image.known_good %} (blessed){% endif %}</option>
-                  {% endif %}
-                {% endfor %}
-              </select>
-            </label>
-          </div>
-        </div>
-        <div class="row">
-          <div class="small-12 columns">
-            <label>
-              Kernel cmdline
-              <input name="kernel_opts" value="{{ m.kernel_opts  if m.kernel_opts }}" type="text">
-            </label>
-          </div>
-        </div>
-        <div class="row">
-          <div class="small-12 columns">
-            <label>
-              Initrd
-              <select name="initrd_id" style="width: 100%;">
-                <option value="">(None)</option>
-                {% for image in images|selectattr("file_type", "equalto", "Initrd") %}
-                  {% if image.id == m.kernel_id or image.id == m.initrd_id %}
-                  <option value="{{ image.id }}" selected="selected">{{ image.description }} ({{ image.filename }}){% if image.known_good %} (blessed){% endif %}</option>
-                  {% else %}
-                  <option value="{{ image.id }}">{{ image.description }} - {{ image.filename }}{% if image.known_good %} (blessed){% endif %}</option>
-                  {% endif %}
-                {% endfor %}
-              </select>
-            </label>
-          </div>
-        </div>
-        <div class="row">
-          <div class="small-12 columns">
-            <label>
-              Preseed
-              <select name="preseed_id" style="width: 100%;">
-                <option value="">(None)</option>
-                {%- for preseed in preseeds %}
-                <option value="{{ preseed.id }}"
-                  {% if preseed.id == m.preseed_id %} selected="selected" {% endif %}
-                    >{{ preseed.description}} ({{ preseed.filename }}) {% if preseed.known_good %} (known good){% endif %}</option>
-                {% endfor -%}
-              </select>
-            </label>
-          </div>
-        </div>
-        <div class="row">
-          <div class="small-12 columns">
-            <label>
-              Netboot Enabled
-              <select name="netboot_enabled">
-              {%- if m.netboot_enabled %}
-                <option value="1" selected="selected">Yes</option>
-                <option value="0">No</option>
-              {% else %}
-                <option value="1">Yes</option>
-                <option value="0" selected="selected">No</option>
-              {% endif -%}
-              </select>
-            </label>
-          </div>
-					{% if user.admin %}
+        {% if user.admin %}
           <fieldset>
             <legend> Assign to </legend>
-            <div class="row">
-              <div class="small-12 columns">
-                <label>
-                  Assign to
-                  <select name="assignee" style="width: 100%;">
-                    <option value="">(None)</option>
-                      {%- for user in users %}
-                        <option value="{{ user.id }}"
-                          {% if m.user %} {% if user.id == m.user.id %} selected="selected" {% endif %} {% endif %}
-                          >{{ user.username}}</option>
-                      {% endfor -%}
-                    </select>
-                </label>
-              </div>
-            </div>
-            <div class="row">
-              <div class="small-12 columns">
-                <label>
-                  Reason
-		  <input name="reason" value="{{ m.assignment.reason if m.assignment }}" style="width: 100%;">
-                </label>
-              </div>
-            </div>
-            </fieldset>
-						{% endif %}
+            {{ render_field(form.assignee.user_id, style="width: 100%;") }}
+            {{ render_field(form.assignee.reason) }}
+          </fieldset>
+	  {% endif %}
         <div class="row">
           <div class="small-12 columns">
               <center>
@@ -315,8 +164,8 @@
    $("select[name='bmc_id']").select2({theme: "foundation"});
    $("select[name='kernel_id']").select2({theme: "foundation"});
    $("select[name='initrd_id']").select2({theme: "foundation"});
-   $("select[name='assignee']").select2({theme: "foundation"});
    $("select[name='preseed_id']").select2({theme: "foundation"});
+   $("select[name='assignee-user_id']").select2({theme: "foundation"});
  </script>
   {% endwith %}
 {% endblock %}
