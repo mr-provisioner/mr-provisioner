@@ -7,6 +7,8 @@ from wtforms.validators import ValidationError, AnyOf, Email, EqualTo, IPAddress
 
 from app.models import User, Token, Machine, Image, Preseed, BMC, MachineUsers, ConsoleToken
 
+from app.bmc_types import list_bmc_types
+
 
 def opt_int(s):
     return None if s == '' else int(s)
@@ -162,9 +164,8 @@ class CreateBMCForm(Form):
                             IPAddress(ipv4=True, message='Must provide ipv4 address')])
     username = StringField("Username", [Length(max=256)])
     password = StringField("Password", [Length(max=256)])
-    privilege_level = StringField("Wrong Privilege", [AnyOf(["user", "admin"])])
-    bmc_type = StringField("Wrong Type", [InputRequired(),
-                                          AnyOf(["moonshot", "plain"])])
+    privilege_level = SelectField("Privilege", [AnyOf(["user", "admin"])], choices=[("user", "user"), ("admin", "admin")])
+    bmc_type = SelectField("Type", [InputRequired(), AnyOf(map(lambda t: t.name, list_bmc_types()))], choices=[(t.name, t.name) for t in list_bmc_types()])
 
 
 class CreateUserForm(Form):

@@ -489,8 +489,9 @@ def get_bmc_admin():
         return redirect(url_for('.get_machines_admin'))
 
     bmc = BMC.query.all()
+    form = validations.CreateBMCForm()
 
-    return render_template("admin-bmcs.html", bmcs=bmc, bmc_types=list_bmc_types())
+    return render_template("admin-bmcs.html", bmcs=bmc, form=form)
 
 
 @mod.route('/bmc/create', methods=['POST'])
@@ -526,8 +527,16 @@ def create_bmc_admin():
 def bmc_admin(id):
 
     bmc = BMC.query.get(id)
+    form = validations.CreateBMCForm()
 
-    return render_template("admin-bmc.html", bmc=bmc, bmc_types=list_bmc_types())
+    form.name.data = bmc.name if bmc.name else ""
+    form.ip.data = bmc.ip if bmc.ip else ""
+    form.username.data = bmc.username if bmc.username else ""
+    form.password.data = bmc.password if bmc.password else ""
+    form.privilege_level.data = bmc.privilege_level if bmc.privilege_level else "admin"
+    form.bmc_type.data = bmc.bmc_type
+
+    return render_template("admin-bmc.html", bmc=bmc, form=form)
 
 
 @mod.route('/bmc/<id>/edit', methods=['POST'])
