@@ -46,20 +46,20 @@ class ChangePasswordForm(Form):
     new_pass = PasswordField('Password', [InputRequired(),
                                           EqualTo('new_pass_confirm', message='Passwords must match'),
                                           Length(min=6, max=256)])
-    new_pass_confirm = PasswordField('Password Confirmation')
+    new_pass_confirm = PasswordField('Confirm Password')
 
 
 class ChangeOwnPasswordForm(Form):
     new_pass = PasswordField('Password', [InputRequired(),
                                           EqualTo('new_pass_confirm', message='Passwords must match'),
                                           Length(min=6, max=256)])
-    new_pass_confirm = PasswordField('Password Confirmation')
+    new_pass_confirm = PasswordField('Confirm Password')
 
 
 class ChangeSSHKeyForm(Form):
-    ssh_key = TextField('SSHKey', [InputRequired(),
-                                   Regexp("^ssh-rsa .*",
-                                          message="This key does not start with the expected ssh-rsa format")])
+    ssh_key = TextAreaField('SSHKey', [InputRequired(),
+                                       Regexp("^ssh-rsa .*",
+                                              message="This key does not start with the expected ssh-rsa format")])
 
 
 class CreateImageForm(Form):
@@ -186,4 +186,4 @@ class CreateUserForm(Form):
     username = StringField("Username", [InputRequired(),
                                         Length(min=3, max=256)])
     email = StringField("Email", [Email(message='Must provide valid email')])
-    admin = BooleanField("Is admin?", [InputRequired()], false_values=('false', '', '0'))
+    admin = BooleanField("Admin?", false_values=('false', '', '0'))
