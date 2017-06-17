@@ -1,4 +1,4 @@
-{% macro render_field(field) %}
+{% macro render_field(field, extra_label_html="") %}
 <div class="row">
   <div class="small-12 columns">
     <label>
@@ -17,6 +17,7 @@
         {% endfor %}
       {% else %}
         {{ field.label }}
+        {{ extra_label_html|safe }}
         {{ field(**kwargs)|safe }}
       {% endif %}
     </label>

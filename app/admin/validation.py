@@ -1,5 +1,5 @@
 from wtforms import Form, BooleanField, StringField, PasswordField, IntegerField, Field, TextField, SelectField, \
-    FormField, FieldList
+    FormField, FieldList, TextAreaField
 from flask_wtf.file import FileField, FileRequired
 
 from wtforms.validators import ValidationError, AnyOf, Email, EqualTo, IPAddress, InputRequired, \
@@ -66,10 +66,21 @@ class CreateImageForm(Form):
     description = StringField("Description", [InputRequired(),
                                               Length(min=3, max=256)])
     image = FileField("Image", [FileRequired()])
-    file_type = StringField("Wrong type of image", [InputRequired(),
-                                                    AnyOf(["Kernel", "Initrd"])])
-    known_good = BooleanField("Known good?", [InputRequired()], false_values=('false', '', '0'))
-    public = BooleanField("Public?", [InputRequired()], false_values=('false', '', '0'))
+    file_type = SelectField("Type", [InputRequired(),
+                                     AnyOf(['Kernel', 'Initrd'])],
+                            choices=[("Kernel", "Kernel"), ("Initrd", "Initrd")])
+    known_good = BooleanField("Known good?", false_values=('false', '', '0'))
+    public = BooleanField("Public?", false_values=('false', '', '0'))
+
+
+class ChangeMetadataImageForm(Form):
+    description = StringField("Description", [InputRequired(),
+                                              Length(min=3, max=256)])
+    file_type = SelectField("Type", [InputRequired(),
+                                     AnyOf(['Kernel', 'Initrd'])],
+                            choices=[("Kernel", "Kernel"), ("Initrd", "Initrd")])
+    known_good = BooleanField("Known good?", false_values=('false', '', '0'))
+    public = BooleanField("Public?", false_values=('false', '', '0'))
 
 
 class CreatePreseedForm(Form):
@@ -77,20 +88,23 @@ class CreatePreseedForm(Form):
                                         Length(min=3, max=256)])
     description = StringField("Description", [InputRequired(),
                                               Length(min=3, max=256)])
-    file_content = TextField("File content", [InputRequired()])
-    file_type = StringField("Wrong type of image", [InputRequired(),
-                                                    AnyOf(["kickstart", "preseed"])])
-    known_good = BooleanField("Known good?", [InputRequired()], false_values=('false', '', '0'))
-    public = BooleanField("Public?", [InputRequired()], false_values=('false', '', '0'))
+    file_content = TextAreaField("Contents", [InputRequired()])
+    file_type = SelectField("Type", [InputRequired(),
+                                     AnyOf(["kickstart", "preseed"])],
+                            choices=[("kickstart", "kickstart"), ("preseed", "Debian Preseed")])
+    known_good = BooleanField("Known good?", false_values=('false', '', '0'))
+    public = BooleanField("Public?", false_values=('false', '', '0'))
 
 
-class ChangeMetadataImageForm(Form):
+class ChangePreseedForm(Form):
     description = StringField("Description", [InputRequired(),
                                               Length(min=3, max=256)])
-    file_type = StringField("Wrong type of image", [InputRequired(),
-                                                    AnyOf(['Kernel', 'Initrd'])])
-    known_good = BooleanField("Known good?", [InputRequired()], false_values=('false', '', '0'))
-    public = BooleanField("Public?", [InputRequired()], false_values=('false', '', '0'))
+    file_content = TextAreaField("Contents", [InputRequired()])
+    file_type = SelectField("Type", [InputRequired(),
+                                     AnyOf(["kickstart", "preseed"])],
+                            choices=[("kickstart", "kickstart"), ("preseed", "Debian Preseed")])
+    known_good = BooleanField("Known good?", false_values=('false', '', '0'))
+    public = BooleanField("Public?", false_values=('false', '', '0'))
 
 
 class CreateMachineForm(Form):

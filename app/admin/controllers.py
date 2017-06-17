@@ -276,7 +276,8 @@ def edit_user(id):
 
 @mod.route('/preseeds', methods=['GET'])
 def get_preseeds_admin():
-    return render_template("admin-preseeds.html", preseeds=Preseed.all_visible(g.user))
+    form = validations.CreatePreseedForm()
+    return render_template("admin-preseeds.html", form=form, preseeds=Preseed.all_visible(g.user))
 
 
 @mod.route('/preseeds/create', methods=['POST'])
@@ -284,8 +285,7 @@ def create_preseeds_admin():
     logger.info("Preseed uploaded by %s" % g.user.username)
     form = validations.CreatePreseedForm(request.form)
     if form.validate():
-        random_suffix = binascii.hexlify(os.urandom(4)).decode('utf-8')
-        filename = "%s.%s" % (secure_filename(form.filename.data), random_suffix)
+        filename = secure_filename(form.filename.data)
 
         new_preseed = Preseed(filename=os.path.join(secure_filename(g.user.username), filename),
                               description=form.description.data,
@@ -311,14 +311,20 @@ def create_preseeds_admin():
 @mod.route('/preseeds/<id>', methods=['GET'])
 def get_preseed_admin(id):
     preseed = Preseed.query.get(id)
+    form = validations.ChangePreseedForm()
+    form.description.data = preseed.description
+    form.file_type.data = preseed.file_type
+    form.file_content.data = preseed.file_content
+    form.known_good.data = preseed.known_good
+    form.public.data = preseed.public
 
-    return render_template("admin-preseed.html", preseed=preseed)
+    return render_template("admin-preseed.html", form=form, preseed=preseed)
 
 
 @mod.route('/preseeds/<id>/edit', methods=['POST'])
 def edit_preseed(id):
     logger.info("Preseed modified by %s" % g.user.username)
-    form = validations.CreatePreseedForm(request.form)
+    form = validations.ChangePreseedForm(request.form)
     if form.validate():
         preseed = Preseed.query.get(id)
         if not preseed:
@@ -373,7 +379,8 @@ def delete_preseed(id):
 
 @mod.route('/images', methods=['GET'])
 def get_images_admin():
-    return render_template("admin-images.html", images=Image.all_visible(g.user))
+    form = validations.CreateImageForm()
+    return render_template("admin-images.html", form=form, images=Image.all_visible(g.user))
 
 
 @mod.route('/images/create', methods=['POST'])
@@ -417,7 +424,13 @@ def create_images_admin():
 @mod.route('/images/<id>', methods=['GET'])
 def get_image_admin(id):
     image = Image.query.get(id)
-    return render_template("admin-image.html", image=image)
+    form = validations.ChangeMetadataImageForm()
+    form.description.data = image.description
+    form.file_type.data = image.file_type
+    form.known_good.data = image.known_good
+    form.public.data = image.public
+
+    return render_template("admin-image.html", form=form, image=image)
 
 
 @mod.route('/images/<id>/edit', methods=['POST'])
