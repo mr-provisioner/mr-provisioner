@@ -134,16 +134,21 @@
                 <td>{{ interface.lease.last_seen if interface.lease else "" }}</td>
                 <td>
                   <a href="#" class="button tiny" style="margin-bottom: 0px;" data-reveal-id="edit-interface-{{ interface.id }}-modal"><i class="fa fa-edit" aria-hidden="true"></i></a>
-                  <a href="#" class="button tiny alert" style="margin-bottom: 0px;"  data-reveal-id="delete-interface-{{ interface.id }}-modal"><i class="fa fa-trash" aria-hidden="true"></i></a>
+
+                  {% if user.admin %}
+                    <a href="#" class="button tiny alert" style="margin-bottom: 0px;"  data-reveal-id="delete-interface-{{ interface.id }}-modal"><i class="fa fa-trash" aria-hidden="true"></i></a>
+                  {% endif %}
                 </td>
               </tr>
             {% endfor %}
           </tbody>
         <table>
 
-        <a class="button tiny" data-reveal-id="create-interface-modal" href=""#"">
-          <i class="fa fa-plus" aria-hidden="true"></i>
-        </a>
+        {% if user.admin %}
+          <a class="button tiny" data-reveal-id="create-interface-modal" href=""#"">
+            <i class="fa fa-plus" aria-hidden="true"></i>
+          </a>
+        {% endif %}
       </div>
 
       <hr/>
@@ -296,7 +301,9 @@
       {% for intf in m.interfaces %}
       <div aria-hidden="true" class="reveal-modal medium" data-reveal id="edit-interface-{{ intf.id }}-modal" role="dialog">
         <form action="{{ url_for('.interface_edit', id=intf.id) }}" method="POST">
-        {{ render_field(form_intf[intf.id].mac) }}
+        {% if user.admin %}
+          {{ render_field(form_intf[intf.id].mac) }}
+        {% endif %}
         {{ render_field(form_intf[intf.id].identifier) }}
         {{ render_field(form_intf[intf.id].reserved_ipv4) }}
         <div class="row">
