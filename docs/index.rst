@@ -28,6 +28,9 @@ Information about development is also available:
    :caption: Design Documentation
 
    design/overview
+   design/netboot_simple
+   design/console
+   design/bmc
 
 .. _dev-docs:
 

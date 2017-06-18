@@ -1,13 +1,13 @@
 Design Overview
 ===============
 
-This section will give an overview of how it all fits together, i.e. the roles of the dhcp/bootp server, tftp-http-proxy and ws-subprocess services. Still needs to be written.
+``mr-provisioner`` helps you automate and provision servers, manage and assign your hardware. It can handle multiple architectures.
 
-.. image:: seqdiag/boot-flow-simple.svg
-   :target: ../_images/boot-flow-simple.svg
+``mr-provisioner`` handles the entire network boot process from controlling DHCP and handling TFTP requests to providing installation configuration files. See :doc:`netboot_simple` for detailed explanation.
 
-.. image:: seqdiag/boot-flow-kea.svg
+Hardware reservation is available and it enables assigning machines to users. Users can then manage the OS that gets installed and access the console. ``mr-provisioner`` provides users restart and PXE reboot functionality by talking to BMC (see :doc:`bmc`) and :doc:`console` via ipmi.
+
+
+.. .. image:: seqdiag/boot-flow-kea.svg
    :target: ../_images/boot-flow-kea.svg
 
-.. image:: seqdiag/ws-console.svg
-   :target: ../_images/ws-console.svg
