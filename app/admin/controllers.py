@@ -12,7 +12,7 @@ from werkzeug.datastructures import CombinedMultiDict
 from sqlalchemy.exc import IntegrityError
 
 from app import db
-from app.models import User, Token, Machine, Image, Preseed, BMC, MachineUsers, ConsoleToken
+from app.models import User, Token, Machine, Image, Preseed, BMC, MachineUsers, ConsoleToken, Interface, Lease
 from app.bmc_types import list_bmc_types, BMCError
 import app.admin.validation as validations
 
@@ -608,6 +608,7 @@ def get_machines_admin():
 
     form = validations.CreateMachineForm()
     validations.CreateMachineForm.populate_choices(form, g)
+    form.macs.append_entry()
 
     return render_template("admin-machines.html",
                            form=form,
@@ -629,7 +630,6 @@ def create_machines_admin():
         # XXX: Think about adding a new object for PDU and Serial
         logger.info("after validation")
         new_machine = Machine(name=form.name.data,
-                              mac=form.mac.data,
                               bmc_id=form.bmc_id.data,
                               bmc_info=form.bmc_info.data,
                               pdu=form.pdu.data,
@@ -644,6 +644,21 @@ def create_machines_admin():
         except IntegrityError as e:
             db.session.rollback()
             flash('Integrity Error: either name or MAC are not unique', 'error')
+            return redirect(url_for('.get_machines_admin'))
+
+        db.session.refresh(new_machine)
+
+        for mac_field in form.macs:
+            mac = mac_field.data
+            if mac and mac != '':
+                new_interface = Interface(machine_id=new_machine.id, mac=mac)
+                db.session.add(new_interface)
+                try:
+                    db.session.commit()
+                except IntegrityError as e:
+                    db.session.rollback()
+                    flash('Integrity Error: failed to add mac: %s' % mac, 'error')
+
     else:
         flash_form_errors(form)
 
@@ -660,6 +675,16 @@ def machine_admin(id):
     form = validations.ChangeMachineForm(request.form)
     validations.ChangeMachineForm.populate_choices(form, g, machine)
 
+    form_intf_new = validations.InterfaceForm()
+
+    form_intf = {}
+    for intf in machine.interfaces:
+        form_intf[intf.id] = validations.InterfaceForm()
+        form_intf[intf.id].identifier.data = intf.identifier
+        form_intf[intf.id].mac.data = intf.mac
+        form_intf[intf.id].dhcpv4.data = intf.dhcpv4
+        form_intf[intf.id].reserved_ipv4.data = intf.static_ipv4
+
     if request.method == 'POST' and form.validate():
         if not g.user.admin and not (g.user.id in map(lambda u: u.id, machine.assignees)):
             flash('Permission denied', 'error')
@@ -667,7 +692,6 @@ def machine_admin(id):
 
         if g.user.admin:
             machine.name = form.name.data
-            machine.mac = form.mac.data
             machine.pdu = None if not form.pdu.data else form.pdu.data
             machine.pdu_port = None if not form.pdu_port.data else form.pdu_port.data
             machine.serial = None if not form.serial.data else form.serial.data
@@ -729,7 +753,6 @@ def machine_admin(id):
         flash_form_errors(form)
 
     form.name.data = machine.name
-    form.mac.data = machine.mac
     form.bmc_id.data = machine.bmc_id
     form.bmc_info.data = machine.bmc_info
     form.pdu.data = machine.pdu
@@ -746,6 +769,8 @@ def machine_admin(id):
 
     return render_template("admin-machine.html",
                            form=form,
+                           form_intf_new=form_intf_new,
+                           form_intf=form_intf,
                            m=machine)
 
 
@@ -844,6 +869,92 @@ def reset_console(id):
     flash('Successfully deactivated console', 'success')
 
     return redirect(url_for('.machine_admin', id=id))
+
+
+@mod.route('/interfaces/<id>', methods=['POST'])
+def interface_edit(id):
+    intf = Interface.query.get(id)
+    if not intf:
+        flash("Interface does not exist", "error")
+        return redirect(url_for('.get_machines_admin'))
+
+    machine = intf.machine
+
+    if not machine.check_permission(g.user, 'assignee'):
+        flash('Permission denied', 'error')
+        return redirect(url_for('.get_machines_admin'))
+
+    form = validations.InterfaceForm(request.form)
+    if form.validate():
+        intf.identifier = form.identifier.data
+        intf.dhcpv4 = True
+        intf.static_ipv4 = form.reserved_ipv4.data
+
+        if machine.check_permission(g.user, 'admin'):
+            intf.mac = form.mac.data
+
+        try:
+            db.session.commit()
+            flash('Interface modified successfully', 'success')
+        except IntegrityError as e:
+            db.session.rollback()
+            flash('Integrity Error: MAC and static IP must be unique', 'error')
+    else:
+        flash_form_errors(form)
+
+    return redirect(url_for('.machine_admin', id=machine.id))
+
+
+@mod.route('/interfaces/<id>/delete', methods=['POST'])
+def interface_delete(id):
+    intf = Interface.query.get(id)
+    if not intf:
+        flash("Interface does not exist", "error")
+        return redirect(url_for('.get_machines_admin'))
+
+    machine = intf.machine
+
+    if not machine.check_permission(g.user, 'admin'):
+        flash('Permission denied', 'error')
+        return redirect(url_for('.get_machines_admin'))
+
+    db.session.delete(intf)
+    db.session.commit()
+    flash('Interface deleted', 'success')
+
+    return redirect(url_for('.machine_admin', id=machine.id))
+
+
+@mod.route('/machines/<id>/interface_create', methods=['POST'])
+def machine_interface_create(id):
+    machine = Machine.query.get(id)
+    if not machine:
+        flash("Machine does not exist", "error")
+        return redirect(url_for('.get_machines_admin'))
+
+    if not machine.check_permission(g.user, 'admin'):
+        flash('Permission denied', 'error')
+        return redirect(url_for('.get_machines_admin'))
+
+    form = validations.InterfaceForm(request.form)
+    if form.validate():
+        new_intf = Interface(identifier=form.identifier.data,
+                             mac=form.mac.data,
+                             dhcpv4=True,
+                             static_ipv4=form.reserved_ipv4.data,
+                             machine_id=machine.id)
+        db.session.add(new_intf)
+        try:
+            db.session.commit()
+            flash('Interface added successfully', 'success')
+        except IntegrityError as e:
+            db.session.rollback()
+            flash('Integrity Error: either MAC or reserved IP not unique', 'error')
+            return redirect(url_for('.machine_admin', id=machine.id))
+    else:
+        flash_form_errors(form)
+
+    return redirect(url_for('.machine_admin', id=machine.id))
 
 
 @mod.route('/ws-subprocess', methods=['GET'])

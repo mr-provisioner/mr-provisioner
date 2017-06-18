@@ -19,68 +19,203 @@
         </nav>
       </div>
     </div>
-    <div class="row">
+    <div class="row" style="margin-top: 1em;">
       <div class="small-12 small-centered columns">
-      <h2>Manage {{ m.name }}</h2>
-      <dl>
-        <dt>Name</dt>
-        <dd> {{ m.name }}</dd>
-        <dt>Power state</dt>
-        <dd> {{ m.power_state }}</dd>
-        <dt>MAC</dt>
-        <dd>{{ m.mac }}</dd>
-        <dt>BMC</dt>
-        <dd>{% if m.bmc %}
-        {% if user.admin %}
-        <a href="{{ url_for('.bmc_admin', id=m.bmc_id) }}">{{ m.bmc.ip }}</a>
-          &nbsp;
-          <a href="http://{{ m.bmc.ip }}">(access BMC<i class="fa fa-external-link" style="margin-left: 0.3em; margin-right: 2px;"></i>)</a>
-          {% else %}
-          <a href="http://{{ m.bmc.ip }}">{{ m.bmc.ip }}</a>
-          {% endif %}
-        {% endif %}</dd>
-	<dt>BMC Info</dt>
-	<dd>{{ m.bmc_info }}</dd>
-	{% if user.admin %}
-          <dt>PDU</dt>
-          <dd>{{ m.pdu }}</dd>
-          <dt>PDU port</dt>
-          <dd>{{ m.pdu_port if m.pdu_port }}</dd>
-          <dt>Serial</dt>
-          <dd>{{ m.serial }}</dd>
-          <dt>Serial serial_port</dt>
-          <dd>{{ m.serial_port if m.serial_port }}</dd>
-	{% endif %}
-	<dt>Kernel</dt>
-        <dd>{% if m.kernel %}<a href="{{ url_for('.get_image_admin', id=m.kernel.id) }}">{{ m.kernel.description }} ({{ m.kernel.filename }})</a>{% endif %}</dd>
-        <dd></dd>
-        <dt>Kernel opts</dt>
-        <dd>{{ m.kernel_opts }}</dd>
-        <dt>Initrd</dt>
-        <dd>{% if m.initrd %}<a href="{{ url_for('.get_image_admin', id=m.initrd.id) }}">{{ m.initrd.description }} ({{ m.initrd.filename }}){% endif %}</a></dd>
-        <dt>Preseed</dt>
-        <dd>{% if m.preseed_id %}<a href="{{ url_for('.get_preseed_admin', id=m.preseed_id) }}">{{ m.preseed.description }} ({{ m.preseed.filename }}){% endif %}</a></dd>
-        <dt>Netboot enabled?</dt>
-        <dd>
-           {% if m.netboot_enabled %}
-             <input type="checkbox" readonly disabled checked/>
-           {% else %}
-             <input type="checkbox" readonly disabled/>
-           {% endif %}
-        </dd>
-      </dl>
+      <div class="row">
+        <div class="small-6 columns tabular">
+          <div class="row">
+            <div class="small-4 columns">
+              <b>Name</b>
+            </div>
+            <div class="small-8 columns">
+              {{ m.name }}
+            </div>
+          </div>
+        </div>
+        <div class="small-6 columns tabular">
+          <div class="row">
+            <div class="small-4 columns">
+              <b>Power state</b>
+            </div>
+            <div class="small-8 columns">
+              {{ m.power_state }}
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="small-4 columns">
+              <b>BMC</b>
+            </div>
+            <div class="small-8 columns">
+              {% if m.bmc %}
+                {% if user.admin %}
+                  <a href="{{ url_for('.bmc_admin', id=m.bmc_id) }}">{{ m.bmc.ip }}</a>
+                  &nbsp;
+                  <a href="http://{{ m.bmc.ip }}">(access BMC<i class="fa fa-external-link" style="margin-left: 0.3em; margin-right: 2px;"></i>)</a>
+                {% else %}
+                  <a href="http://{{ m.bmc.ip }}">{{ m.bmc.ip }}</a>
+                {% endif %}
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="small-4 columns">
+              <b>BMC Info</b>
+            </div>
+            <div class="small-8 columns">
+              {{ m.bmc_info }}
+            </div>
+          </div>
+        </div>
+      </div>
+      {% if user.admin %}
+      <hr/>
+      <div class="row">
+        <div class="small-6 columns tabular">
+          <div class="row">
+            <div class="small-4 columns">
+              <b>PDU</b>
+            </div>
+            <div class="small-8 columns">
+              {{ m.pdu }}
+            </div>
+          </div>
+          <div class="row">
+            <div class="small-4 columns">
+              <b>PDU port</b>
+            </div>
+            <div class="small-8 columns">
+              {{ m.pdu_port if m.pdu_port }}
+            </div>
+          </div>
+        </div>
+        <div class="small-6 columns tabular">
+          <div class="row">
+            <div class="small-4 columns">
+              <b>Serial</b>
+            </div>
+            <div class="small-8 columns">
+              {{ m.serial }}
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="small-4 columns">
+              <b>Serial port</b>
+            </div>
+            <div class="small-8 columns">
+              {{ m.serial_port if m.serial_port }}
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+      <hr/>
+      <div class="row">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>MAC</th>
+              <th>Reserved IPv4</th>
+              <th>Lease IPv4</th>
+              <th>Last seen</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for interface in m.interfaces %}
+              <tr>
+                <td>{{ interface.identifier if interface.identifier else "" }}</td>
+                <td>{{ interface.mac }}</td>
+                <td>{{ interface.static_ipv4 if interface.static_ipv4 else "" }}</td>
+                <td>{{ interface.lease.ipv4 if interface.lease else "" }}</td>
+                <td>{{ interface.lease.last_seen if interface.lease else "" }}</td>
+                <td>
+                  <a href="#" class="button tiny" style="margin-bottom: 0px;" data-reveal-id="edit-interface-{{ interface.id }}-modal"><i class="fa fa-edit" aria-hidden="true"></i></a>
+                  <a href="#" class="button tiny alert" style="margin-bottom: 0px;"  data-reveal-id="delete-interface-{{ interface.id }}-modal"><i class="fa fa-trash" aria-hidden="true"></i></a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        <table>
+
+        <a class="button tiny" data-reveal-id="create-interface-modal" href=""#"">
+          <i class="fa fa-plus" aria-hidden="true"></i>
+        </a>
+      </div>
+
+      <hr/>
+      <div class="row">
+        <div class="small-6 columns tabular">
+          <div class="row">
+            <div class="small-4 columns">
+              <b>Kernel</b>
+            </div>
+            <div class="small-8 columns">
+              {% if m.kernel %}
+                <a href="{{ url_for('.get_image_admin', id=m.kernel.id) }}">
+                  {{ m.kernel.description }} ({{ m.kernel.filename }})
+                </a>
+              {% endif %}
+            </div>
+          </div>
+          <div class="row">
+            <div class="small-4 columns">
+              <b>Kernel opts</b>
+            </div>
+            <div class="small-8 columns">
+              {{ m.kernel_opts }}
+            </div>
+          </div>
+          <div class="row">
+            <div class="small-4 columns">
+              <b>Netboot enabled?</b>
+            </div>
+            <div class="small-8 columns">
+              {% if m.netboot_enabled %}
+              <input type="checkbox" readonly disabled checked/>
+              {% else %}
+              <input type="checkbox" readonly disabled/>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        <div class="small-6 columns tabular">
+          <div class="row">
+            <div class="small-4 columns">
+              <b>Initrd</b>
+            </div>
+            <div class="small-8 columns">
+              {% if m.initrd %}<a href="{{ url_for('.get_image_admin', id=m.initrd.id) }}">{{ m.initrd.description }} ({{ m.initrd.filename }}){% endif %}</a>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="small-4 columns">
+              <b>Preseed</b>
+            </div>
+            <div class="small-8 columns">
+              {% if m.preseed_id %}<a href="{{ url_for('.get_preseed_admin', id=m.preseed_id) }}">{{ m.preseed.description }} ({{ m.preseed.filename }}){% endif %}</a>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <fieldset>
-        <p> <b>Assigned to:</b>
-           {% if m.assignment %}
-           {{ m.user.username }} </p>
+        <p>
+        <b>Assigned to:</b>
+        {% if m.assignment %}
+        {{ m.user.username }}
+        </p>
         <p> <b>Reason:</b> {{ m.assignment.reason }} </p>
         <p> <b>Since:</b> {{ m.assignment.start_date.strftime("%Y-%m-%d") }} </p>
-          {% else %}
-           No one</p>
-          {% endif %}
-        </dl>
+        {% else %}
+        No one</p>
+        {% endif %}
       </fieldset>
+
       {% if user.admin or (m.assignment and (user.id==m.user.id)) %}
       <div class="row">
         <div class="small-3 small columns">
@@ -127,7 +262,6 @@
         <form action="{{ url_for('.machine_admin', id=m.id) }}" method="POST">
         {% if user.admin %}
         {{ render_field(form.name) }}
-        {{ render_field(form.mac) }}
         {{ render_field(form.bmc_id, style="width: 100%;") }}
         {{ render_field(form.bmc_info) }}
         {{ render_field(form.pdu) }}
@@ -155,9 +289,54 @@
             </center>
           </div>
         </div>
-      </form>
-      </div>
+        </form>
         </div>
+      </div>
+
+      {% for intf in m.interfaces %}
+      <div aria-hidden="true" class="reveal-modal medium" data-reveal id="edit-interface-{{ intf.id }}-modal" role="dialog">
+        <form action="{{ url_for('.interface_edit', id=intf.id) }}" method="POST">
+        {{ render_field(form_intf[intf.id].mac) }}
+        {{ render_field(form_intf[intf.id].identifier) }}
+        {{ render_field(form_intf[intf.id].reserved_ipv4) }}
+        <div class="row">
+          <div class="small-12 columns">
+            <center>
+              <input class="button" name="button" value="Save Interface" type="submit">
+            </center>
+          </div>
+        </div>
+        </form>
+      </div>
+
+      <div aria-hidden="true" class="reveal-modal small" data-reveal id="delete-interface-{{ intf.id }}-modal" role="dialog">
+        <h2> Confirm deletion</h2>
+        <form action="{{ url_for('.interface_delete', id=intf.id) }}" method="POST">
+          <div class="row">
+            <p>Are you sure you want to delete interface <b>{{ intf.mac }}</b> and all associated data?</p>
+          </div>
+          <div class="row">
+            <input class="button alert" type="submit" value="Delete Interface"/>
+          </div>
+        </form>
+      </div>
+      {% endfor %}
+
+      <div aria-hidden="true" class="reveal-modal medium" data-reveal id="create-interface-modal" role="dialog">
+        <form action="{{ url_for('.machine_interface_create', id=m.id) }}" method="POST">
+        {{ render_field(form_intf_new.mac) }}
+        {{ render_field(form_intf_new.identifier) }}
+        {{ render_field(form_intf_new.reserved_ipv4) }}
+        <div class="row">
+          <div class="small-12 columns">
+            <center>
+              <input class="button" name="button" value="Create Interface" type="submit">
+            </center>
+          </div>
+        </div>
+        </form>
+      </div>
+
       </div>
  </section>
  <script>

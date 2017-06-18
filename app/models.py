@@ -41,22 +41,45 @@ class BMC(db.Model):
         return resolve_bmc_type(self.bmc_type)
 
 
+class Lease(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    mac = db.Column(db.String, unique=True, nullable=False)
+    ipv4 = db.Column(db.String)
+    last_seen = db.Column(db.DateTime, nullable=False)
+
+    def __init__(self, *, mac, ipv4):
+        self.mac = mac
+        self.ipv4 = ipv4
+        self.last_seen = datetime.utcnow()
+
+
+@event.listens_for(Lease.mac, 'set', retval=True)
+def set_interface_mac(target, value, oldvalue, initiator):
+    return value.lower()
+
+
 class Interface(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     mac = db.Column(db.String, unique=True, nullable=False)
-    index = db.Column(db.Integer)
-    ipv4 = db.Column(db.String)
-    machine_id = db.Column(db.Integer, db.ForeignKey("Machine.id"))
+    identifier = db.Column(db.String, nullable=True)
+    dhcpv4 = db.Column(db.Boolean)
+    static_ipv4 = db.Column(db.String, unique=True, nullable=True)
+    machine_id = db.Column(db.Integer, db.ForeignKey("machine.id", ondelete="CASCADE"))
 
-    def __init__(self, *, mac, index, ipv4, machine_id):
+    def __init__(self, *, mac, machine_id, dhcpv4=True, identifier=None, static_ipv4=None):
         self.mac = mac
-        self.index = index
-        self.ipv4 = ipv4
+        self.identifier = identifier
+        self.dhcpv4 = dhcpv4
+        self.static_ipv4 = static_ipv4
         self.machine_id = machine_id
 
     @property
     def machine(self):
         return Machine.query.get(self.machine_id)
+
+    @property
+    def lease(self):
+        return Lease.query.filter_by(mac=self.mac).first()
 
 
 @event.listens_for(Interface.mac, 'set', retval=True)
@@ -123,7 +146,7 @@ class Machine(db.Model):
 
     @property
     def interfaces(self):
-        return Interface.query.filter(machine_id=self.id).all()
+        return Interface.query.filter_by(machine_id=self.id).all()
 
     def kernel_opts_all(self, config):
         preseed_opts = self.preseed.kernel_opts(self, config) if self.preseed_id else ""

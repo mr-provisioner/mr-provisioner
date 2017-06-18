@@ -37,7 +37,7 @@
                 <a href="{{ url_for('.machine_admin', id=m.id) }}">{{ m.name }}</a>
               </td>
               <td>
-                {{ m.mac }}
+                {{ m.macs|join('\n') }}
               </td>
               <td>
                 {% if m.bmc %}<a href="{{ url_for('.bmc_admin', id=m.bmc_id) }}">{{ m.bmc.ip }}</a>{% endif %}
@@ -78,13 +78,48 @@
         <h2> New Machine </h2>
         <form action="{{ url_for('.create_machines_admin') }}" method="POST">
         {{ render_field(form.name) }}
-        {{ render_field(form.mac) }}
+        <fieldset>
+          <legend>MACs</legend>
+          <ul id="macs-edit-list" class="no-bullet">
+          {% for item in form.macs %}
+            <li>
+              <div class="row collapse">
+                <div class="small-10 columns">
+                  {{ render_field(item, label=False) }}
+                </div>
+                <div class="small-2 columns">
+                  <a href="#" class="button postfix mac-remove">Remove</a>
+                </div>
+              </div>
+            </li>
+          {% endfor %}
+          </ul>
+          <a href="#" class="button small mac-add">Add</a>
+          <script>
+            $(function() {
+              var templateHtml = $("#macs-edit-list").children().last().html();
+              var incrId = $("#macs-edit-list").children().length;
+              templateHtml = templateHtml.replace(/macs-\d+/g, "macs-{id}");
+
+              function removeHandler(ev) {
+                $(ev.target).parent().parent().parent().remove();
+                ev.preventDefault();
+              }
+
+              $("#macs-edit-list").find(".mac-remove").click(removeHandler);
+
+              $(".mac-add").off("click");
+              $(".mac-add").click(function(ev) {
+                var newItem = $('<li></li>').html(templateHtml.replace(/\{id\}/g, "" + incrId++));
+                $(newItem).find(".mac-remove").click(removeHandler);
+                $("#macs-edit-list").append(newItem);
+                ev.preventDefault();
+              });
+            });
+          </script>
+        </fieldset>
         {{ render_field(form.bmc_id, style="width: 100%;") }}
         {{ render_field(form.bmc_info) }}
-        {{ render_field(form.pdu) }}
-        {{ render_field(form.pdu_port) }}
-        {{ render_field(form.serial) }}
-        {{ render_field(form.serial_port) }}
         <div class="row">
           <div class="small-12 columns">
               <center>
