@@ -12,8 +12,8 @@ from werkzeug.datastructures import CombinedMultiDict
 from sqlalchemy.exc import IntegrityError
 
 from app import db
-from app.models import User, Token, Machine, Image, Preseed, BMC, MachineUsers, ConsoleToken, Interface, Lease
-from app.bmc_types import list_bmc_types, BMCError
+from app.models import User, Token, Machine, Image, Preseed, BMC, MachineUsers, ConsoleToken, Interface
+from app.bmc_types import BMCError
 import app.admin.validation as validations
 
 from flask import current_app as app

@@ -1,11 +1,11 @@
-from wtforms import Form, BooleanField, StringField, PasswordField, IntegerField, Field, TextField, SelectField, \
+from wtforms import Form, BooleanField, StringField, PasswordField, IntegerField, SelectField, \
     FormField, FieldList, TextAreaField
 from flask_wtf.file import FileField, FileRequired
 
 from wtforms.validators import ValidationError, AnyOf, Email, EqualTo, IPAddress, InputRequired, \
     Length, MacAddress, NumberRange, Optional, Regexp
 
-from app.models import User, Token, Machine, Image, Preseed, BMC, MachineUsers, ConsoleToken
+from app.models import User, Image, Preseed, BMC
 
 from app.bmc_types import list_bmc_types
 
@@ -15,7 +15,7 @@ def opt_int(s):
 
 
 def opt_str(s):
-    return None if s is None or s == '' else unicode(s)
+    return None if s is None or s == '' else str(s)
 
 
 class ValidImage(object):
@@ -132,7 +132,8 @@ class InterfaceForm(Form):
 class CreateMachineForm(Form):
     name = StringField("Name", [InputRequired(), Length(min=3, max=256)])
     macs = FieldList(StringField("MAC address", [Optional(),
-                                                 MacAddress(message='Must provide a valid MAC address')]), min_entries=0, max_entries=64)
+                                                 MacAddress(message='Must provide a valid MAC address')]),
+                     min_entries=0, max_entries=64)
     bmc_id = SelectField("BMC", coerce=opt_int, validators=[Optional()])
     bmc_info = StringField("BMC info", [Optional()])
     pdu = StringField("PDU", [Length(max=256)])
@@ -179,7 +180,6 @@ class ChangeMachineForm(Form):
         bmcs = BMC.query.all() if g.user.admin else []
         images = Image.all_visible(g.user)
         preseeds = Preseed.all_visible(g.user)
-        users = User.query.all()
         form.bmc_id.choices = [("", "(None)")] + \
             [(bmc.id, "%s - %s - %s" % (bmc.name, bmc.ip, bmc.bmc_type)) for bmc in bmcs]
         form.kernel_id.choices = [("", "(None)")] + \
@@ -187,7 +187,8 @@ class ChangeMachineForm(Form):
         form.initrd_id.choices = [("", "(None)")] + \
             [(i.id, "%s - %s" % (i.description, i.filename)) for i in images if i.file_type == "Initrd"]
         form.preseed_id.choices = [("", "(None)")] + \
-            [(p.id, "%s - %s%s" % (p.description, p.filename, " (known good)" if p.known_good else "")) for p in preseeds]
+            [(p.id, "%s - %s%s" % (p.description, p.filename, " (known good)" if p.known_good else ""))
+                for p in preseeds]
         form.assignee.user_id.choices = [("", "(None)")] + \
             [(u.id, u.username) for u in User.query.all()]
 
@@ -198,8 +199,11 @@ class CreateBMCForm(Form):
                             IPAddress(ipv4=True, message='Must provide ipv4 address')])
     username = StringField("Username", [Length(max=256)])
     password = StringField("Password", [Length(max=256)])
-    privilege_level = SelectField("Privilege", [AnyOf(["user", "admin"])], choices=[("user", "user"), ("admin", "admin")])
-    bmc_type = SelectField("Type", [InputRequired(), AnyOf(map(lambda t: t.name, list_bmc_types()))], choices=[(t.name, t.name) for t in list_bmc_types()])
+    privilege_level = SelectField("Privilege", [AnyOf(["user", "admin"])],
+                                  choices=[("user", "user"), ("admin", "admin")])
+    bmc_type = SelectField("Type", [InputRequired(),
+                                    AnyOf(map(lambda t: t.name, list_bmc_types()))],
+                           choices=[(t.name, t.name) for t in list_bmc_types()])
 
 
 class CreateUserForm(Form):

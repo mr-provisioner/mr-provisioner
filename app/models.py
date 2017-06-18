@@ -54,7 +54,7 @@ class Lease(db.Model):
 
 
 @event.listens_for(Lease.mac, 'set', retval=True)
-def set_interface_mac(target, value, oldvalue, initiator):
+def set_lease_mac(target, value, oldvalue, initiator):
     return value.lower()
 
 
