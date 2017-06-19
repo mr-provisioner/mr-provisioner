@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from app.bmc_types import resolve_bmc_type, BMCError
 from sqlalchemy import true, event
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.orm.exc import NoResultFound
 import binascii
 
 
@@ -58,7 +59,7 @@ class DiscoveredMAC(db.Model):
         try:
             d = DiscoveredMAC.query.filter_by(mac=mac).one()
             return d
-        except db.NoResultsFound:
+        except NoResultFound:
             return None
 
 
@@ -78,7 +79,7 @@ class Lease(db.Model):
         try:
             lease = Lease.query.filter_by(mac=mac).one()
             return lease
-        except db.NoResultsFound:
+        except NoResultFound:
             return None
 
 
@@ -115,7 +116,7 @@ class Interface(db.Model):
         try:
             interface = Interface.query.filter_by(mac=mac).one()
             return interface
-        except db.NoResultsFound:
+        except NoResultFound:
             return None
 
 
@@ -272,7 +273,7 @@ class Machine(db.Model):
         try:
             interface = Interface.query.filter_by(mac=mac).one()
             return Machine.query.get(interface.machine_id)
-        except db.NoResultsFound:
+        except NoResultFound:
             return None
 
 
