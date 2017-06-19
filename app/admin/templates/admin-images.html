@@ -1,5 +1,5 @@
 {% extends "layout.html" %}
-
+{% from "_formhelpers.html" import render_field %}
 
 {% block body %}
   {% with imagesactive="active" %}
@@ -68,50 +68,15 @@
       <div aria-hidden="true" class="reveal-modal small" data-reveal id="new-modal" role="dialog">
         <h2> Upload File </h2>
         <form action="{{ url_for('.create_images_admin') }}" method="POST" enctype="multipart/form-data">
+        {{ render_field(form.description) }}
+        {{ render_field(form.image) }}
+        {{ render_field(form.file_type) }}
+        {{ render_field(form.known_good) }}
+        {{ render_field(form.public) }}
         <div class="row">
           <div class="small-12 columns">
-            <input name="description" placeholder="Description" type="text">
-          </div>
-        </div>
-        <div class="row">
-          <div class="small-12 columns">
-            <input name="image" type="file">
-          </div>
-        </div>
-        <div class="row">
-          <div class="small-12 columns">
-            <label>
-              Type
-              <select name="file_type">
-                <option value="Kernel">Kernel</option>
-                <option value="Initrd">Initrd</option>
-              </select>
-          </div>
-        </div>
-        <div class="row">
-          <div class="small-12 columns">
-            <label>
-              Known Good
-              <select name="known_good">
-                <option value="0">No</option>
-                <option value="1">Yes</option>
-              </select>
-          </div>
-        </div>
-        <div class="row">
-          <div class="small-12 columns">
-            <label>
-              Public
-              <select name="public">
-                <option value="0">Private</option>
-                <option value="1">Public</option>
-              </select>
-          </div>
-        </div>
-        <div class="row">
-          <div class="small-12 columns">
-              <center>
-            <input class="button" name="button" value="Upload" type="submit">
+            <center>
+              <input class="button" name="button" value="Upload" type="submit">
             </center>
           </div>
         </div>

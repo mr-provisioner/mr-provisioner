@@ -3,7 +3,7 @@ from base64 import b64encode
 from os import urandom
 from datetime import datetime, timedelta
 from app.bmc_types import resolve_bmc_type, BMCError
-from sqlalchemy import true
+from sqlalchemy import true, event
 import binascii
 
 
@@ -41,10 +41,55 @@ class BMC(db.Model):
         return resolve_bmc_type(self.bmc_type)
 
 
+class Lease(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    mac = db.Column(db.String, unique=True, nullable=False)
+    ipv4 = db.Column(db.String)
+    last_seen = db.Column(db.DateTime, nullable=False)
+
+    def __init__(self, *, mac, ipv4):
+        self.mac = mac
+        self.ipv4 = ipv4
+        self.last_seen = datetime.utcnow()
+
+
+@event.listens_for(Lease.mac, 'set', retval=True)
+def set_lease_mac(target, value, oldvalue, initiator):
+    return value.lower()
+
+
+class Interface(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    mac = db.Column(db.String, unique=True, nullable=False)
+    identifier = db.Column(db.String, nullable=True)
+    dhcpv4 = db.Column(db.Boolean)
+    static_ipv4 = db.Column(db.String, unique=True, nullable=True)
+    machine_id = db.Column(db.Integer, db.ForeignKey("machine.id", ondelete="CASCADE"))
+
+    def __init__(self, *, mac, machine_id, dhcpv4=True, identifier=None, static_ipv4=None):
+        self.mac = mac
+        self.identifier = identifier
+        self.dhcpv4 = dhcpv4
+        self.static_ipv4 = static_ipv4
+        self.machine_id = machine_id
+
+    @property
+    def machine(self):
+        return Machine.query.get(self.machine_id)
+
+    @property
+    def lease(self):
+        return Lease.query.filter_by(mac=self.mac).first()
+
+
+@event.listens_for(Interface.mac, 'set', retval=True)
+def set_interface_mac(target, value, oldvalue, initiator):
+    return value.lower()
+
+
 class Machine(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, unique=True, nullable=False)
-    mac = db.Column(db.String, unique=True, nullable=False)
     pdu = db.Column(db.String)
     pdu_port = db.Column(db.Integer)
     serial = db.Column(db.String)
@@ -58,10 +103,9 @@ class Machine(db.Model):
     bmc_id = db.Column(db.Integer, db.ForeignKey("BMC.id"))
     bmc_info = db.Column(db.String)
 
-    def __init__(self, name, mac, pdu, pdu_port, serial, serial_port, kernel_id, kernel_opts,
-                 preseed_id, initrd_id, netboot_enabled, bmc_id, bmc_info):
+    def __init__(self, name, pdu=None, pdu_port=None, serial=None, serial_port=None, kernel_id=None, kernel_opts="",
+                 preseed_id=None, initrd_id=None, netboot_enabled=False, bmc_id=None, bmc_info=""):
         self.name = name
-        self.mac = mac
         self.pdu = pdu
         self.pdu_port = pdu_port
         self.serial = serial
@@ -75,9 +119,9 @@ class Machine(db.Model):
         self.bmc_info = bmc_info
 
     def __repr__(self):
-        return "<name: %s, mac: %s, kernel: %d, kernel_opts: %s," \
+        return "<name: %s, macs: %s, kernel: %d, kernel_opts: %s," \
                "initrd: %d, netboot_enabled: %b, bmc_id %d>" % (self.name,
-                                                                self.mac,
+                                                                ",".join(self.macs),
                                                                 self.kernel_id,
                                                                 self.kernel_opts,
                                                                 self.initrd_id,
@@ -95,6 +139,14 @@ class Machine(db.Model):
     @property
     def preseed(self):
         return Preseed.query.get(self.preseed_id) if self.preseed_id else None
+
+    @property
+    def macs(self):
+        return map(lambda i: i.mac, self.interfaces)
+
+    @property
+    def interfaces(self):
+        return Interface.query.filter_by(machine_id=self.id).all()
 
     def kernel_opts_all(self, config):
         preseed_opts = self.preseed.kernel_opts(self, config) if self.preseed_id else ""
@@ -178,27 +230,11 @@ class Machine(db.Model):
 
         return True
 
-    @property
-    def serialize(self):
-        """Return object data in serialized format"""
-        return {
-            'name': self.name,
-            'mac': self.mac,
-            'bmc': self.bmc,
-            'pdu': self.pdu,
-            'pdu_port': self.pdu_port,
-            'serial': self.serial,
-            'serial_port': self.serial_port,
-            'kernel': self.kernel,
-            'kernel_opts': self.kernel_opts,
-            'initrd': self.initrd,
-            'netboot_enabled': self.netboot_enabled
-        }
-
     @staticmethod
     def by_mac(mac):
         try:
-            return db.session.query(Machine).filter_by(mac=mac).one()
+            interface = Interface.query.filter_by(mac=mac).one()
+            return Machine.query.get(interface.machine_id)
         except db.NoResultsFound:
             return None
 

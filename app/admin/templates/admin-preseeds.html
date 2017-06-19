@@ -1,5 +1,5 @@
 {% extends "layout.html" %}
-
+{% from "_formhelpers.html" import render_field %}
 
 {% block body %}
   {% with preseedsactive="active" %}
@@ -70,60 +70,14 @@
       <div aria-hidden="true" class="reveal-modal xlarge" data-reveal id="new-modal" role="dialog">
         <h2> Upload Preseed </h2>
         <form action="{{ url_for('.create_preseeds_admin') }}" method="POST" enctype="multipart/form-data">
-        <div class="row">
-          <div class="small-12 columns">
-	    <label>
-	      Filename
-              <input name="filename" type="text">
-	    </label>
-          </div>
-        </div>
-        <div class="row">
-          <div class="small-12 columns">
-	    <label>
-	      Description
-              <input name="description" type="text">
-	    </label>
-          </div>
-        </div>
-        <div class="row">
-          <div class="small-12 columns">
-	    <label>
-	      Content
-              <textarea name="file_content" rows="10" style="width: 100%;"></textarea>
-	    </label>
-          </div>
-        </div>
-        <div class="row">
-          <div class="small-12 columns">
-            <label>
-              Type
-              <select name="file_type">
-                <option value="kickstart">Kickstart</option>
-		<option value="preseed">Preseed</option>
-              </select>
-          </div>
-        </div>
-        <div class="row">
-          <div class="small-12 columns">
-            <label>
-              Known Good
-              <select name="known_good">
-                <option value="0">No</option>
-                <option value="1">Yes</option>
-              </select>
-          </div>
-        </div>
-        <div class="row">
-          <div class="small-12 columns">
-            <label>
-              Public
-              <select name="public">
-                <option value="0">Private</option>
-                <option value="1">Public</option>
-              </select>
-          </div>
-        </div>
+        {{ render_field(form.filename) }}
+        {{ render_field(form.description) }}
+        {{ render_field(form.file_content,
+                        extra_label_html='<div style="font-family: monospace;">you can use jinja syntax for inserting your ssh key: {{ ssh_key }}</div>',
+                        rows="10", style="width: 100%;font-family: monospace;") }}
+        {{ render_field(form.file_type) }}
+        {{ render_field(form.known_good) }}
+        {{ render_field(form.public) }}
         <div class="row">
           <div class="small-12 columns">
               <center>

@@ -1,5 +1,5 @@
 {% extends "layout.html" %}
-
+{% from "_formhelpers.html" import render_field %}
 
 {% block body %}
   {% with bmcactive="active" %}
@@ -60,77 +60,16 @@
         <div aria-hidden="true" class="reveal-modal small" data-reveal id="edit-modal" role="dialog">
           <h2> Edit BMC </h2>
           <form action="{{ url_for('.edit_bmc', id=bmc.id) }}" method="POST">
+          {{ render_field(form.bmc_type) }}
+          {{ render_field(form.name) }}
+          {{ render_field(form.ip) }}
+          {{ render_field(form.username) }}
+          {{ render_field(form.password) }}
+          {{ render_field(form.privilege_level) }}
           <div class="row">
             <div class="small-12 columns">
-              <label>
-                Name
-                <input name="name" type="text" value="{{ bmc.name }}">
-              </label>
-            </div>
-          </div>
-          <div class="row">
-            <div class="small-12 columns">
-              <label>
-                IP
-                <input name="ip" type="text" value="{{ bmc.ip }}">
-              </label>
-            </div>
-          </div>
-          <div class="row">
-            <div class="small-12 columns">
-              <label>
-                Username
-                <input name="username" type="text" value="{{ bmc.username }}">
-              </label>
-            </div>
-          </div>
-          <div class="row">
-            <div class="small-12 columns">
-              <label>
-                Password
-                <input name="password" value="{{ bmc.password }}" type="text">
-              </label>
-            </div>
-          </div>
-          <div class="row">
-            <div class="small-12 columns">
-              <label>
-                Privilege Level
-                <select name="privilege_level">
-                {% if bmc.privilege_level == "admin" %}
-          	<option value="admin" selected="selected">Admin</option>
-                {% else %}
-          	<option value="admin">Admin</option>
-                {%endif %}
-                {% if bmc.privilege_level == "user" %}
-          	<option value="user" selected="selected">User</option>
-                {% else %}
-          	<option value="user">User</option>
-                {%endif %}
-                </select>
-              </label>
-            </div>
-          </div>
-          <div class="row">
-            <div class="small-12 columns">
-              <label>
-                BMC Type
-                <select name="bmc_type">
-                  {% for bmc_type in bmc_types %}
-                  <option value="{{bmc_type.name}}"
-          	  {% if bmc.bmc_type == bmc_type.name %}
-          	  selected="selected"
-          	  {% endif %}
-          	  >{{bmc_type.name}}</option>
-                  {% endfor %}
-                </select>
-              </label>
-            </div>
-          </div>
-          <div class="row">
-            <div class="small-12 columns">
-                <center>
-              <input class="button" name="button" value="Save BMC" type="submit">
+              <center>
+                <input class="button" name="button" value="Save BMC" type="submit">
               </center>
             </div>
           </div>

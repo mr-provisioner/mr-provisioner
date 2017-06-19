@@ -36,3 +36,7 @@ table {
 .icon-button {
   font-size: 18px !important;
 }
+
+.tabular > .row {
+  margin-bottom: 1em;
+}

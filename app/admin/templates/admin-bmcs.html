@@ -1,5 +1,5 @@
 {% extends "layout.html" %}
-
+{% from "_formhelpers.html" import render_field %}
 
 {% block body %}
   {% with bmcactive="active" %}
@@ -44,61 +44,12 @@
       <div aria-hidden="true" class="reveal-modal small" data-reveal id="new-modal" role="dialog">
         <h2> New BMC </h2>
         <form action="{{ url_for('.create_bmc_admin') }}" method="POST">
-        <div class="row">
-          <div class="small-12 columns">
-            <label>
-              Name
-              <input name="name" type="text" value="">
-            </label>
-          </div>
-        </div>
-        <div class="row">
-          <div class="small-12 columns">
-            <label>
-              IP
-              <input name="ip" type="text" value="">
-            </label>
-          </div>
-        </div>
-        <div class="row">
-          <div class="small-12 columns">
-            <label>
-              Username
-              <input name="username" type="text" value="">
-            </label>
-          </div>
-        </div>
-        <div class="row">
-          <div class="small-12 columns">
-            <label>
-              Password
-              <input name="password" value="" type="text">
-            </label>
-          </div>
-        </div>
-        <div class="row">
-          <div class="small-12 columns">
-            <label>
-              Privilege Level
-	      <select name="privilege_level">
-		<option value="admin">Admin</option>
-		<option value="user">User</option>
-	      </select>
-            </label>
-          </div>
-        </div>
-        <div class="row">
-          <div class="small-12 columns">
-            <label>
-              BMC Type
-	      <select name="bmc_type">
-                {% for bmc_type in bmc_types %}
-                <option value="{{bmc_type.name}}">{{bmc_type.name}}</option>
-                {% endfor %}
-	      </select>
-            </label>
-          </div>
-        </div>
+        {{ render_field(form.bmc_type) }}
+        {{ render_field(form.name) }}
+        {{ render_field(form.ip) }}
+        {{ render_field(form.username) }}
+        {{ render_field(form.password) }}
+        {{ render_field(form.privilege_level) }}
         <div class="row">
           <div class="small-12 columns">
               <center>

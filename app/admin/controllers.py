@@ -12,8 +12,8 @@ from werkzeug.datastructures import CombinedMultiDict
 from sqlalchemy.exc import IntegrityError
 
 from app import db
-from app.models import User, Token, Machine, Image, Preseed, BMC, MachineUsers, ConsoleToken
-from app.bmc_types import list_bmc_types, BMCError
+from app.models import User, Token, Machine, Image, Preseed, BMC, MachineUsers, ConsoleToken, Interface
+from app.bmc_types import BMCError
 import app.admin.validation as validations
 
 from flask import current_app as app
@@ -276,7 +276,8 @@ def edit_user(id):
 
 @mod.route('/preseeds', methods=['GET'])
 def get_preseeds_admin():
-    return render_template("admin-preseeds.html", preseeds=Preseed.all_visible(g.user))
+    form = validations.CreatePreseedForm()
+    return render_template("admin-preseeds.html", form=form, preseeds=Preseed.all_visible(g.user))
 
 
 @mod.route('/preseeds/create', methods=['POST'])
@@ -284,8 +285,7 @@ def create_preseeds_admin():
     logger.info("Preseed uploaded by %s" % g.user.username)
     form = validations.CreatePreseedForm(request.form)
     if form.validate():
-        random_suffix = binascii.hexlify(os.urandom(4)).decode('utf-8')
-        filename = "%s.%s" % (secure_filename(form.filename.data), random_suffix)
+        filename = secure_filename(form.filename.data)
 
         new_preseed = Preseed(filename=os.path.join(secure_filename(g.user.username), filename),
                               description=form.description.data,
@@ -311,14 +311,20 @@ def create_preseeds_admin():
 @mod.route('/preseeds/<id>', methods=['GET'])
 def get_preseed_admin(id):
     preseed = Preseed.query.get(id)
+    form = validations.ChangePreseedForm()
+    form.description.data = preseed.description
+    form.file_type.data = preseed.file_type
+    form.file_content.data = preseed.file_content
+    form.known_good.data = preseed.known_good
+    form.public.data = preseed.public
 
-    return render_template("admin-preseed.html", preseed=preseed)
+    return render_template("admin-preseed.html", form=form, preseed=preseed)
 
 
 @mod.route('/preseeds/<id>/edit', methods=['POST'])
 def edit_preseed(id):
     logger.info("Preseed modified by %s" % g.user.username)
-    form = validations.CreatePreseedForm(request.form)
+    form = validations.ChangePreseedForm(request.form)
     if form.validate():
         preseed = Preseed.query.get(id)
         if not preseed:
@@ -373,7 +379,8 @@ def delete_preseed(id):
 
 @mod.route('/images', methods=['GET'])
 def get_images_admin():
-    return render_template("admin-images.html", images=Image.all_visible(g.user))
+    form = validations.CreateImageForm()
+    return render_template("admin-images.html", form=form, images=Image.all_visible(g.user))
 
 
 @mod.route('/images/create', methods=['POST'])
@@ -417,7 +424,13 @@ def create_images_admin():
 @mod.route('/images/<id>', methods=['GET'])
 def get_image_admin(id):
     image = Image.query.get(id)
-    return render_template("admin-image.html", image=image)
+    form = validations.ChangeMetadataImageForm()
+    form.description.data = image.description
+    form.file_type.data = image.file_type
+    form.known_good.data = image.known_good
+    form.public.data = image.public
+
+    return render_template("admin-image.html", form=form, image=image)
 
 
 @mod.route('/images/<id>/edit', methods=['POST'])
@@ -489,8 +502,9 @@ def get_bmc_admin():
         return redirect(url_for('.get_machines_admin'))
 
     bmc = BMC.query.all()
+    form = validations.CreateBMCForm()
 
-    return render_template("admin-bmcs.html", bmcs=bmc, bmc_types=list_bmc_types())
+    return render_template("admin-bmcs.html", bmcs=bmc, form=form)
 
 
 @mod.route('/bmc/create', methods=['POST'])
@@ -526,8 +540,16 @@ def create_bmc_admin():
 def bmc_admin(id):
 
     bmc = BMC.query.get(id)
+    form = validations.CreateBMCForm()
 
-    return render_template("admin-bmc.html", bmc=bmc, bmc_types=list_bmc_types())
+    form.name.data = bmc.name if bmc.name else ""
+    form.ip.data = bmc.ip if bmc.ip else ""
+    form.username.data = bmc.username if bmc.username else ""
+    form.password.data = bmc.password if bmc.password else ""
+    form.privilege_level.data = bmc.privilege_level if bmc.privilege_level else "admin"
+    form.bmc_type.data = bmc.bmc_type
+
+    return render_template("admin-bmc.html", bmc=bmc, form=form)
 
 
 @mod.route('/bmc/<id>/edit', methods=['POST'])
@@ -584,11 +606,13 @@ def delete_bmc(id):
 def get_machines_admin():
     machines = Machine.query.all()
 
+    form = validations.CreateMachineForm()
+    validations.CreateMachineForm.populate_choices(form, g)
+    form.macs.append_entry()
+
     return render_template("admin-machines.html",
-                           machines=machines,
-                           preseeds=Preseed.query.all(),
-                           bmcs=BMC.query.all(),
-                           images=Image.query.all())
+                           form=form,
+                           machines=machines)
 
 
 @mod.route('/machines/create', methods=['POST'])
@@ -601,22 +625,18 @@ def create_machines_admin():
 
     logger.info("Machine added by %s" % g.user.username)
     form = validations.CreateMachineForm(request.form)
+    validations.CreateMachineForm.populate_choices(form, g)
     if form.validate():
         # XXX: Think about adding a new object for PDU and Serial
         logger.info("after validation")
         new_machine = Machine(name=form.name.data,
-                              mac=form.mac.data,
                               bmc_id=form.bmc_id.data,
                               bmc_info=form.bmc_info.data,
                               pdu=form.pdu.data,
                               pdu_port=form.pdu_port.data,
                               serial=form.serial.data,
                               serial_port=form.serial_port.data,
-                              kernel_id=form.kernel_id.data,
-                              kernel_opts=form.kernel_opts.data,
-                              initrd_id=form.initrd_id.data,
-                              preseed_id=form.preseed_id.data,
-                              netboot_enabled=form.netboot_enabled.data)
+                              netboot_enabled=False)
         db.session.add(new_machine)
         try:
             db.session.commit()
@@ -624,40 +644,54 @@ def create_machines_admin():
         except IntegrityError as e:
             db.session.rollback()
             flash('Integrity Error: either name or MAC are not unique', 'error')
+            return redirect(url_for('.get_machines_admin'))
+
+        db.session.refresh(new_machine)
+
+        for mac_field in form.macs:
+            mac = mac_field.data
+            if mac and mac != '':
+                new_interface = Interface(machine_id=new_machine.id, mac=mac)
+                db.session.add(new_interface)
+                try:
+                    db.session.commit()
+                except IntegrityError as e:
+                    db.session.rollback()
+                    flash('Integrity Error: failed to add mac: %s' % mac, 'error')
+
     else:
         flash_form_errors(form)
 
     return redirect(url_for('.get_machines_admin'))
 
 
-@mod.route('/machines/<id>', methods=['GET'])
-def get_machine_admin(id):
+@mod.route('/machines/<id>', methods=['GET', 'POST'])
+def machine_admin(id):
     machine = Machine.query.get(id)
-    return render_template("admin-machine.html",
-                           m=machine,
-                           images=Image.all_visible(g.user),
-                           bmcs=BMC.query.all(),
-                           preseeds=Preseed.all_visible(g.user),
-                           users=User.query.all())
+    if not machine:
+        flash("Machine does not exist", "error")
+        return redirect(url_for('.get_machines_admin'))
 
-
-@mod.route('/machines/<id>/edit', methods=['POST'])
-def edit_machine(id):
-    logger.info("Machine modified by %s" % g.user.username)
     form = validations.ChangeMachineForm(request.form)
-    if form.validate():
-        machine = Machine.query.get(id)
-        if not machine:
-            flash("Machine does not exist", "error")
-            return redirect(url_for('.get_machines_admin'))
+    validations.ChangeMachineForm.populate_choices(form, g, machine)
 
+    form_intf_new = validations.InterfaceForm()
+
+    form_intf = {}
+    for intf in machine.interfaces:
+        form_intf[intf.id] = validations.InterfaceForm()
+        form_intf[intf.id].identifier.data = intf.identifier
+        form_intf[intf.id].mac.data = intf.mac
+        form_intf[intf.id].dhcpv4.data = intf.dhcpv4
+        form_intf[intf.id].reserved_ipv4.data = intf.static_ipv4
+
+    if request.method == 'POST' and form.validate():
         if not g.user.admin and not (g.user.id in map(lambda u: u.id, machine.assignees)):
             flash('Permission denied', 'error')
-            return redirect(url_for('.get_machine_admin', id=id))
+            return redirect(url_for('.machine_admin', id=id))
 
         if g.user.admin:
             machine.name = form.name.data
-            machine.mac = form.mac.data
             machine.pdu = None if not form.pdu.data else form.pdu.data
             machine.pdu_port = None if not form.pdu_port.data else form.pdu_port.data
             machine.serial = None if not form.serial.data else form.serial.data
@@ -677,7 +711,7 @@ def edit_machine(id):
         except BMCError as e:
             db.session.rollback()
             flash(str(e), 'error')
-            return redirect(url_for('.get_machine_admin', id=id))
+            return redirect(url_for('.machine_admin', id=id))
 
         try:
             db.session.commit()
@@ -688,23 +722,16 @@ def edit_machine(id):
 
         # XXX: Add to log table assignment
         if g.user.admin:
-            if request.form['assignee'] == "":
-                # remove from the DB if it exists
+            if form.assignee.user_id.data:
                 assignment = MachineUsers.query.filter_by(machine_id=id).first()
                 if assignment:
-                    db.session.delete(assignment)
-                    db.session.commit()
-                    flash('Machine unassigned', 'success')
-            else:
-                assignment = MachineUsers.query.filter_by(machine_id=id).first()
-                if assignment:
-                    assignment.user_id = int(request.form['assignee'])
-                    assignment.reason = request.form['reason']
+                    assignment.user_id = form.assignee.user_id.data
+                    assignment.reason = form.assignee.reason.data
                 else:
                     assignment = MachineUsers(machine_id=id,
-                                              user_id=int(request.form['assignee']),
+                                              user_id=form.assignee.user_id.data,
                                               permissions=0,
-                                              reason=request.form['reason'])
+                                              reason=form.assignee.reason.data)
                     db.session.add(assignment)
                 try:
                     db.session.commit()
@@ -712,11 +739,39 @@ def edit_machine(id):
                 except IntegrityError as e:
                     db.session.rollback()
                     flash("Integrity Error: %s" % str(e), 'error')
+            else:
+                # remove from the DB if it exists
+                assignment = MachineUsers.query.filter_by(machine_id=id).first()
+                if assignment:
+                    db.session.delete(assignment)
+                    db.session.commit()
+                    flash('Machine unassigned', 'success')
 
-    else:
+        db.session.refresh(machine)
+
+    elif request.method == 'POST':
         flash_form_errors(form)
 
-    return redirect(url_for('.get_machine_admin', id=id))
+    form.name.data = machine.name
+    form.bmc_id.data = machine.bmc_id
+    form.bmc_info.data = machine.bmc_info
+    form.pdu.data = machine.pdu
+    form.pdu_port.data = machine.pdu_port
+    form.serial.data = machine.serial
+    form.serial_port.data = machine.serial_port
+    form.kernel_id.data = machine.kernel_id
+    form.kernel_opts.data = machine.kernel_opts
+    form.initrd_id.data = machine.initrd_id
+    form.preseed_id.data = machine.preseed_id
+    form.netboot_enabled.data = machine.netboot_enabled
+    form.assignee.reason.data = machine.assignment.reason if machine.assignment else ""
+    form.assignee.user_id.data = machine.user.id if machine.user else ""
+
+    return render_template("admin-machine.html",
+                           form=form,
+                           form_intf_new=form_intf_new,
+                           form_intf=form_intf,
+                           m=machine)
 
 
 @mod.route('/machines/<id>/reboot', methods=['GET', 'POST'])
@@ -735,7 +790,7 @@ def reboot_machine(id):
     machine.reboot()
     flash('Successfully rebooted machine', 'success')
 
-    return redirect(url_for('.get_machine_admin', id=id))
+    return redirect(url_for('.machine_admin', id=id))
 
 
 @mod.route('/machines/<id>/pxe_reboot', methods=['GET', 'POST'])
@@ -755,7 +810,7 @@ def pxe_reboot_machine(id):
     machine.pxe_reboot()
     flash('Successfully PXE-rebooted machine', 'success')
 
-    return redirect(url_for('.get_machine_admin', id=id))
+    return redirect(url_for('.machine_admin', id=id))
 
 
 @mod.route('/machines/<id>/delete', methods=['POST'])
@@ -813,7 +868,93 @@ def reset_console(id):
     machine.deactivate_sol()
     flash('Successfully deactivated console', 'success')
 
-    return redirect(url_for('.get_machine_admin', id=id))
+    return redirect(url_for('.machine_admin', id=id))
+
+
+@mod.route('/interfaces/<id>', methods=['POST'])
+def interface_edit(id):
+    intf = Interface.query.get(id)
+    if not intf:
+        flash("Interface does not exist", "error")
+        return redirect(url_for('.get_machines_admin'))
+
+    machine = intf.machine
+
+    if not machine.check_permission(g.user, 'assignee'):
+        flash('Permission denied', 'error')
+        return redirect(url_for('.get_machines_admin'))
+
+    form = validations.InterfaceForm(request.form)
+    if form.validate():
+        intf.identifier = form.identifier.data
+        intf.dhcpv4 = True
+        intf.static_ipv4 = form.reserved_ipv4.data
+
+        if machine.check_permission(g.user, 'admin'):
+            intf.mac = form.mac.data
+
+        try:
+            db.session.commit()
+            flash('Interface modified successfully', 'success')
+        except IntegrityError as e:
+            db.session.rollback()
+            flash('Integrity Error: MAC and static IP must be unique', 'error')
+    else:
+        flash_form_errors(form)
+
+    return redirect(url_for('.machine_admin', id=machine.id))
+
+
+@mod.route('/interfaces/<id>/delete', methods=['POST'])
+def interface_delete(id):
+    intf = Interface.query.get(id)
+    if not intf:
+        flash("Interface does not exist", "error")
+        return redirect(url_for('.get_machines_admin'))
+
+    machine = intf.machine
+
+    if not machine.check_permission(g.user, 'admin'):
+        flash('Permission denied', 'error')
+        return redirect(url_for('.get_machines_admin'))
+
+    db.session.delete(intf)
+    db.session.commit()
+    flash('Interface deleted', 'success')
+
+    return redirect(url_for('.machine_admin', id=machine.id))
+
+
+@mod.route('/machines/<id>/interface_create', methods=['POST'])
+def machine_interface_create(id):
+    machine = Machine.query.get(id)
+    if not machine:
+        flash("Machine does not exist", "error")
+        return redirect(url_for('.get_machines_admin'))
+
+    if not machine.check_permission(g.user, 'admin'):
+        flash('Permission denied', 'error')
+        return redirect(url_for('.get_machines_admin'))
+
+    form = validations.InterfaceForm(request.form)
+    if form.validate():
+        new_intf = Interface(identifier=form.identifier.data,
+                             mac=form.mac.data,
+                             dhcpv4=True,
+                             static_ipv4=form.reserved_ipv4.data,
+                             machine_id=machine.id)
+        db.session.add(new_intf)
+        try:
+            db.session.commit()
+            flash('Interface added successfully', 'success')
+        except IntegrityError as e:
+            db.session.rollback()
+            flash('Integrity Error: either MAC or reserved IP not unique', 'error')
+            return redirect(url_for('.machine_admin', id=machine.id))
+    else:
+        flash_form_errors(form)
+
+    return redirect(url_for('.machine_admin', id=machine.id))
 
 
 @mod.route('/ws-subprocess', methods=['GET'])
