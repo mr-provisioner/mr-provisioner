@@ -78,7 +78,7 @@
           <form action="{{ url_for('.edit_preseed', id=preseed.id) }}" method="POST">
           {{ render_field(form.description) }}
           {{ render_field(form.file_content,
-                          extra_label_html='<div style="font-family: monospace;">you can use jinja syntax for inserting your ssh key: {{ ssh_key }}</div>',
+                          extra_label_html='<div style="font-family: monospace;">you can use jinja syntax for inserting your ssh key: {{ ssh_key }}, as well as the machine name: {{ hostname }}</div>',
                           rows="10", style="width: 100%;font-family: monospace;") }}
           {{ render_field(form.file_type) }}
           {{ render_field(form.known_good) }}

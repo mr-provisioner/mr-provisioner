@@ -25,4 +25,4 @@ def get_preseed(machine_id):
         user = User.query.first() # if no assignment, a random user is chosen
 
     template = jinja2.Template(preseed.file_content)
-    return Response(template.render(ssh_key=user.ssh_key), mimetype='text/plain')
+    return Response(template.render(ssh_key=user.ssh_key, hostname=machine.name), mimetype='text/plain')
