@@ -1,7 +1,6 @@
 *.pyc
 *.swp
 *.swo
-*.db
 *.swn
 *.tox
 

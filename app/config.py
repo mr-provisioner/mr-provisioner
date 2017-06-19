@@ -56,6 +56,8 @@ def apply_config(app, config_file):
         BANNER_NAME=config.get('ui', 'banner_name', fallback='mr-provisioner'),
         TFTP_JINJA_ENV=tftp_jinja_env,
         TFTP_ROOT=config.get('files', 'TFTPRoot'),
+        DHCP_TFTP_PROXY_HOST=config.get('dhcp', 'tftp_proxy_host'),
+        DHCP_DEFAULT_BOOTFILE=config.get('dhcp', 'default_bootfile', fallback=''),
         WSS_EXT_HOST=config.get('wssubprocess', 'ext_host', fallback=''),
         WSS_EXT_PORT=int(config.get('wssubprocess', 'ext_port', fallback=8866)),
         CONTROLLER_ACCESS_URI=config.get('controller', 'access_uri'),
