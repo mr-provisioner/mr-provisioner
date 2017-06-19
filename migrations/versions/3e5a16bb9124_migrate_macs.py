@@ -7,7 +7,9 @@ Create Date: 2017-06-18 07:25:08.653971
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.orm import sessionmaker
 
+Session = sessionmaker()
 
 # revision identifiers, used by Alembic.
 revision = '3e5a16bb9124'
