@@ -105,7 +105,7 @@ def seen():
         # Already assigned, don't care.
         return "", 200
 
-    options = {o.option: o.value for o in data['options']}
+    options = {o['option']: o['value'] for o in data['options']}
 
     info = {}
 
