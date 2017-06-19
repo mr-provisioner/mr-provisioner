@@ -16,23 +16,31 @@ branch_labels = None
 depends_on = None
 
 
-from app import db
 from app.models import Machine, Interface
 
 
 def upgrade():
+    bind = op.get_bind()
+    session = Session(bind=bind)
+
     s = sa.sql.text('SELECT id, mac FROM machine').\
         columns(id=sa.Integer, mac=sa.String)
-    for id, mac in db.session.execute(s):
+    for id, mac in session.execute(s):
         if mac and mac != '':
             intf = Interface(machine_id=id, mac=mac)
-            db.session.add(intf)
-            db.session.commit()
+            session.add(intf)
+
+    session.commit()
 
 
 def downgrade():
+    bind = op.get_bind()
+    session = Session(bind=bind)
+
     for m in Machine.query.all():
         macs = m.macs
         if len(macs) > 0:
             s = sa.sql.text('UPDATE machine SET mac=:mac WHERE id=:id')
-            db.session.execute(s, mac=macs[0], id=m.id)
+            session.execute(s, mac=macs[0], id=m.id)
+
+    session.commit()
