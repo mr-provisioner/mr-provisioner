@@ -133,7 +133,9 @@
                 <td>{{ interface.lease.ipv4 if interface.lease else "" }}</td>
                 <td>{{ interface.lease.last_seen if interface.lease else "" }}</td>
                 <td>
-                  <a href="#" class="button tiny" style="margin-bottom: 0px;" data-reveal-id="edit-interface-{{ interface.id }}-modal"><i class="fa fa-edit" aria-hidden="true"></i></a>
+                  {% if user.admin or (m.assignment and (user.id==m.user.id)) %}
+                    <a href="#" class="button tiny" style="margin-bottom: 0px;" data-reveal-id="edit-interface-{{ interface.id }}-modal"><i class="fa fa-edit" aria-hidden="true"></i></a>
+                  {% endif %}
 
                   {% if user.admin %}
                     <a href="#" class="button tiny alert" style="margin-bottom: 0px;"  data-reveal-id="delete-interface-{{ interface.id }}-modal"><i class="fa fa-trash" aria-hidden="true"></i></a>

@@ -37,7 +37,7 @@
                 <a href="{{ url_for('.machine_admin', id=m.id) }}">{{ m.name }}</a>
               </td>
               <td>
-                {{ m.macs|join('\n') }}
+                {{ m.macs|join(', ') }}
               </td>
               <td>
                 {% if m.bmc %}<a href="{{ url_for('.bmc_admin', id=m.bmc_id) }}">{{ m.bmc.ip }}</a>{% endif %}
