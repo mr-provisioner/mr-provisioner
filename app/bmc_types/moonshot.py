@@ -37,6 +37,10 @@ class MoonshotBMC(BMCType):
     def set_power(self, machine, power_state):
         bmc = machine.bmc
         try:
+            # Moonshot reacts with error "Unknown (0x80)" to "chassis power reset" command
+            # "chassis power cycle" reboots machine everytime
+            if power_state == "reset":
+                power_state = "cycle"
             set_power(power_state, host=bmc.ip, username=bmc.username, password=bmc.password,
                       bridge_info=self.get_bridge_info(machine))
         except IPMIError as e:
