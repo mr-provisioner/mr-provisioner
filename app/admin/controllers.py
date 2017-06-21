@@ -474,23 +474,30 @@ def delete_image(id):
         flash('Permission denied', 'error')
         return redirect(url_for('.get_images_admin'))
 
-    filename = os.path.join(app.config['TFTP_ROOT'], image.filename)
+    machines = Machine.query.filter_by(kernel_id=image.id).all()
+    for m in machines:
+        m.kernel_id = None
+
+    machines = Machine.query.filter_by(initrd_id=image.id).all()
+    for m in machines:
+        m.initrd_id = None
+
     try:
-        os.remove(filename)
-
-        machines = Machine.query.filter_by(kernel=image.id).all()
-        for m in machines:
-            m.kernel_id = None
-
-        machines = Machine.query.filter_by(initrd=image.id).all()
-        for m in machines:
-            m.initrd_id = None
-
         db.session.delete(image)
         db.session.commit()
         flash('Image and metadata deleted', 'success')
+    except IntegrityError as e:
+        db.session.rollback()
+        flash("Integrity Error: %s" % str(e), "error")
+        return redirect(url_for('.get_images_admin'))
+
+    filename = os.path.join(app.config['TFTP_ROOT'], image.filename)
+    try:
+        os.remove(filename)
     except OSError as e:
-        flash("Error removing file from filesystem: %s" % str(e), 'error')
+        # Errno 2 means the file was not there, no need to delete it
+        if e.errno != 2:
+            flash("Error removing file from filesystem: %s" % str(e), 'error')
 
     return redirect(url_for('.get_images_admin'))
 
