@@ -628,7 +628,19 @@ def create_machines_admin():
     validations.CreateMachineForm.populate_choices(form, g)
     if form.validate():
         # XXX: Think about adding a new object for PDU and Serial
-        logger.info("after validation")
+
+        if form.bmc_id.data:
+            bmc = BMC.query.get(form.bmc_id.data)
+            if bmc is None:
+                flash('BMC with id=%d does not exist' % form.bmc_id.data)
+                return redirect(url_for('.get_machines_admin'))
+
+            try:
+                bmc.type_inst.validate_bmc_info(form.bmc_info.data)
+            except BMCError as e:
+                flash(str(e), 'error')
+                return redirect(url_for('.get_machines_admin'))
+
         new_machine = Machine(name=form.name.data,
                               bmc_id=form.bmc_id.data,
                               bmc_info=form.bmc_info.data,
