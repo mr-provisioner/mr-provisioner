@@ -82,7 +82,16 @@ And finally, start up `mr-provisioner`::
 
     ./run.py -c /path/to/your/config.ini tornado -h 0.0.0.0 -p 5000
 
-For a proper setup, see :doc:`deploy`.
+Next steps
+-----------
+
+mr-provisioner can be used with any DHCP server, but works best with `Kea`_ and the mr-provisioner-kea plugin. See :doc:`kea` for more information. Some of the features that are only enabled with `Kea`_ include:
+
+ - Showing DHCP IP lease in the UI
+ - Assigning static/reserved IPs to machines
+
+For additional deployment instructions, see :doc:`deploy`.
 
 .. _ws-subprocess: https://github.com/bwalex/ws-subprocess
 .. _tftp-http-proxy: https://github.com/bwalex/tftp-http-proxy
+.. _Kea: https://www.isc.org/kea/
