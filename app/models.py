@@ -94,14 +94,16 @@ class Interface(db.Model):
     identifier = db.Column(db.String, nullable=True)
     dhcpv4 = db.Column(db.Boolean)
     static_ipv4 = db.Column(db.String, unique=True, nullable=True)
+    reserved_ipv4 = db.Column(db.String, unique=True, nullable=True)
     machine_id = db.Column(db.Integer, db.ForeignKey("machine.id", ondelete="CASCADE"))
     network_id = db.Column(db.Integer, db.ForeignKey("network.id", ondelete="SET NULL"), nullable=True)
 
-    def __init__(self, *, mac, machine_id, dhcpv4=True, identifier=None, static_ipv4=None):
+    def __init__(self, *, mac, machine_id, dhcpv4=True, identifier=None, static_ipv4=None, reserved_ipv4=None):
         self.mac = mac
         self.identifier = identifier
         self.dhcpv4 = dhcpv4
         self.static_ipv4 = static_ipv4
+        self.reserved_ipv4 = reserved_ipv4
         self.machine_id = machine_id
         self.network_id = None
 
@@ -112,6 +114,10 @@ class Interface(db.Model):
     @property
     def lease(self):
         return Lease.query.filter_by(mac=self.mac).first()
+
+    @property
+    def network(self):
+        return Network.query.get(self.network_id)
 
     @staticmethod
     def by_mac(mac):
