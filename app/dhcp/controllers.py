@@ -166,9 +166,7 @@ def subnet():
     use_reserved = True if not use_static and interface.reserved_ipv4 else False
 
     expected_subnet = None
-    if use_static:
-        expected_subnet = ipaddress.IPv4Network(interface.network.static_net)
-    elif use_reserved:
+    if use_reserved:
         expected_subnet = ipaddress.IPv4Network(interface.network.reserved_net)
 
     logger.info('expected_subnet: %s' % expected_subnet)
