@@ -126,7 +126,7 @@ class InterfaceForm(Form):
     identifier = StringField("Interface identifier", [Optional()])
     mac = StringField("MAC", [InputRequired(), MacAddress(message='Must provide a valid MAC address')])
     dhcpv4 = BooleanField("DHCP v4", false_values=('false', '', '0'), default=True)
-    reserved_ipv4 = NullableStringField("static IPv4", [Optional(), IPAddress(ipv4=True)])
+    reserved_ipv4 = NullableStringField("Reserved IPv4", [Optional(), IPAddress(ipv4=True)])
 
 
 class CreateMachineForm(Form):

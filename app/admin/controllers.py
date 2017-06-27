@@ -907,14 +907,16 @@ def interface_edit(id):
     if form.validate():
         intf.identifier = form.identifier.data
         intf.dhcpv4 = True
-        intf.reserved_ipv4 = form.reserved_ipv4.data
+        if form.reserved_ipv4.data:
+            # intf.reserved_ipv4 = form.reserved_ipv4.data
+            flash('Reserved ip cannot be set currently, this is WIP', 'error')
 
         if machine.check_permission(g.user, 'admin'):
             intf.mac = form.mac.data
 
         try:
             db.session.commit()
-            flash('Interface modified successfully', 'success')
+            flash('Interface saved', 'success')
         except IntegrityError as e:
             db.session.rollback()
             flash('Integrity Error: MAC and static IP must be unique', 'error')
