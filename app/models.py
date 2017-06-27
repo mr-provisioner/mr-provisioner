@@ -95,6 +95,7 @@ class Interface(db.Model):
     dhcpv4 = db.Column(db.Boolean)
     static_ipv4 = db.Column(db.String, unique=True, nullable=True)
     machine_id = db.Column(db.Integer, db.ForeignKey("machine.id", ondelete="CASCADE"))
+    network_id = db.Column(db.Integer, db.ForeignKey("network.id", ondelete="SET NULL"), nullable=True)
 
     def __init__(self, *, mac, machine_id, dhcpv4=True, identifier=None, static_ipv4=None):
         self.mac = mac
@@ -102,6 +103,7 @@ class Interface(db.Model):
         self.dhcpv4 = dhcpv4
         self.static_ipv4 = static_ipv4
         self.machine_id = machine_id
+        self.network_id = None
 
     @property
     def machine(self):
@@ -539,3 +541,16 @@ class Preseed(db.Model):
             return db.session.query(Preseed).all()
         else:
             return db.session.query(Preseed).filter((Preseed.public == true()) | (Preseed.user_id == user.id)).all()
+
+
+class Network(db.Model):
+    __tablename__ = 'network'
+    id = db.Column(db.Integer, primary_key=True)
+    subnet = db.Column(db.String, unique=True, nullable=False)
+    reserved_net = db.Column(db.String, unique=True, nullable=True)
+    static_net = db.Column(db.String, unique=True, nullable=True)
+
+    def __init__(self, *, subnet, reserved_net=None, static_net=None):
+        self.subnet = subnet
+        self.reserved_net = reserved_net
+        self.static_net = static_net
