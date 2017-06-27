@@ -1,0 +1,10 @@
+[Unit]
+Description=Kea DHCPv4 Server
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+ExecStart=/opt/kea/sbin/kea-dhcp4 -c /etc/kea.conf
+
+[Install]
+WantedBy=multi-user.target

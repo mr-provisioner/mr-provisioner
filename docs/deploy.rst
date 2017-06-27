@@ -29,3 +29,8 @@ Start the services::
     systemctl start mr-provisioner.service
     systemctl start mr-provisioner-ws.service
     systemctl start mr-provisioner-tftp.service
+
+Optionally, if you followed :doc:`kea`, also enable and start the Kea services::
+
+    systemctl enable kea-dhcp4.service
+    systemctl start kea-dhcp4.service

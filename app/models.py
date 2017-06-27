@@ -4,6 +4,8 @@ from os import urandom
 from datetime import datetime, timedelta
 from app.bmc_types import resolve_bmc_type, BMCError
 from sqlalchemy import true, event
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.orm.exc import NoResultFound
 import binascii
 
 
@@ -41,6 +43,26 @@ class BMC(db.Model):
         return resolve_bmc_type(self.bmc_type)
 
 
+class DiscoveredMAC(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    mac = db.Column(db.String, unique=True, nullable=False)
+    info = db.Column(JSONB)
+    last_seen = db.Column(db.DateTime, nullable=False)
+
+    def __init__(self, *, mac, info):
+        self.mac = mac
+        self.info = info
+        self.last_seen = datetime.utcnow()
+
+    @staticmethod
+    def by_mac(mac):
+        try:
+            d = DiscoveredMAC.query.filter_by(mac=mac).one()
+            return d
+        except NoResultFound:
+            return None
+
+
 class Lease(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     mac = db.Column(db.String, unique=True, nullable=False)
@@ -51,6 +73,14 @@ class Lease(db.Model):
         self.mac = mac
         self.ipv4 = ipv4
         self.last_seen = datetime.utcnow()
+
+    @staticmethod
+    def by_mac(mac):
+        try:
+            lease = Lease.query.filter_by(mac=mac).one()
+            return lease
+        except NoResultFound:
+            return None
 
 
 @event.listens_for(Lease.mac, 'set', retval=True)
@@ -80,6 +110,14 @@ class Interface(db.Model):
     @property
     def lease(self):
         return Lease.query.filter_by(mac=self.mac).first()
+
+    @staticmethod
+    def by_mac(mac):
+        try:
+            interface = Interface.query.filter_by(mac=mac).one()
+            return interface
+        except NoResultFound:
+            return None
 
 
 @event.listens_for(Interface.mac, 'set', retval=True)
@@ -235,7 +273,7 @@ class Machine(db.Model):
         try:
             interface = Interface.query.filter_by(mac=mac).one()
             return Machine.query.get(interface.machine_id)
-        except db.NoResultsFound:
+        except NoResultFound:
             return None
 
 

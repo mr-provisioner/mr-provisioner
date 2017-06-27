@@ -18,6 +18,7 @@ Information about development is also available:
 
    getting_started
    detailed_config
+   kea
    deploy
    upgrade
 
