@@ -117,7 +117,7 @@ class Interface(db.Model):
 
     @property
     def network(self):
-        return Network.query.get(self.network_id)
+        return Network.query.get(self.network_id) if self.network_id else None
 
     @staticmethod
     def by_mac(mac):

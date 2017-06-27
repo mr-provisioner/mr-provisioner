@@ -74,8 +74,10 @@ def index():
         data['next-server'] = app.config['DHCP_TFTP_PROXY_HOST']
         data['options'].append({'option': 67, 'value': app.config['DHCP_DEFAULT_BOOTFILE']})
 
-    if interface.static_ipv4:
-        data['ipv4'] = interface.static_ipv4
+    use_static = True if interface.static_ipv4 else False
+
+    if interface.reserved_ipv4 and not use_static:
+        data['ipv4'] = interface.reserved_ipv4
 
     return jsonify(data), 200
 
@@ -143,7 +145,7 @@ def seen():
     return "", 202
 
 
-@mod.route('ipv4/subnet', methods=['POST'])
+@mod.route('/ipv4/subnet', methods=['POST'])
 def subnet():
     data = request.get_json(force=True)
     try:
