@@ -552,11 +552,13 @@ class Preseed(db.Model):
 class Network(db.Model):
     __tablename__ = 'network'
     id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, unique=True, nullable=False)
     subnet = db.Column(db.String, unique=True, nullable=False)
     reserved_net = db.Column(db.String, unique=True, nullable=True)
     static_net = db.Column(db.String, unique=True, nullable=True)
 
-    def __init__(self, *, subnet, reserved_net=None, static_net=None):
+    def __init__(self, *, name, subnet, reserved_net=None, static_net=None):
+        self.name = name
         self.subnet = subnet
         self.reserved_net = reserved_net
         self.static_net = static_net
