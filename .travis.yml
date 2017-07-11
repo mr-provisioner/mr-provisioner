@@ -1,10 +1,24 @@
-language: python
-python:
-  - 3.3
-  - 3.6
-install:
-  - pip install -r requirements.txt
-  - pip install -r requirements.dev.txt
-script:
-  - make lint
-  - make docs
+matrix:
+  include:
+    - language: python
+      python:
+        - 3.3
+        - 3.6
+      install:
+        - pip install -r requirements.txt
+        - pip install -r requirements.dev.txt
+      script:
+        - make lint
+        - make docs
+
+    - language: node_js
+      node_js:
+        - node
+        - 7
+      install:
+        - cd app/admin/ui && yarn install
+      before_script:
+        - cd app/admin/ui
+      script:
+        - npm run build
+        - npm run lint

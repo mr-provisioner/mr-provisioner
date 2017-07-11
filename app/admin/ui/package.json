@@ -9,6 +9,7 @@
     "start": "webpack-dev-server --progress --profile --colors",
     "dev": "WEBPACK_DASHBOARD=true webpack-dashboard -- webpack-dev-server --progress --profile --colors",
     "prettier": "prettier --no-semi --trailing-comma es5 --single-quote --write 'src/**/*.js' 'src/**/*.jsx'",
+    "lint": "prettier --no-semi --trailing-comma es5 --single-quote -l 'src/**/*.js' 'src/**/*.jsx'",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
