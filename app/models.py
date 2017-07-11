@@ -94,14 +94,18 @@ class Interface(db.Model):
     identifier = db.Column(db.String, nullable=True)
     dhcpv4 = db.Column(db.Boolean)
     static_ipv4 = db.Column(db.String, unique=True, nullable=True)
+    reserved_ipv4 = db.Column(db.String, unique=True, nullable=True)
     machine_id = db.Column(db.Integer, db.ForeignKey("machine.id", ondelete="CASCADE"))
+    network_id = db.Column(db.Integer, db.ForeignKey("network.id", ondelete="SET NULL"), nullable=True)
 
-    def __init__(self, *, mac, machine_id, dhcpv4=True, identifier=None, static_ipv4=None):
+    def __init__(self, *, mac, machine_id, dhcpv4=True, identifier=None, static_ipv4=None, reserved_ipv4=None):
         self.mac = mac
         self.identifier = identifier
         self.dhcpv4 = dhcpv4
         self.static_ipv4 = static_ipv4
+        self.reserved_ipv4 = reserved_ipv4
         self.machine_id = machine_id
+        self.network_id = None
 
     @property
     def machine(self):
@@ -110,6 +114,10 @@ class Interface(db.Model):
     @property
     def lease(self):
         return Lease.query.filter_by(mac=self.mac).first()
+
+    @property
+    def network(self):
+        return Network.query.get(self.network_id) if self.network_id else None
 
     @staticmethod
     def by_mac(mac):
@@ -539,3 +547,18 @@ class Preseed(db.Model):
             return db.session.query(Preseed).all()
         else:
             return db.session.query(Preseed).filter((Preseed.public == true()) | (Preseed.user_id == user.id)).all()
+
+
+class Network(db.Model):
+    __tablename__ = 'network'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, unique=True, nullable=False)
+    subnet = db.Column(db.String, unique=True, nullable=False)
+    reserved_net = db.Column(db.String, unique=True, nullable=True)
+    static_net = db.Column(db.String, unique=True, nullable=True)
+
+    def __init__(self, *, name, subnet, reserved_net=None, static_net=None):
+        self.name = name
+        self.subnet = subnet
+        self.reserved_net = reserved_net
+        self.static_net = static_net

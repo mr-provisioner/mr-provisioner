@@ -129,7 +129,7 @@
               <tr>
                 <td>{{ interface.identifier if interface.identifier else "" }}</td>
                 <td>{{ interface.mac }}</td>
-                <td>{{ interface.static_ipv4 if interface.static_ipv4 else "" }}</td>
+                <td>{{ interface.reserved_ipv4 if interface.reserved_ipv4 else "" }}</td>
                 <td>{{ interface.lease.ipv4 if interface.lease else "" }}</td>
                 <td>{{ interface.lease.last_seen if interface.lease else "" }}</td>
                 <td>

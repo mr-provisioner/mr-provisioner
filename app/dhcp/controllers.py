@@ -32,6 +32,15 @@ seen_schema = Schema({
     }]
 })
 
+subnet_schema = Schema({
+    'mac': And(str, lambda s: re.match(MAC_REGEX, s) is not None),
+    'subnets': [{
+        'subnetId': int,
+        'prefix': Use(ipaddress.IPv4Address),
+        'prefixLen': And(int, lambda i: i >= 0 and i <= 32)
+    }]
+})
+
 
 @mod.route('/ipv4', methods=['GET'])
 def index():
@@ -65,8 +74,10 @@ def index():
         data['next-server'] = app.config['DHCP_TFTP_PROXY_HOST']
         data['options'].append({'option': 67, 'value': app.config['DHCP_DEFAULT_BOOTFILE']})
 
-    if interface.static_ipv4:
-        data['ipv4'] = interface.static_ipv4
+    use_static = True if interface.static_ipv4 else False
+
+    if interface.reserved_ipv4 and not use_static:
+        data['ipv4'] = interface.reserved_ipv4
 
     return jsonify(data), 200
 
@@ -132,3 +143,46 @@ def seen():
         db.session.commit()
 
     return "", 202
+
+
+@mod.route('/ipv4/subnet', methods=['POST'])
+def subnet():
+    data = request.get_json(force=True)
+    try:
+        subnet_schema.validate(data)
+    except SchemaError as e:
+        return str(e), 400
+
+    hwaddr = data['mac']
+    if not hwaddr:
+        abort(400)
+
+    interface = Interface.by_mac(hwaddr)
+    if not interface:
+        abort(404)
+
+    if not interface.network:
+        abort(404)
+
+    use_static = True if interface.static_ipv4 else False
+    use_reserved = True if not use_static and interface.reserved_ipv4 else False
+
+    expected_subnet = None
+    if use_reserved:
+        expected_subnet = ipaddress.IPv4Network(interface.network.reserved_net)
+
+    logger.info('expected_subnet: %s' % expected_subnet)
+
+    if expected_subnet is None:
+        return jsonify({'subnetId': None}), 200
+
+    response = {}
+
+    for subnet in data['subnets']:
+        net = ipaddress.IPv4Network((subnet['prefix'], subnet['prefixLen']))
+        if net.overlaps(expected_subnet):
+            response['subnetId'] = subnet['subnetId']
+            logger.info('matched subnet: %s' % subnet)
+            break
+
+    return jsonify(response), 200

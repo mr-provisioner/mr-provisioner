@@ -702,7 +702,7 @@ def machine_admin(id):
         form_intf[intf.id].identifier.data = intf.identifier
         form_intf[intf.id].mac.data = intf.mac
         form_intf[intf.id].dhcpv4.data = intf.dhcpv4
-        form_intf[intf.id].reserved_ipv4.data = intf.static_ipv4
+        form_intf[intf.id].reserved_ipv4.data = intf.reserved_ipv4
 
     if request.method == 'POST' and form.validate():
         if not g.user.admin and not (g.user.id in map(lambda u: u.id, machine.assignees)):
@@ -907,14 +907,16 @@ def interface_edit(id):
     if form.validate():
         intf.identifier = form.identifier.data
         intf.dhcpv4 = True
-        intf.static_ipv4 = form.reserved_ipv4.data
+        if form.reserved_ipv4.data:
+            # intf.reserved_ipv4 = form.reserved_ipv4.data
+            flash('Reserved ip cannot be set currently, this is WIP', 'error')
 
         if machine.check_permission(g.user, 'admin'):
             intf.mac = form.mac.data
 
         try:
             db.session.commit()
-            flash('Interface modified successfully', 'success')
+            flash('Interface saved', 'success')
         except IntegrityError as e:
             db.session.rollback()
             flash('Integrity Error: MAC and static IP must be unique', 'error')
@@ -960,7 +962,7 @@ def machine_interface_create(id):
         new_intf = Interface(identifier=form.identifier.data,
                              mac=form.mac.data,
                              dhcpv4=True,
-                             static_ipv4=form.reserved_ipv4.data,
+                             reserved_ipv4=form.reserved_ipv4.data,
                              machine_id=machine.id)
         db.session.add(new_intf)
         try:
