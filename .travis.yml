@@ -6,5 +6,5 @@ install:
   - pip install -r requirements.txt
   - pip install -r requirements.dev.txt
 script:
-  - flake8 app/
-  - cd docs && make html
+  - make lint
+  - make docs
