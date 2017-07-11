@@ -1,4 +1,4 @@
-from app.util.manuf import MacParser
+from mr_provisioner.util.manuf import MacParser
 import os
 import itertools
 

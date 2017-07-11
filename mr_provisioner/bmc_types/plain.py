@@ -1,5 +1,5 @@
-from app.bmc_types import register_bmc_type, BMCType, BMCError
-from app.ipmi import get_power, set_power, set_bootdev, deactivate_sol, get_sol_command, IPMIError
+from mr_provisioner.bmc_types import register_bmc_type, BMCType, BMCError
+from mr_provisioner.ipmi import get_power, set_power, set_bootdev, deactivate_sol, get_sol_command, IPMIError
 
 
 class PlainBMC(BMCType):

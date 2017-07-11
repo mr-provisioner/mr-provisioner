@@ -18,7 +18,7 @@ branch_labels = None
 depends_on = None
 
 
-from app.models import Machine, Interface
+from mr_provisioner.models import Machine, Interface
 
 
 def upgrade():

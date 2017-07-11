@@ -5,9 +5,12 @@ import configparser
 import sys
 
 from jinja2 import Environment, FileSystemLoader
-from app.ipmi import set_ipmitool
+from mr_provisioner.ipmi import set_ipmitool
 
 _basedir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+_pydir = os.path.abspath(os.path.dirname(__file__))
+
+version = open(os.path.join(_basedir, 'VERSION')).read().strip()
 
 
 def apply_config(app, config_file):
@@ -43,7 +46,11 @@ def apply_config(app, config_file):
                             datefmt=log_datefmt,
                             filename=log_file)
 
-    tftp_templates_dir = os.path.join(_basedir, "templates")
+    default_tftp_templates_dir = os.path.join(_pydir, 'netboot_templates')
+    tftp_templates_dir = config.get('files', 'netboot_templates_dir', fallback=default_tftp_templates_dir)
+    if tftp_templates_dir == '':
+        tftp_templates_dir = default_tftp_templates_dir
+    print('templates', tftp_templates_dir)
     tftp_jinja_env = Environment(loader=FileSystemLoader(tftp_templates_dir))
 
     try:
@@ -53,9 +60,10 @@ def apply_config(app, config_file):
 
     # Config settings used by app itself
     app.config.update(
+        VERSION=version,
         BANNER_NAME=config.get('ui', 'banner_name', fallback='mr-provisioner'),
         TFTP_JINJA_ENV=tftp_jinja_env,
-        TFTP_ROOT=config.get('files', 'TFTPRoot'),
+        TFTP_ROOT=config.get('files', 'tftp_root'),
         DHCP_TFTP_PROXY_HOST=config.get('dhcp', 'tftp_proxy_host'),
         DHCP_DEFAULT_BOOTFILE=config.get('dhcp', 'default_bootfile', fallback=''),
         WSS_EXT_HOST=config.get('wssubprocess', 'ext_host', fallback=''),
@@ -68,11 +76,12 @@ def apply_config(app, config_file):
     app.config.update(
         SECRET_KEY=os.urandom(24),
         SEND_FILE_MAX_AGE_DEFAULT=int(config.get('ui', 'max_age', fallback=(6 * 60 * 60))),
-        MAX_CONTENT_LENGTH=int(config.get('files', 'MaxUploadSize', fallback=(1024 * 1024 * 1024)))
+        MAX_CONTENT_LENGTH=int(config.get('files', 'max_upload_size', fallback=(1024 * 1024 * 1024)))
     )
 
     # Config settings used by Flask SQLAlchemy
     app.config.update(
         SQLALCHEMY_DATABASE_URI=config.get('database', 'uri'),
+        SQLALCHEMY_ECHO=(log_level == logging.DEBUG),
         SQLALCHEMY_TRACK_MODIFICATIONS=True
     )

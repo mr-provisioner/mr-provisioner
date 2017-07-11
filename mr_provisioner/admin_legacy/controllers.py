@@ -11,12 +11,12 @@ from werkzeug.utils import secure_filename
 from werkzeug.datastructures import CombinedMultiDict
 from sqlalchemy.exc import IntegrityError
 
-from app import db
+from mr_provisioner import db
 from sqlalchemy.exc import DatabaseError
-from app.models import User, Token, Machine, Image, Preseed, BMC, MachineUsers, \
+from mr_provisioner.models import User, Token, Machine, Image, Preseed, BMC, MachineUsers, \
     ConsoleToken, Interface
-from app.bmc_types import BMCError
-import app.admin_legacy.validation as validations
+from mr_provisioner.bmc_types import BMCError
+import mr_provisioner.admin_legacy.validation as validations
 
 from flask import current_app as app
 

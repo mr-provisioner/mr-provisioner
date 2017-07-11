@@ -1,8 +1,8 @@
-from app import db
+from mr_provisioner import db
 from base64 import b64encode
 from os import urandom
 from datetime import datetime, timedelta
-from app.bmc_types import resolve_bmc_type, BMCError, list_bmc_types
+from mr_provisioner.bmc_types import resolve_bmc_type, BMCError, list_bmc_types
 from sqlalchemy import true, event, text
 from sqlalchemy.dialects.postgresql import JSONB, INET, CIDR, MACADDR
 from sqlalchemy.orm.exc import NoResultFound

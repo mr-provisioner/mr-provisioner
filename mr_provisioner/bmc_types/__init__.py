@@ -25,5 +25,5 @@ def list_bmc_types():
     return types
 
 
-importlib.import_module('.plain', 'app.bmc_types')
-importlib.import_module('.moonshot', 'app.bmc_types')
+importlib.import_module('.plain', 'mr_provisioner.bmc_types')
+importlib.import_module('.moonshot', 'mr_provisioner.bmc_types')

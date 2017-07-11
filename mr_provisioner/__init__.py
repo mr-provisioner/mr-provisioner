@@ -6,7 +6,12 @@ from flask_cors import CORS
 from flask_script import Manager
 from flask_migrate import Migrate, MigrateCommand
 
-from app.config import apply_config
+from mr_provisioner.config import apply_config
+import os
+
+_basedir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+_migrations_dir = os.path.join(_basedir, 'migrations')
+
 
 db = SQLAlchemy()
 
@@ -20,13 +25,13 @@ def create_app(config_path=None):
 
     db.init_app(app)
 
-    Migrate(app, db)
+    Migrate(app, db, directory=_migrations_dir)
 
-    from app.admin.controllers import mod as admin_module
-    from app.admin_legacy.controllers import mod as admin_legacy_module
-    from app.preseed.controllers import mod as preseed_module
-    from app.tftp.controllers import mod as tftp_module
-    from app.dhcp.controllers import mod as dhcp_module
+    from mr_provisioner.admin.controllers import mod as admin_module
+    from mr_provisioner.admin_legacy.controllers import mod as admin_legacy_module
+    from mr_provisioner.preseed.controllers import mod as preseed_module
+    from mr_provisioner.tftp.controllers import mod as tftp_module
+    from mr_provisioner.dhcp.controllers import mod as dhcp_module
 
     app.register_blueprint(admin_module, url_prefix='/admin')
     app.register_blueprint(admin_legacy_module, url_prefix='/admin-legacy')
@@ -42,7 +47,8 @@ def create_app(config_path=None):
 
 
 manager = Manager(create_app)
-manager.add_option("-c", "--config", dest="config_path", required=True)
+manager.add_option("-c", "--config", dest="config_path", required=False,
+                   default=os.getenv("APP_CONFIG", "/etc/mr-provisioner/config.ini"))
 manager.add_command('db', MigrateCommand)
 
 
@@ -69,5 +75,9 @@ def tornado(host, port):
     IOLoop.instance().start()
 
 
-if __name__ == '__main__':
+def main():
     manager.run()
+
+
+if __name__ == '__main__':
+    main()
