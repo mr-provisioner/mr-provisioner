@@ -67,6 +67,7 @@ def apply_config(app, config_file):
     # Config settings used by Flask
     app.config.update(
         SECRET_KEY=os.urandom(24),
+        SEND_FILE_MAX_AGE_DEFAULT=int(config.get('ui', 'max_age', fallback=(6 * 60 * 60))),
         MAX_CONTENT_LENGTH=int(config.get('files', 'MaxUploadSize', fallback=(1024 * 1024 * 1024)))
     )
 
