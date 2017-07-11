@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="format-detection" content="telephone=no">
+    <title>{{ banner_name }} - mr-provisioner</title>
+    <link rel="stylesheet" href="{{ url_for('.ui_assets', filename='app.css') }}"/>
+  </head>
+
+  <body>
+    <div id="app" style="height: 100%;"></div>
+
+    <script>
+      var globalBannerName = '{{ banner_name }}';
+    </script>
+
+    <script src="{{ url_for('.ui_assets', filename='app.js') }}"></script>
+  </body>
+</html>

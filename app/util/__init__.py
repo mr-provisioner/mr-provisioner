@@ -1,5 +1,6 @@
 from app.util.manuf import MacParser
 import os
+import itertools
 
 MAC_REGEX = r"[\da-fA-F]{2}:[\da-fA-F]{2}:[\da-fA-F]{2}:[\da-fA-F]{2}:[\da-fA-F]{2}:[\da-fA-F]{2}"
 
@@ -52,3 +53,11 @@ def mac_vendor(mac):
         return comment if comment else vendor
     else:
         return "unknown"
+
+
+def flatmap(func, *iterable):
+    return itertools.chain.from_iterable(map(func, *iterable))
+
+
+def trim_to_none(str):
+    return None if str == '' else str

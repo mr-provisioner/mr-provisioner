@@ -15,4 +15,7 @@ passlib==1.7.1
 flask-wtf==0.14.2
 Flask-Migrate==2.0.3
 psycopg2==2.7.1
+graphene==1.4
+Flask-GraphQL==1.4.1
+validators==0.12
 netaddr==0.7.19

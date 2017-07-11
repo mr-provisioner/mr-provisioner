@@ -5,6 +5,8 @@ import re
 import os
 
 from app.models import Machine
+from app import db
+from sqlalchemy.exc import DatabaseError
 
 from flask import current_app as app
 
@@ -68,3 +70,9 @@ def get_file_tftp():
         return config, 200
 
     return "", 404
+
+
+@mod.errorhandler(DatabaseError)
+def handle_db_error(error):
+    db.session.rollback()
+    raise

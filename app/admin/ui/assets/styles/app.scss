@@ -1,0 +1,28 @@
+@charset "UTF-8";
+
+@import 'normalize';
+@import './mr-provisioner.grommet';
+
+@import 'codemirror/lib/codemirror';
+@import 'xterm/lib/xterm';
+
+.react-paginate ul {
+    display: inline-block;
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
+.react-paginate li {
+    display: inline-block;
+    margin-left: 1em;
+    margin-right: 1em;
+
+    &.selected {
+	border-bottom: 1px solid $brand-link-color;
+	font-weight: bold;
+    }
+}
+
+.react-paginate .break a {
+    cursor: default;
+}

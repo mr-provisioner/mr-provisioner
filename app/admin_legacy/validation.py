@@ -202,7 +202,7 @@ class CreateBMCForm(Form):
     privilege_level = SelectField("Privilege", [AnyOf(["user", "admin"])],
                                   choices=[("user", "user"), ("admin", "admin")])
     bmc_type = SelectField("Type", [InputRequired(),
-                                    AnyOf(map(lambda t: t.name, list_bmc_types()))],
+                                    AnyOf([t.name for t in list_bmc_types()])],
                            choices=[(t.name, t.name) for t in list_bmc_types()])
 
 
