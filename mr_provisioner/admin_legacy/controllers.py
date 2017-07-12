@@ -20,8 +20,8 @@ import mr_provisioner.admin_legacy.validation as validations
 
 from flask import current_app as app
 
-mod = Blueprint('admin-legacy', __name__, template_folder='templates', static_folder='static')
-logger = logging.getLogger('admin-legacy')
+mod = Blueprint('admin_legacy', __name__, template_folder='templates', static_folder='static')
+logger = logging.getLogger('admin_legacy')
 
 
 @mod.context_processor
@@ -44,10 +44,10 @@ def authenticate():
     g.user = None
 
     # Skip authentication for some endpoints
-    if request.endpoint == 'admin.static' or \
-       request.endpoint == 'admin.get_ws_subprocess_command' or \
-       request.endpoint == 'admin.login' or \
-       request.endpoint == 'admin.login_post':
+    if request.endpoint == 'admin_legacy.static' or \
+       request.endpoint == 'admin_legacy.get_ws_subprocess_command' or \
+       request.endpoint == 'admin_legacy.login' or \
+       request.endpoint == 'admin_legacy.login_post':
         pass
     else:
         try:
