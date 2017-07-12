@@ -2,11 +2,15 @@ from app import db
 from base64 import b64encode
 from os import urandom
 from datetime import datetime, timedelta
-from app.bmc_types import resolve_bmc_type, BMCError
-from sqlalchemy import true, event
-from sqlalchemy.dialects.postgresql import JSONB
+from app.bmc_types import resolve_bmc_type, BMCError, list_bmc_types
+from sqlalchemy import true, event, text
+from sqlalchemy.dialects.postgresql import JSONB, INET, CIDR, MACADDR
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.schema import UniqueConstraint
 import binascii
+from netaddr import IPSet, IPNetwork
+import itertools
+import re
 
 
 class BMC(db.Model):
@@ -17,6 +21,7 @@ class BMC(db.Model):
     password = db.Column(db.String)
     privilege_level = db.Column(db.String)
     bmc_type = db.Column(db.String)
+    machines = db.relationship("Machine", back_populates="bmc", passive_deletes=True)
 
     def __init__(self, ip, name, username, password, privilege_level, bmc_type):
         self.ip = ip
@@ -42,10 +47,26 @@ class BMC(db.Model):
     def type_inst(self):
         return resolve_bmc_type(self.bmc_type)
 
+    def check_permission(self, user, min_priv_level='any'):
+        if user.admin:
+            return True
+        elif min_priv_level == 'admin':
+            return False
+
+        return False
+
+    @staticmethod
+    def can_create(user):
+        return True if user.admin else False
+
+    @staticmethod
+    def list_types():
+        return [t.name for t in list_bmc_types()]
+
 
 class DiscoveredMAC(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    mac = db.Column(db.String, unique=True, nullable=False)
+    mac = db.Column(MACADDR, unique=True, nullable=False)
     info = db.Column(JSONB)
     last_seen = db.Column(db.DateTime, nullable=False)
 
@@ -62,11 +83,15 @@ class DiscoveredMAC(db.Model):
         except NoResultFound:
             return None
 
+    @staticmethod
+    def can_list(user):
+        return True if user.admin else False
+
 
 class Lease(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    mac = db.Column(db.String, unique=True, nullable=False)
-    ipv4 = db.Column(db.String)
+    mac = db.Column(MACADDR, unique=True, nullable=False)
+    ipv4 = db.Column(INET)
     last_seen = db.Column(db.DateTime, nullable=False)
 
     def __init__(self, *, mac, ipv4):
@@ -90,34 +115,31 @@ def set_lease_mac(target, value, oldvalue, initiator):
 
 class Interface(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    mac = db.Column(db.String, unique=True, nullable=False)
+    mac = db.Column(MACADDR, unique=True, nullable=False)
     identifier = db.Column(db.String, nullable=True)
     dhcpv4 = db.Column(db.Boolean)
-    static_ipv4 = db.Column(db.String, unique=True, nullable=True)
-    reserved_ipv4 = db.Column(db.String, unique=True, nullable=True)
+    static_ipv4 = db.Column(INET, nullable=True)
+    reserved_ipv4 = db.Column(INET, nullable=True)
     machine_id = db.Column(db.Integer, db.ForeignKey("machine.id", ondelete="CASCADE"))
+    machine = db.relationship("Machine", passive_deletes=True)
     network_id = db.Column(db.Integer, db.ForeignKey("network.id", ondelete="SET NULL"), nullable=True)
+    network = db.relationship("Network", passive_deletes=True)
+    __table_args__ = (UniqueConstraint('static_ipv4', 'network_id'),
+                      UniqueConstraint('reserved_ipv4', 'network_id'),)
 
-    def __init__(self, *, mac, machine_id, dhcpv4=True, identifier=None, static_ipv4=None, reserved_ipv4=None):
+    def __init__(self, *, mac, machine_id, network_id=None, dhcpv4=True, identifier=None,
+                 static_ipv4=None, reserved_ipv4=None):
         self.mac = mac
         self.identifier = identifier
         self.dhcpv4 = dhcpv4
         self.static_ipv4 = static_ipv4
         self.reserved_ipv4 = reserved_ipv4
         self.machine_id = machine_id
-        self.network_id = None
-
-    @property
-    def machine(self):
-        return Machine.query.get(self.machine_id)
+        self.network_id = network_id
 
     @property
     def lease(self):
         return Lease.query.filter_by(mac=self.mac).first()
-
-    @property
-    def network(self):
-        return Network.query.get(self.network_id) if self.network_id else None
 
     @staticmethod
     def by_mac(mac):
@@ -127,10 +149,25 @@ class Interface(db.Model):
         except NoResultFound:
             return None
 
+    @staticmethod
+    def update_discovery(connection, interface):
+        query = DiscoveredMAC.__table__.delete().where((DiscoveredMAC.mac == interface.mac))
+        connection.execute(query)
+
 
 @event.listens_for(Interface.mac, 'set', retval=True)
 def set_interface_mac(target, value, oldvalue, initiator):
     return value.lower()
+
+
+@event.listens_for(Interface, 'after_update')
+def interface_after_update(mapper, connection, target):
+    Interface.update_discovery(connection, target)
+
+
+@event.listens_for(Interface, 'after_insert')
+def interface_after_insert(mapper, connection, target):
+    Interface.update_discovery(connection, target)
 
 
 class Machine(db.Model):
@@ -141,13 +178,20 @@ class Machine(db.Model):
     serial = db.Column(db.String)
     serial_port = db.Column(db.Integer)
     kernel_id = db.Column(db.Integer, db.ForeignKey("image.id"))
+    kernel = db.relationship("Image", foreign_keys=[kernel_id], passive_deletes=True)
     kernel_opts = db.Column(db.String)
     preseed_id = db.Column(db.Integer, db.ForeignKey("preseed.id"))
+    preseed = db.relationship("Preseed", passive_deletes=True)
     initrd_id = db.Column(db.Integer, db.ForeignKey("image.id"))
+    initrd = db.relationship("Image", foreign_keys=[initrd_id], passive_deletes=True)
     netboot_enabled = db.Column(db.Boolean)
     # arch needed?
     bmc_id = db.Column(db.Integer, db.ForeignKey("BMC.id"))
+    bmc = db.relationship("BMC", passive_deletes=True)
     bmc_info = db.Column(db.String)
+
+    interfaces = db.relationship("Interface", back_populates="machine", passive_deletes=True)
+    assignments = db.relationship("MachineUsers", back_populates="machine", passive_deletes=True)
 
     def __init__(self, name, pdu=None, pdu_port=None, serial=None, serial_port=None, kernel_id=None, kernel_opts="",
                  preseed_id=None, initrd_id=None, netboot_enabled=False, bmc_id=None, bmc_info=""):
@@ -166,7 +210,7 @@ class Machine(db.Model):
 
     def __repr__(self):
         return "<name: %s, macs: %s, kernel: %d, kernel_opts: %s," \
-               "initrd: %d, netboot_enabled: %b, bmc_id %d>" % (self.name,
+               "initrd: %d, netboot_enabled: %b, bmc_id %s>" % (self.name,
                                                                 ",".join(self.macs),
                                                                 self.kernel_id,
                                                                 self.kernel_opts,
@@ -175,52 +219,34 @@ class Machine(db.Model):
                                                                 self.bmc_id)
 
     @property
-    def kernel(self):
-        return Image.query.get(self.kernel_id) if self.kernel_id else None
-
-    @property
-    def initrd(self):
-        return Image.query.get(self.initrd_id) if self.initrd_id else None
-
-    @property
-    def preseed(self):
-        return Preseed.query.get(self.preseed_id) if self.preseed_id else None
-
-    @property
     def macs(self):
         return map(lambda i: i.mac, self.interfaces)
-
-    @property
-    def interfaces(self):
-        return Interface.query.filter_by(machine_id=self.id).all()
 
     def kernel_opts_all(self, config):
         preseed_opts = self.preseed.kernel_opts(self, config) if self.preseed_id else ""
         return preseed_opts + " " + (self.kernel_opts if self.kernel_opts else "")
 
-    @property
-    def bmc(self):
-        return BMC.query.get(self.bmc_id) if self.bmc_id else None
-
+    # XXX: get rid of it.
     @property
     def user(self):
         # XXX: support multiple
         machine_user = MachineUsers.query.filter_by(machine_id=self.id).first()
-        return machine_user.assigned_user if machine_user else None
+        return machine_user.user if machine_user else None
 
     @property
     def assignees(self):
-        return map(lambda mu: mu.assigned_user, self.assignments)
+        return [mu.user for mu in self.assignments]
 
-    @property
-    def assignments(self):
-        return MachineUsers.query.filter_by(machine_id=self.id).all()
-
+    # XXX: get rid of it.
     @property
     def assignment(self):
         # XXX: support multiple
         machine_user = MachineUsers.query.filter_by(machine_id=self.id).first()
         return machine_user if machine_user else None
+
+    @property
+    def hostname(self):
+        return re.sub(r'[^a-zA-Z0-9]', '-', self.name)
 
     @property
     def power_state(self):
@@ -251,6 +277,12 @@ class Machine(db.Model):
         else:
             bmc.type_inst.set_power(self, "on")
 
+    def set_power(self, power_state):
+        power_state = 'reset' if power_state == 'reboot' else power_state
+        bmc = self.bmc
+        # XXX: raise exception if not bmc
+        bmc.type_inst.set_power(self, power_state)
+
     def deactivate_sol(self):
         bmc = self.bmc
         # XXX: raise exception if not bmc
@@ -275,6 +307,10 @@ class Machine(db.Model):
             return False
 
         return True
+
+    @staticmethod
+    def can_create(user):
+        return True if user.admin else False
 
     @staticmethod
     def by_mac(mac):
@@ -346,6 +382,18 @@ class User(db.Model):
             'admin': self.admin
         }
 
+    def check_permission(self, user, min_priv_level='any'):
+        if user.admin:
+            return True
+        elif min_priv_level == 'admin':
+            return False
+
+        return False
+
+    @staticmethod
+    def can_create(user):
+        return True if user.admin else False
+
 
 class Token(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -372,14 +420,38 @@ class Token(db.Model):
             'desc': self.desc,
         }
 
+    def check_permission(self, user, min_priv_level='any'):
+        if user.admin:
+            return True
+        elif min_priv_level == 'admin':
+            return False
+
+        if user.id == self.user_id:
+            return True
+        elif min_priv_level == 'owner':
+            return False
+
+        return False
+
+    @staticmethod
+    def by_user(user):
+        return db.session.query(Token).filter_by(user_id=user.id).all()
+
+    @staticmethod
+    def can_create(user):
+        return True
+
 
 class MachineUsers(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     machine_id = db.Column(db.Integer, db.ForeignKey("machine.id", ondelete="CASCADE"))
+    machine = db.relationship("Machine", passive_deletes=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
+    user = db.relationship("User", passive_deletes=True)
     permissions = db.Column(db.Integer)
     start_date = db.Column(db.DateTime, nullable=False)
     reason = db.Column(db.Text, nullable=False)
+    __table_args__ = (UniqueConstraint('machine_id', 'user_id'),)
 
     def __init__(self, machine_id, user_id, permissions, reason):
         self.start_date = datetime.now()
@@ -404,10 +476,6 @@ class MachineUsers(db.Model):
             'start_date': self.start_date.strftime("%Y-%m-%d"),
             'reason': self.reason
         }
-
-    @property
-    def assigned_user(self):
-        return User.query.get(self.user_id)
 
 
 class AuditLog(db.Model):
@@ -439,10 +507,11 @@ class AuditLog(db.Model):
 class Image(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     filename = db.Column(db.String, unique=True, nullable=False)
-    description = db.Column(db.String, nullable=False)
+    description = db.Column(db.String)
     file_type = db.Column(db.String, nullable=False)
     date = db.Column(db.DateTime, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
+    user = db.relationship("User", passive_deletes=True)
     known_good = db.Column(db.Boolean, nullable=False)
     public = db.Column(db.Boolean, nullable=False)
 
@@ -470,8 +539,25 @@ class Image(db.Model):
         }
 
     @property
-    def user(self):
-        return User.query.get(self.user_id)
+    def machines(self):
+        return Machine.query.filter((Machine.kernel_id == self.id) | (Machine.initrd_id == self.id)).all()
+
+    def check_permission(self, user, min_priv_level='any'):
+        if user.admin:
+            return True
+        elif min_priv_level == 'admin':
+            return False
+
+        if user.id == self.user_id:
+            return True
+        elif min_priv_level == 'owner':
+            return False
+
+        return self.public
+
+    @staticmethod
+    def can_create(user):
+        return True
 
     @staticmethod
     def all_visible(user):
@@ -480,15 +566,21 @@ class Image(db.Model):
         else:
             return db.session.query(Image).filter((Image.public == true()) | (Image.user_id == user.id)).all()
 
+    @staticmethod
+    def list_types():
+        return ['Initrd', 'Kernel']
+
 
 class Preseed(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     filename = db.Column(db.String, unique=True, nullable=False)
-    description = db.Column(db.String, unique=True, nullable=False)
+    description = db.Column(db.String)
     file_type = db.Column(db.String, nullable=False)
-    file_content = db.Column(db.Text, nullable=False)
+    file_content = db.Column(db.Text)
     date = db.Column(db.DateTime, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
+    user = db.relationship("User", passive_deletes=True)
+    machines = db.relationship("Machine", back_populates="preseed", passive_deletes=True)
     known_good = db.Column(db.Boolean, nullable=False)
     public = db.Column(db.Boolean, nullable=False)
 
@@ -537,9 +629,22 @@ class Preseed(db.Model):
             'public': self.public
         }
 
-    @property
-    def user(self):
-        return User.query.get(self.user_id)
+    def check_permission(self, user, min_priv_level='any'):
+        if user.admin:
+            return True
+        elif min_priv_level == 'admin':
+            return False
+
+        if user.id == self.user_id:
+            return True
+        elif min_priv_level == 'owner':
+            return False
+
+        return self.public
+
+    @staticmethod
+    def can_create(user):
+        return True
 
     @staticmethod
     def all_visible(user):
@@ -548,17 +653,111 @@ class Preseed(db.Model):
         else:
             return db.session.query(Preseed).filter((Preseed.public == true()) | (Preseed.user_id == user.id)).all()
 
+    @staticmethod
+    def list_types():
+        return ['preseed', 'kickstart']
+
 
 class Network(db.Model):
     __tablename__ = 'network'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, unique=True, nullable=False)
-    subnet = db.Column(db.String, unique=True, nullable=False)
-    reserved_net = db.Column(db.String, unique=True, nullable=True)
-    static_net = db.Column(db.String, unique=True, nullable=True)
+    subnet = db.Column(CIDR, unique=True, nullable=False)
+    reserved_net = db.Column(CIDR, unique=True, nullable=True)
+    static_net = db.Column(CIDR, unique=True, nullable=True)
+    interfaces = db.relationship("Interface", back_populates="network", passive_deletes=True)
 
     def __init__(self, *, name, subnet, reserved_net=None, static_net=None):
         self.name = name
         self.subnet = subnet
         self.reserved_net = reserved_net
         self.static_net = static_net
+
+    @property
+    def machines(self):
+        return Machine.query.join(Machine.interfaces).filter(Interface.network_id == self.id).all()
+
+    @property
+    def prefix(self):
+        return IPNetwork(self.subnet).prefixlen
+
+    @property
+    def netmask(self):
+        return str(IPNetwork(self.subnet).netmask)
+
+    def check_permission(self, user, min_priv_level='any'):
+        if user.admin:
+            return True
+        elif min_priv_level == 'admin':
+            return False
+
+        return False
+
+    def available_ipv4s(self, limit=25):
+        def _gen(ip_set):
+            for ip_net in ip_set.iter_cidrs():
+                for ip in ip_net.iter_hosts():
+                    if ip.words[-1] not in [0, 255, 0xffff]:
+                        yield ip
+
+        interfaces = Interface.query.filter_by(network_id=self.id).all()
+
+        static_ips = IPSet([self.static_net]) if self.static_net else IPSet()
+        reserved_ips = IPSet([self.reserved_net]) if self.reserved_net else IPSet()
+
+        for interface in interfaces:
+            if interface.static_ipv4:
+                static_ips.remove(interface.static_ipv4)
+            if interface.reserved_ipv4:
+                reserved_ips.remove(interface.reserved_ipv4)
+
+        return (list(itertools.islice(_gen(static_ips), limit)),
+                list(itertools.islice(_gen(reserved_ips), limit)))
+
+    def ip_in_use(self, ip, *, exclude_intf=None):
+        query = Interface.query.filter((Interface.network_id == self.id) &
+                                       ((Interface.reserved_ipv4 == ip) |
+                                       (Interface.static_ipv4 == ip)))
+        if exclude_intf:
+            query = query.filter((Interface.id != exclude_intf.id))
+
+        return query.count() != 0
+
+    @staticmethod
+    def subnet_conflicts(subnet, *, exclude_network=None):
+        query = Network.query.filter(
+            text('network(:range) << subnet OR network(:range) >>= subnet')).\
+            params(range=subnet)
+
+        if exclude_network:
+            query = query.filter((Network.id != exclude_network.id))
+
+        return query.count() != 0
+
+    @staticmethod
+    def static_net_changed(connection, network):
+        query = Interface.__table__.update().where((Interface.network_id == network.id))
+        if network.static_net:
+            query = query.where(text('not static_ipv4 << network(:range)'))
+        query = query.values(static_ipv4=None)
+
+        connection.execute(query, range=network.static_net)
+
+    @staticmethod
+    def reserved_net_changed(connection, network):
+        query = Interface.__table__.update().where((Interface.network_id == network.id))
+        if network.reserved_net:
+            query = query.where(text('not reserved_ipv4 << network(:range)'))
+        query = query.values(reserved_ipv4=None)
+
+        connection.execute(query, range=network.reserved_net)
+
+    @staticmethod
+    def can_create(user):
+        return True if user.admin else False
+
+
+@event.listens_for(Network, 'before_update')
+def network_before_update(mapper, connection, target):
+    Network.static_net_changed(connection, target)
+    Network.reserved_net_changed(connection, target)

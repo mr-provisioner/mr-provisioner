@@ -23,11 +23,13 @@ def create_app(config_path=None):
     Migrate(app, db)
 
     from app.admin.controllers import mod as admin_module
+    from app.admin_legacy.controllers import mod as admin_legacy_module
     from app.preseed.controllers import mod as preseed_module
     from app.tftp.controllers import mod as tftp_module
     from app.dhcp.controllers import mod as dhcp_module
 
     app.register_blueprint(admin_module, url_prefix='/admin')
+    app.register_blueprint(admin_legacy_module, url_prefix='/admin-legacy')
     app.register_blueprint(preseed_module, url_prefix='/preseed')
     app.register_blueprint(tftp_module, url_prefix='/tftp')
     app.register_blueprint(dhcp_module, url_prefix='/dhcp')

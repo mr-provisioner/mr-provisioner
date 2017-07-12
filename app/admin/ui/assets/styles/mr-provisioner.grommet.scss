@@ -1,0 +1,72 @@
+//$primary-color-dark:   #303F9F;
+//$primary-color:        #3F51B5;
+//$primary-color-light:  #C5CAE9;
+//$primary-color-text:   #FFFFFF;
+//$accent-color:         #448AFF;
+//$primary-text-color:   #212121;
+//$secondary-text-color: #757575;
+//$divider-color:        #BDBDBD;
+
+
+$primary-color-dark:   #1976D2;
+$primary-color:        #2196F3;
+$primary-color-light:  #BBDEFB;
+$primary-color-text:   #FFFFFF;
+$accent-color:         #03A9F4;
+$primary-text-color:   #212121;
+$secondary-text-color: #757575;
+$divider-color:        #BDBDBD;
+
+$critical-color:       #F44336;
+$warning-color:        #FFC107;
+$ok-color:             #4CAF50;
+
+//$critical-color:       #EF5350;
+//$warning-color:        #FFCA28;
+//$ok-color:             #66BB6A;
+
+$unknown-color:        #BDBDBD;
+
+@import url('https://fonts.googleapis.com/css?family=Source+Sans+Pro');
+
+$text-color: $primary-text-color;
+$brand-font-family: 'Source Sans Pro', sans-serif;
+$brand-large-number-font-family: 'Source Sans Pro', Arial, sans-serif;
+$brand-color: $primary-color;
+$brand-color-lighter: $primary-color-light;
+
+// XXX: revisit colors below!
+$brand-neutral-colors: (#425563, #5F7A76, #80746E, #767676) !default;
+$brand-accent-colors: (#2AD2C9, #614767, #ff8d6d) !default;
+
+$brand-status-colors: (
+  critical: $critical-color,
+  error: $critical-color,
+  warning: $warning-color,
+  ok: $ok-color,
+  unknown: $unknown-color,
+  disabled: $unknown-color
+);
+$colored-text-color: rgba(255, 255, 255, 0.75);
+$brand-link-color: $primary-color;
+$link-hover-color: $primary-color-dark;
+//$brand-link-text-decoration: underline;
+$brand-grey-colors: (#000001, #333333, #3B3B3B, #434343, #666666);
+$brand-graph-colors: $brand-neutral-colors;
+
+$text-font-weight: 100;
+$text-strong-font-weight: 600;
+
+$button-accent-color: #ff8d6d;
+$control-brand-color: #049371;
+$border-radius: 0px;
+
+
+@import 'grommet/scss/grommet-core/settings';
+
+@import 'grommet/scss/grommet-core/index';
+
+
+a.grommetux-anchor--active.active {
+    font-weight: bold;
+}

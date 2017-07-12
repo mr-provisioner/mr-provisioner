@@ -50,3 +50,7 @@ ENV/
 
 /logs*
 /tftp*
+
+node_modules
+
+/app/admin/ui/public
