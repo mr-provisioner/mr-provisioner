@@ -397,7 +397,8 @@ class User(db.Model):
 
 class Token(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
+    user = db.relationship("User", passive_deletes=True)
     token = db.Column(db.String, unique=True, nullable=False)
     desc = db.Column(db.String)
 
@@ -436,6 +437,10 @@ class Token(db.Model):
     @staticmethod
     def by_user(user):
         return db.session.query(Token).filter_by(user_id=user.id).all()
+
+    @staticmethod
+    def by_token(token):
+        return Token.query.filter_by(token=token).first()
 
     @staticmethod
     def can_create(user):
