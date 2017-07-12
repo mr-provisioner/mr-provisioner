@@ -141,6 +141,24 @@ class Interface(db.Model):
     def lease(self):
         return Lease.query.filter_by(mac=self.mac).first()
 
+    @property
+    def config_type_v4(self):
+        if self.network and self.static_ipv4:
+            return 'static'
+        elif self.network and self.reserved_ipv4:
+            return 'dynamic-reserved'
+        else:
+            return 'dynamic'
+
+    @property
+    def configured_ipv4(self):
+        if self.config_type_v4 == 'static':
+            return self.static_ipv4
+        elif self.config_type_v4 == 'dynamic-reserved':
+            return self.reserved_ipv4
+        else:
+            return None
+
     @staticmethod
     def by_mac(mac):
         try:
@@ -393,6 +411,10 @@ class User(db.Model):
     @staticmethod
     def can_create(user):
         return True if user.admin else False
+
+    @staticmethod
+    def by_username(username):
+        return User.query.filter_by(username=username).first()
 
 
 class Token(db.Model):

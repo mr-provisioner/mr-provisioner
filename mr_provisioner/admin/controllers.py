@@ -1048,7 +1048,8 @@ class DeleteMachineAssignee(graphene.Mutation):
         assignment = MachineUsers.query.get(args.get('id'))
         user = assignment.user
         machine = assignment.machine if assignment else None
-        if not assignment or not machine or not machine.check_permission(g.user, 'admin'):
+        if not assignment or not machine or \
+           not (machine.check_permission(g.user, 'admin') or assignment.user_id == g.user.id):
             errors = ['Permission denied']
             return DeleteMachineAssignee(user=None, ok=False, errors=errors)
 
