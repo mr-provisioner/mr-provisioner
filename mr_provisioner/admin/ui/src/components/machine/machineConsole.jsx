@@ -72,7 +72,7 @@ class MachineConsole_ extends React.Component {
   }
 
   handleTermData = data => {
-    if (this.ws) this.ws.send(new TextEncode().encode(data))
+    if (this.ws) this.ws.send(new TextEncoder().encode(data))
   }
 
   handleWSMessage = msg => {
