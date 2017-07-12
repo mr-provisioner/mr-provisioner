@@ -2,3 +2,4 @@
    -> if so, also update the .service file and the docs!
  - set up linter (and make code lint-clean)
  - add REST API
+ - Look at issues
