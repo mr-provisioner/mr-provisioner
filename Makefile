@@ -1,4 +1,4 @@
-APP_DIR=app
+APP_DIR=mr_provisioner
 FRONTEND_DIR=$(APP_DIR)/admin/ui
 DOCS_DIR=docs
 
@@ -13,3 +13,7 @@ lint:
 .PHONY: docs
 docs:
 	make -C $(DOCS_DIR) html
+
+.PHONY: dist
+dist: frontend
+	./setup.py sdist

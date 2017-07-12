@@ -15,8 +15,8 @@ down_revision = 'e212b1b698e4'
 branch_labels = None
 depends_on = None
 
-from app import db
-from app.models import User
+from mr_provisioner import db
+from mr_provisioner.models import User
 from passlib.hash import pbkdf2_sha256
 
 def upgrade():

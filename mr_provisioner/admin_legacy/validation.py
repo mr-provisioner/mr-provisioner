@@ -5,9 +5,9 @@ from flask_wtf.file import FileField, FileRequired
 from wtforms.validators import ValidationError, AnyOf, Email, EqualTo, IPAddress, InputRequired, \
     Length, MacAddress, NumberRange, Optional, Regexp
 
-from app.models import User, Image, Preseed, BMC
+from mr_provisioner.models import User, Image, Preseed, BMC
 
-from app.bmc_types import list_bmc_types
+from mr_provisioner.bmc_types import list_bmc_types
 
 
 def opt_int(s):

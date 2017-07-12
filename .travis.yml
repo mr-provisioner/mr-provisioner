@@ -23,9 +23,9 @@ matrix:
         - node
         - 7
       install:
-        - make -C app/admin/ui dist
+        - make -C mr_provisioner/admin/ui dist
       before_script:
-        - cd app/admin/ui
+        - cd mr_provisioner/admin/ui
       script:
         - npm run build
         - npm run lint

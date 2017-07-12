@@ -5,9 +5,9 @@ import re
 import ipaddress
 from datetime import datetime
 
-from app import db
-from app.models import Interface, Machine, Lease, DiscoveredMAC
-from app.util import MAC_REGEX, DHCP_ARCH_CODES, mac_vendor
+from mr_provisioner import db
+from mr_provisioner.models import Interface, Machine, Lease, DiscoveredMAC
+from mr_provisioner.util import MAC_REGEX, DHCP_ARCH_CODES, mac_vendor
 from sqlalchemy.exc import DatabaseError
 
 from flask import current_app as app

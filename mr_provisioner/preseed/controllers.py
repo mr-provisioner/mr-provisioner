@@ -3,8 +3,8 @@ from flask import Blueprint, Response
 import logging
 import jinja2
 
-from app.models import Machine
-from app import db
+from mr_provisioner.models import Machine
+from mr_provisioner import db
 from sqlalchemy.exc import DatabaseError
 from collections import namedtuple
 

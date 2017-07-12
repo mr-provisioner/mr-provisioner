@@ -4,8 +4,8 @@ import logging
 import re
 import os
 
-from app.models import Machine
-from app import db
+from mr_provisioner.models import Machine
+from mr_provisioner import db
 from sqlalchemy.exc import DatabaseError
 
 from flask import current_app as app

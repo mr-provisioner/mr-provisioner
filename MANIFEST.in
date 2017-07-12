@@ -1,0 +1,22 @@
+include setup.py
+include requirements.txt
+include LICENSE
+include COPYRIGHT
+include README.md
+include VERSION
+include run.py
+
+include mr_provisioner/util/manuf.db
+
+recursive-include migrations/ *.sql *.ini *.py
+
+recursive-include mr_provisioner/netboot_templates/ *.tmpl
+
+recursive-include mr_provisioner/admin/templates *
+recursive-include mr_provisioner/admin/ui/public *.js *.css *.map
+
+recursive-include mr_provisioner/admin_legacy/templates *
+recursive-include mr_provisioner/admin_legacy/static *
+
+recursive-include examples/ *
+recursive-include docs/ *.rst

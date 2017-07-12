@@ -10,12 +10,12 @@ from base64 import b64encode
 from werkzeug.utils import secure_filename
 from sqlalchemy.exc import IntegrityError
 
-from app import db
+from mr_provisioner import db
 from sqlalchemy.exc import DatabaseError
-from app.models import User, Token, Machine, Image, Preseed, BMC, MachineUsers, \
+from mr_provisioner.models import User, Token, Machine, Image, Preseed, BMC, MachineUsers, \
     ConsoleToken, Interface, Network, DiscoveredMAC
-from app.bmc_types import BMCError
-from app.util import trim_to_none
+from mr_provisioner.bmc_types import BMCError
+from mr_provisioner.util import trim_to_none
 
 from flask import current_app as app
 
