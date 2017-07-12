@@ -16,7 +16,7 @@ matrix:
         - node
         - 7
       install:
-        - cd app/admin/ui && yarn install
+        - make -C app/admin/ui dist
       before_script:
         - cd app/admin/ui
       script:
