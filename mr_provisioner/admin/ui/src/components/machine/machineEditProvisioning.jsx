@@ -144,7 +144,7 @@ const formFields = {
     accessor: e => e,
   },
   kernelOpts: {
-    defaultValue: ({ machine }) => machine.kernelOpts,
+    defaultValue: ({ machine }) => machine.kernelOpts || '',
     accessor: e => e.target.value,
   },
   initrdId: {
