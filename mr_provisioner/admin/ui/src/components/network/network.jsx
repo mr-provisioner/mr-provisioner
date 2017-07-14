@@ -52,7 +52,7 @@ function NetworkOverview({ network, onEdit }) {
           </Box>
           <Box justify="between" direction="row" pad="small">
             <span>
-              <Label>Static subnet</Label>
+              <Label>Static IPv4 pool</Label>
             </span>
             <span className="secondary">
               {network.staticNet}
@@ -60,7 +60,7 @@ function NetworkOverview({ network, onEdit }) {
           </Box>
           <Box justify="between" direction="row" pad="small">
             <span>
-              <Label>Reserved subnet</Label>
+              <Label>Reserved IPv4 pool</Label>
             </span>
             <span className="secondary">
               {network.reservedNet}
