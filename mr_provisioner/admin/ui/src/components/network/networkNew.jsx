@@ -56,7 +56,7 @@ function NetworkNew_({ fields, fieldErrors, ...props }) {
           </fieldset>
           <fieldset>
             <FormField
-              label="Sub-subnet for static IPs (CIDR notation)"
+              label="Static IPv4 pool (CIDR notation)"
               help={null}
               error={props.showFieldErrors && fieldErrors.staticNet}
             >
@@ -68,7 +68,7 @@ function NetworkNew_({ fields, fieldErrors, ...props }) {
             </FormField>
 
             <FormField
-              label="Sub-subnet for reserved IPs (CIDR notation)"
+              label="Reserved IPv4 pool (CIDR notation)"
               help={null}
               error={props.showFieldErrors && fieldErrors.reservedNet}
             >

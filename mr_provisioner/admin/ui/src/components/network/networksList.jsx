@@ -61,12 +61,12 @@ class NetworksList_ extends React.Component {
             cell={<TextCell col="subnet" />}
           />
           <TableColumn
-            label="Static subnet"
+            label="Static IPv4 pool"
             sortFn={sortByStaticNet}
             cell={<TextCell col="staticNet" />}
           />
           <TableColumn
-            label="Reserved subnet"
+            label="Reserved IPv4 pool"
             sortFn={sortByReservedNet}
             cell={<TextCell col="reservedNet" />}
           />
