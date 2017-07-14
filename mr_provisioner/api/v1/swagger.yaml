@@ -1,0 +1,790 @@
+# this is an example of the Uber API
+# as a demonstration of an API spec in YAML
+swagger: '2.0'
+info:
+  title: mr-provisioner API
+  description: Provision in style
+  version: "1.0"
+# the domain of the service
+# array of all schemes that your API supports
+schemes:
+  - http
+  - https
+# will be prefixed to all paths
+basePath: /api/v1
+produces:
+  - application/json
+consumes:
+  - application/json
+  - multipart/form-data
+
+securityDefinitions:
+  Bearer:
+    type: apiKey
+    name: Authorization
+    description: |
+      Send an authorization header with a bearer token. Set the value to
+      `Bearer <someToken>`.
+    in: header
+security:
+  - Bearer: []
+
+paths:
+  /machine:
+    get:
+      summary: List machines
+      description: |
+        This endpoint returns a list of either all machines or all machines assigned to the user.
+      parameters:
+        - name: show_all
+          in: query
+          description: If true, show all machines instead of just machines assigned to me.
+          required: false
+          type: boolean
+      tags:
+        - Machines
+      responses:
+        200:
+          description: An array of machines
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Machine'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+
+  /machine/{machine_id}:
+    get:
+      summary: Get machine
+      description: |
+        This endpoint returns a machine.
+      parameters:
+        - name: machine_id
+          in: path
+          required: true
+          type: integer
+      tags:
+        - Machines
+      responses:
+        200:
+          description: A machine
+          schema:
+            $ref: '#/definitions/Machine'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    put:
+      summary: Modify machine
+      description: |
+        This endpoint modifies a machine's provisioning information.
+      parameters:
+        - name: machine_id
+          in: path
+          required: true
+          type: integer
+        - name: machine
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/MachineModify'
+      tags:
+        - Machines
+      responses:
+        200:
+          description: The modified machine
+          schema:
+            $ref: '#/definitions/Machine'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+
+  /machine/{machine_id}/power:
+    get:
+      summary: Get machine power state
+      description: |
+        This endpoint returns a machine's power state.
+      parameters:
+        - name: machine_id
+          in: path
+          required: true
+          type: integer
+      tags:
+        - Machines
+      responses:
+        200:
+          description: A machine power state
+          schema:
+            $ref: '#/definitions/MachinePowerState'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+
+    post:
+      summary: Change machine power state
+      description: |
+        This endpoint changes a machine's power state.
+      parameters:
+        - name: machine_id
+          in: path
+          required: true
+          type: integer
+        - name: state
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/MachinePowerStateModify'
+      tags:
+        - Machines
+      responses:
+        202:
+          description: Empty (Accepted)
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+
+  /machine/{machine_id}/interface:
+    get:
+      summary: List machine interfaces
+      description: |
+        This endpoint returns a machine's interfaces.
+      parameters:
+        - name: machine_id
+          in: path
+          required: true
+          type: integer
+      tags:
+        - Machines
+      responses:
+        200:
+          description: A machine's interfaces
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/MachineInterface'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /machine/{machine_id}/interface/{interface_id}:
+    get:
+      summary: Get a machine interface
+      description: |
+        This endpoint returns a machine's interfaces.
+      parameters:
+        - name: machine_id
+          in: path
+          required: true
+          type: integer
+        - name: interface_id
+          in: path
+          required: true
+          type: integer
+      tags:
+        - Machines
+      responses:
+        200:
+          description: A machine interface
+          schema:
+            $ref: '#/definitions/MachineInterface'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    put:
+      summary: Modify machine interface
+      description: |
+        This endpoint modifies a machine interface.
+      parameters:
+        - name: machine_id
+          in: path
+          required: true
+          type: integer
+        - name: interface_id
+          in: path
+          required: true
+          type: integer
+        - name: interface
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/MachineInterfaceModify'
+      tags:
+        - Machines
+      responses:
+        200:
+          description: The modified interface
+          schema:
+            $ref: '#/definitions/MachineInterface'
+        409:
+          description: |
+            Unable to assign an IP automatically or conflicting identifier
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /machine/{machine_id}/assignee:
+    get:
+      summary: List machine assignees
+      description: |
+        This endpoint returns a machine's assignees.
+      parameters:
+        - name: machine_id
+          in: path
+          required: true
+          type: integer
+      tags:
+        - Machines
+      responses:
+        200:
+          description: A machine's assignees
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/MachineAssignee'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    post:
+      summary: Assign machine to a user (create a new assignment)
+      description: |
+        This endpoint adds an assignee to a machine.
+      parameters:
+        - name: machine_id
+          in: path
+          required: true
+          type: integer
+        - in: body
+          name: assignee
+          schema:
+            $ref: '#/definitions/MachineAssigneeCreate'
+      tags:
+        - Machines
+      responses:
+        201:
+          description: The newly assigned assignee object
+          schema:
+            $ref: '#/definitions/MachineAssignee'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+
+  /machine/{machine_id}/assignee/{assignee_id}:
+    get:
+      summary: Get a machine assignee
+      description: |
+        This endpoint returns a machine's assignee.
+      parameters:
+        - name: machine_id
+          in: path
+          required: true
+          type: integer
+        - name: assignee_id
+          in: path
+          required: true
+          type: integer
+      tags:
+        - Machines
+      responses:
+        200:
+          description: A machine assignee
+          schema:
+            $ref: '#/definitions/MachineAssignee'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    put:
+      summary: Modify machine assignee
+      description: |
+        This endpoint modifies a machine assignee.
+      parameters:
+        - name: machine_id
+          in: path
+          required: true
+          type: integer
+        - name: assignee_id
+          in: path
+          required: true
+          type: integer
+        - name: assignee
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/MachineAssigneeModify'
+      tags:
+        - Machines
+      responses:
+        200:
+          description: The modified assignee
+          schema:
+            $ref: '#/definitions/MachineAssignee'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      summary: Remove a machine assignee
+      description: |
+        This endpoint removes a machine assignee.
+      parameters:
+        - name: machine_id
+          in: path
+          required: true
+          type: integer
+        - name: assignee_id
+          in: path
+          required: true
+          type: integer
+      tags:
+        - Machines
+      responses:
+        204:
+          description: Empty
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /image:
+    get:
+      summary: List images
+      description: |
+        This endpoint returns a list of either all machines or all machines assigned to the user.
+      parameters:
+        - name: show_all
+          in: query
+          description: If true, show all machines instead of just my own images.
+          required: false
+          type: boolean
+      tags:
+        - Images
+      responses:
+        200:
+          description: An array of images
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Image'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    post:
+      summary: Create image
+      description: |
+        This endpoint creates a new image with a multipart file upload.
+      consumes:
+        - multipart/form-data
+      parameters:
+        - in: formData
+          name: file
+          type: file
+          description: The file to upload.
+        - in: formData
+          name: q
+          type: string
+          description: |
+            JSON of ImageCreateOrModify type:
+          default: |
+            {
+              "description": "Example image",
+              "type": "Kernel",
+              "public": false,
+              "known_good": true
+            }
+      tags:
+        - Images
+      responses:
+        201:
+          description: The newly created image
+          schema:
+            $ref: '#/definitions/Image'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+
+  /image/{image_id}:
+    get:
+      summary: Get image
+      description: |
+        This endpoint returns an image.
+      parameters:
+        - name: image_id
+          in: path
+          required: true
+          type: integer
+      tags:
+        - Images
+      responses:
+        200:
+          description: An image
+          schema:
+            $ref: '#/definitions/Image'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    put:
+      summary: Modify image
+      description: |
+        This endpoint modifies an image's metadata.
+      parameters:
+        - name: image_id
+          in: path
+          required: true
+          type: integer
+        - name: image
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/ImageCreateOrModify'
+      tags:
+        - Images
+      responses:
+        200:
+          description: The modified image
+          schema:
+            $ref: '#/definitions/Image'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      summary: Delete image
+      description: |
+        This endpoint deletes an image.
+      parameters:
+        - name: image_id
+          in: path
+          required: true
+          type: integer
+      tags:
+        - Images
+      responses:
+        204:
+          description: Empty
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+
+
+
+  /preseed:
+    get:
+      summary: List preseeds
+      description: |
+        This endpoint returns a list of either all machines or all machines assigned to the user.
+      parameters:
+        - name: show_all
+          in: query
+          description: If true, show all machines instead of just my own preseeds.
+          required: false
+          type: boolean
+      tags:
+        - Preseeds
+      responses:
+        200:
+          description: An array of preseeds
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Preseed'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    post:
+      summary: Create preseed
+      description: |
+        This endpoint creates a new preseed.
+      parameters:
+        - in: body
+          name: preseed
+          schema:
+            $ref: '#/definitions/PreseedCreateOrModify'
+      tags:
+        - Preseeds
+      responses:
+        201:
+          description: The newly created preseed
+          schema:
+            $ref: '#/definitions/Preseed'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+
+  /preseed/{preseed_id}:
+    get:
+      summary: Get preseed
+      description: |
+        This endpoint returns an preseed.
+      parameters:
+        - name: preseed_id
+          in: path
+          required: true
+          type: integer
+      tags:
+        - Preseeds
+      responses:
+        200:
+          description: An preseed
+          schema:
+            $ref: '#/definitions/Preseed'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    put:
+      summary: Modify preseed
+      description: |
+        This endpoint modifies an preseed's metadata.
+      parameters:
+        - name: preseed_id
+          in: path
+          required: true
+          type: integer
+        - name: preseed
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/PreseedCreateOrModify'
+      tags:
+        - Preseeds
+      responses:
+        200:
+          description: The modified preseed
+          schema:
+            $ref: '#/definitions/Preseed'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      summary: Delete preseed
+      description: |
+        This endpoint deletes an preseed.
+      parameters:
+        - name: preseed_id
+          in: path
+          required: true
+          type: integer
+      tags:
+        - Preseeds
+      responses:
+        204:
+          description: Empty
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+
+
+definitions:
+  Machine:
+    type: object
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+        description: Name
+      hostname:
+        type: string
+        description: Hostname
+      initrd_id:
+        type: integer
+        description: ID of initrd to use for netboot
+      kernel_id:
+        type: integer
+        description: ID of kernel to use for netboot
+      kernel_opts:
+        type: string
+        description: Kernel command line
+      preseed_id:
+        type: integer
+        description: ID of preseed to use for installation/boot
+      netboot_enabled:
+        type: boolean
+        description: Whether machine should netboot
+  MachineModify:
+    type: object
+    properties:
+      initrd_id:
+        type: integer
+        description: ID of initrd to use for netboot
+      kernel_id:
+        type: integer
+        description: ID of kernel to use for netboot
+      kernel_opts:
+        type: string
+        description: Kernel command line
+      preseed_id:
+        type: integer
+        description: ID of preseed to use for installation/boot
+      netboot_enabled:
+        type: boolean
+        description: Whether machine should netboot
+  MachineInterface:
+    type: object
+    properties:
+      id:
+        type: integer
+      identifier:
+        type: string
+      mac:
+        type: string
+      network_name:
+        type: string
+      subnetv4:
+        type: string
+      netmaskv4:
+        type: string
+      prefixlenv4:
+        type: string
+      static_pool_v4:
+        type: string
+      reserved_pool_v4:
+        type: string
+      config_type_v4:
+        type: string
+        enum: ["static", "dynamic-reserved", "dynamic"]
+      configured_ipv4:
+        type: string
+      lease_ipv4:
+        type: string
+      last_seen_date:
+        type: string
+  MachineInterfaceModify:
+    type: object
+    properties:
+      identifier:
+        type: string
+      config_type_v4:
+        type: string
+        enum: ["static", "dynamic-reserved", "dynamic"]
+      configured_ipv4:
+        type: string
+  MachineAssignee:
+    type: object
+    properties:
+      id:
+        type: integer
+      user:
+        type: string
+      reason:
+        type: string
+  MachineAssigneeCreate:
+    type: object
+    properties:
+      user:
+        type: string
+      reason:
+        type: string
+  MachineAssigneeModify:
+    type: object
+    properties:
+      reason:
+        type: string
+  MachinePowerState:
+    type: object
+    properties:
+      state:
+        type: string
+        enum: ['on', 'off', 'unknown']
+  MachinePowerStateModify:
+    type: object
+    properties:
+      state:
+        type: string
+        enum: ['on', 'off', 'reboot', 'pxe_reboot']
+  Image:
+    type: object
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+      description:
+        type: string
+      type:
+        type: string
+        enum: [Kernel, Initrd]
+      upload_date:
+        type: string
+      user:
+        type: string
+      known_good:
+        type: boolean
+      public:
+        type: boolean
+  ImageCreateOrModify:
+    type: object
+    properties:
+      description:
+        type: string
+      type:
+        type: string
+        enum: [Kernel, Initrd]
+      known_good:
+        type: boolean
+      public:
+        type: boolean
+  Preseed:
+    type: object
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+      description:
+        type: string
+      type:
+        type: string
+        enum: [preseed, kickstart]
+      content:
+        type: string
+      user:
+        type: string
+      known_good:
+        type: boolean
+      public:
+        type: boolean
+  PreseedCreateOrModify:
+    type: object
+    properties:
+      name:
+        type: string
+      description:
+        type: string
+      type:
+        type: string
+        enum: [preseed, kickstart]
+      content:
+        type: string
+      known_good:
+        type: boolean
+      public:
+        type: boolean
+  Error:
+    type: object
+    properties:
+      error_type:
+        type: string
+        description: Short error type
+      errors:
+        type: array
+        description: Error messages
+        items:
+          type: string

@@ -1,4 +1,4 @@
-from flask import Blueprint, request, g, jsonify
+from flask import Blueprint, request, g, render_template, jsonify, send_file, redirect, url_for
 
 import logging
 
@@ -19,8 +19,8 @@ import random
 import json
 
 
-mod = Blueprint('api', __name__, template_folder='templates')
-logger = logging.getLogger('api')
+mod = Blueprint('api_v1', __name__, template_folder='templates', static_folder='static')
+logger = logging.getLogger('api_v1')
 
 
 class InvalidUsage(Exception):
@@ -161,19 +161,22 @@ def authenticate():
 
     if request.method == 'OPTIONS':
         return
+    if request.endpoint == 'api_v1.static' or \
+       request.endpoint == 'api_v1.index' or \
+       request.endpoint == 'api_v1.docs_index' or \
+       request.endpoint == 'api_v1.swagger_file':
+        pass
+    else:
+        try:
+            token_str = request.headers['Authorization'].replace('Bearer ', '')
+            token = Token.by_token(token_str)
+            if not token:
+                return '', 401
 
-    try:
-        token_str = request.headers['Authorization'].replace('Bearer ', '')
-        token = Token.by_token(token_str)
-        if not token:
+            print('user', token.user.id)
+            g.user = token.user
+        except KeyError:
             return '', 401
-
-        print('user', token.user.id)
-        g.user = token.user
-    except KeyError:
-        return '', 401
-
-    return
 
 
 @mod.route('/machine', methods=['GET'])
@@ -674,6 +677,21 @@ def image_delete(id):
     db.session.commit()
 
     return '', 204
+
+
+@mod.route('/')
+def index():
+    return redirect(url_for('.docs_index'))
+
+
+@mod.route('/docs')
+def docs_index():
+    return render_template('swagger-ui.html')
+
+
+@mod.route('/swagger.yaml')
+def swagger_file():
+    return send_file(os.path.abspath(os.path.join(os.path.dirname(__file__), 'swagger.yaml')), cache_timeout=1)
 
 
 def handle_generic_error(error, status_code=400):
