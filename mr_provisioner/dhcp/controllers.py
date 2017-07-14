@@ -13,6 +13,7 @@ from sqlalchemy.exc import DatabaseError
 from flask import current_app as app
 
 from schema import Schema, And, Or, Use, SchemaError
+from functools import reduce
 
 
 mod = Blueprint('dhcp', __name__, template_folder='templates')
@@ -38,7 +39,13 @@ subnet_schema = Schema({
     'subnets': [{
         'subnetId': int,
         'prefix': Use(ipaddress.IPv4Address),
-        'prefixLen': And(int, lambda i: i >= 0 and i <= 32)
+        'prefixLen': And(int, lambda i: i >= 0 and i <= 32),
+        'pools': [{
+            'poolId': int,
+            'capacity': int,
+            'firstIP': Use(ipaddress.IPv4Address),
+            'lastIP': Use(ipaddress.IPv4Address),
+        }]
     }]
 })
 
@@ -150,7 +157,7 @@ def seen():
 def subnet():
     data = request.get_json(force=True)
     try:
-        subnet_schema.validate(data)
+        data = subnet_schema.validate(data)
     except SchemaError as e:
         return str(e), 400
 
@@ -168,20 +175,24 @@ def subnet():
     use_static = True if interface.static_ipv4 else False
     use_reserved = True if not use_static and interface.reserved_ipv4 else False
 
-    expected_subnet = None
+    expected_pool = None
     if use_reserved:
-        expected_subnet = ipaddress.IPv4Network(interface.network.reserved_net)
+        expected_pool = ipaddress.IPv4Network(interface.network.reserved_net)
 
-    logger.info('expected_subnet: %s' % expected_subnet)
+    logger.info('expected_pool: %s' % expected_pool)
 
-    if expected_subnet is None:
+    if expected_pool is None:
         return jsonify({'subnetId': None}), 200
 
     response = {}
 
     for subnet in data['subnets']:
-        net = ipaddress.IPv4Network((subnet['prefix'], subnet['prefixLen']))
-        if net.overlaps(expected_subnet):
+        net = ipaddress.IPv4Network((subnet['prefix'], subnet['prefixLen']), strict=False)
+        if not net.overlaps(ipaddress.IPv4Network(interface.network.subnet)):
+            continue
+
+        pool_matches = reduce(lambda r, p: r or p['firstIP'] in expected_pool, subnet['pools'], False)
+        if pool_matches:
             response['subnetId'] = subnet['subnetId']
             logger.info('matched subnet: %s' % subnet)
             break
