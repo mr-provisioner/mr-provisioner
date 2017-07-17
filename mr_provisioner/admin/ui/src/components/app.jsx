@@ -163,7 +163,9 @@ export function AppFooter(props) {
     >
       <Footer justify="between">
         <Box direction="row" align="center" pad={{ between: 'medium' }}>
-          <Paragraph margin="none">© 2017 Linaro and mr-provisioner contributors</Paragraph>
+          <Paragraph margin="none">
+            © 2017 Linaro and mr-provisioner contributors
+          </Paragraph>
           <Menu direction="row" size="small" dropAlign={{ right: 'right' }}>
             <Anchor href="https://mr-provisioner.readthedocs.io">
               Documentation
