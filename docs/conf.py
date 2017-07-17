@@ -48,7 +48,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'mr-provisioner'
-copyright = '2017, Linaro'
+copyright = '2017, Linaro and mr-provisioner contributors'
 author = 'Linaro'
 
 # The version info for the project you're documenting, acts as replacement for
