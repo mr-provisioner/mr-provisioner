@@ -1,6 +1,5 @@
 import pytest
 import json
-from . import db, client, app
 from mr_provisioner.models import User, Token
 from werkzeug.datastructures import Headers
 
