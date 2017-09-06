@@ -142,16 +142,24 @@ preseed_schema = Schema({
     'type': And(str, lambda s: s in Preseed.list_types()),
     Optional('description'): Or(None, And(str, lambda s: validators.length(s, min=0, max=256))),
     Optional('content'): Or(None, And(str, lambda s: validators.length(s, min=0, max=2 * 1024 * 1024))),
-    Optional('known_good'): Use(bool),
-    Optional('public'): Use(bool),
+    Optional('known_good'): bool,
+    Optional('public'): bool,
 }, ignore_extra_keys=True)
 
 
 image_schema = Schema({
     'type': And(str, lambda s: s in Image.list_types()),
     Optional('description'): Or(None, And(str, lambda s: validators.length(s, min=0, max=256))),
-    Optional('known_good'): Use(bool),
-    Optional('public'): Use(bool),
+    Optional('known_good'): bool,
+    Optional('public'): bool,
+}, ignore_extra_keys=True)
+
+
+change_image_schema = Schema({
+    Optional('type'): And(str, lambda s: s in Image.list_types()),
+    Optional('description'): Or(None, And(str, lambda s: validators.length(s, min=0, max=256))),
+    Optional('known_good'): bool,
+    Optional('public'): bool,
 }, ignore_extra_keys=True)
 
 
@@ -640,7 +648,7 @@ def image_get(id):
 @mod.route('/image/<int:id>', methods=['PUT'])
 def image_put(id):
     data = request.get_json(force=True)
-    data = image_schema.validate(data)
+    data = change_image_schema.validate(data)
 
     image = Image.query.get(id)
     if not image:

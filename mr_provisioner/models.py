@@ -587,6 +587,10 @@ class Image(db.Model):
         return True
 
     @staticmethod
+    def all():
+        return db.session.query(Image).all()
+
+    @staticmethod
     def all_visible(user):
         if(user.admin):
             return db.session.query(Image).all()
