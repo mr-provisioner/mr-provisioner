@@ -79,7 +79,7 @@ def test_assign_machine_user(client, valid_headers_admin, user_nonadmin, valid_p
     assert data['reason'] == 'API testing'
 
 
-def test_remove_assignee(client, valid_headers_admin, user_nonadmin, valid_plain_machine, valid_assignment_nonadmin):
+def test_remove_assignee(client, valid_headers_admin, valid_plain_machine, valid_assignment_nonadmin):
     r = client.delete('/api/v1/machine/%d/assignee/%d' % (valid_assignment_nonadmin.machine_id,
                                                           valid_assignment_nonadmin.id),
                       headers=valid_headers_admin)
@@ -88,3 +88,56 @@ def test_remove_assignee(client, valid_headers_admin, user_nonadmin, valid_plain
     assignees = valid_plain_machine.assignments
 
     assert len(assignees) == 0
+
+
+def test_change_assignee(client, valid_headers_admin, valid_plain_machine, valid_assignment_nonadmin):
+    body = json.dumps({
+        'reason': 'API testing',
+    })
+
+    r = client.put('/api/v1/machine/%d/assignee/%d' % (valid_assignment_nonadmin.machine_id,
+                                                       valid_assignment_nonadmin.id),
+                   headers=valid_headers_admin,
+                   data=body)
+
+    assert r.status_code == 200
+
+    assignees = valid_plain_machine.assignments
+
+    data = json.loads(r.data)
+
+    assert len(assignees) == 1
+    assert assignees[0].reason == 'API testing'
+    assert data['reason'] == 'API testing'
+
+
+def test_machine_interface_empty_list(client, valid_headers_nonadmin, valid_plain_machine):
+    r = client.get('/api/v1/machine/%d/interface' % valid_plain_machine.id, headers=valid_headers_nonadmin)
+
+    assert r.status_code == 200
+
+    data = json.loads(r.data)
+
+    assert data == []
+
+
+def test_machine_interface_list(client, valid_headers_nonadmin, valid_interface_1, valid_plain_machine):
+    r = client.get('/api/v1/machine/%d/interface' % valid_plain_machine.id, headers=valid_headers_nonadmin)
+
+    assert r.status_code == 200
+
+    data = json.loads(r.data)
+
+    assert len(data) == 1
+
+def test_get_machine_interface(client, valid_headers_nonadmin, valid_interface_1, valid_plain_machine):
+    r = client.get('/api/v1/machine/%d/interface/%d' % (valid_plain_machine.id, valid_interface_1.id),
+                   headers=valid_headers_nonadmin)
+
+    assert r.status_code == 200
+
+    data = json.loads(r.data)
+
+    assert data['id'] == valid_interface_1.id
+    assert data['mac'] == valid_interface_1.mac
+    assert data['network_name'] == valid_interface_1.network.name

@@ -1,6 +1,8 @@
 import os
 import pytest
 import sqlalchemy
+import tempfile
+import shutil
 from mr_provisioner import create_app
 from mr_provisioner import db as db_
 
@@ -18,6 +20,20 @@ def app(request):
 
     request.addfinalizer(teardown)
     return app
+
+
+@pytest.fixture(scope='function', autouse=True)
+def tftp_root(app):
+    path = tempfile.mkdtemp()
+    orig_path = app.config['TFTP_ROOT']
+
+    app.config.update(TFTP_ROOT=path)
+
+    yield
+
+    app.config.update(TFTP_ROOT=orig_path)
+
+    shutil.rmtree(path)
 
 
 @pytest.yield_fixture(scope='function')

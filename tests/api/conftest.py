@@ -1,11 +1,21 @@
 import pytest
-from mr_provisioner.models import User, Token, BMC, Machine, MachineUsers
+from mr_provisioner.models import User, Token, BMC, Machine, MachineUsers, Interface, Network, Image
 from werkzeug.datastructures import Headers
 
 
 @pytest.fixture(scope='function')
 def user_nonadmin(db):
     user = User('apitest', 'api@example.com', False, '', 'apitest', False)
+    db.session.add(user)
+    db.session.commit()
+    db.session.refresh(user)
+
+    return user
+
+# XXX: Figure out if I need a second user for anything, if not, delete this fixture
+@pytest.fixture(scope='function')
+def user_nonadmin2(db):
+    user = User('apitest2', 'api2@example.com', False, '', 'apitest', False)
     db.session.add(user)
     db.session.commit()
     db.session.refresh(user)
@@ -109,3 +119,48 @@ def valid_assignment_nonadmin(db, valid_plain_machine, user_nonadmin):
 
     return machineuser
 
+@pytest.fixture(scope='function')
+def valid_network(db):
+    network = Network(name='default',
+                      subnet='10.0.0.0/20')
+    db.session.add(network)
+    db.session.commit()
+    db.session.refresh(network)
+
+    return network
+
+
+@pytest.fixture(scope='function')
+def valid_interface_1(db, valid_plain_machine, valid_network):
+    interface = Interface(mac='00:11:22:33:44:55',
+                          machine_id=valid_plain_machine.id,
+                          network_id=valid_network.id)
+    db.session.add(interface)
+    db.session.commit()
+    db.session.refresh(interface)
+
+    return interface
+
+
+@pytest.fixture(scope='function')
+def valid_image_kernel(db, user_admin):
+    image = Image(filename='%s/kernel' % user_admin.username, description='kernel',
+                  file_type='kernel', user_id=user_admin.id,
+                  known_good=False, public=True)
+    db.session.add(image)
+    db.session.commit()
+    db.session.refresh(image)
+
+    return image
+
+
+@pytest.fixture(scope='function')
+def valid_image_initrd(db, user_admin):
+    image = Image(filename='%s/initrd' % user_admin.username, description='initrd',
+                  file_type='initrd', user_id=user_admin.id,
+                  known_good=False, public=True)
+    db.session.add(image)
+    db.session.commit()
+    db.session.refresh(image)
+
+    return image
