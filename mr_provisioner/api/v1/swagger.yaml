@@ -148,6 +148,108 @@ paths:
           schema:
             $ref: '#/definitions/Error'
 
+  /machine/{machine_id}/state:
+    get:
+      summary: Get machine state
+      description: |
+        This endpoint returns a machine's state.
+      parameters:
+        - name: machine_id
+          in: path
+          required: true
+          type: integer
+      tags:
+        - Machines
+      responses:
+        200:
+          description: A machine state
+          schema:
+            $ref: '#/definitions/MachineState'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+
+    post:
+      summary: Effect a machine state change
+      description: |
+        This endpoint changes a machine's state:
+          - `provision`: enables netboot on the machine, pxe-reboots it, and sets the state to `provisioning`.
+      parameters:
+        - name: machine_id
+          in: path
+          required: true
+          type: integer
+        - name: state
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/MachineStatePost'
+      tags:
+        - Machines
+      responses:
+        202:
+          description: New machine state
+          schema:
+            $ref: '#/definitions/MachineState'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+
+    put:
+      summary: Change machine state without further side-effects
+      description: |
+        This endpoint changes a machine's state without further side-effects.
+      parameters:
+        - name: machine_id
+          in: path
+          required: true
+          type: integer
+        - name: state
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/MachineStateModify'
+      tags:
+        - Machines
+      responses:
+        200:
+          description: New machine state
+          schema:
+            $ref: '#/definitions/MachineState'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+
+  /machine/{machine_id}/console:
+    post:
+      summary: Establish console connection credentials/information
+      description: |
+        This endpoint creates ephemeral console connection credentials and provides connection details.
+
+        If the `host` field of the response is `null`, the websocket connection should be to the same host as the API call.
+
+        The websocket URL to connect to is built as follows: `ws://[host or API host]:[port]/ws?token=[token]`, or using `wss://`
+        instead of `ws://` if using secure sockets.
+      parameters:
+        - name: machine_id
+          in: path
+          required: true
+          type: integer
+      tags:
+        - Machines
+      responses:
+        202:
+          description: Console connection information
+          schema:
+            $ref: '#/definitions/ConsoleConnection'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+
   /machine/{machine_id}/interface:
     get:
       summary: List machine interfaces
@@ -774,6 +876,33 @@ definitions:
       state:
         type: string
         enum: ['on', 'off', 'reboot', 'pxe_reboot']
+  MachineState:
+    type: object
+    properties:
+      state:
+        type: string
+        enum: ['ready', 'provisioning', 'error', 'unknown']
+  MachineStatePost:
+    type: object
+    properties:
+      state:
+        type: string
+        enum: ['provision']
+  MachineStateModify:
+    type: object
+    properties:
+      state:
+        type: string
+        enum: ['ready', 'error', 'unknown']
+  ConsoleConnection:
+    type: object
+    properties:
+      host:
+        type: string
+      port:
+        type: integer
+      token:
+        type: string
   Image:
     type: object
     properties:

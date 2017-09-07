@@ -1,6 +1,7 @@
 from mr_provisioner import db
 from base64 import b64encode
 from os import urandom
+import json
 from datetime import datetime, timedelta
 from mr_provisioner.bmc_types import resolve_bmc_type, BMCError, list_bmc_types
 from sqlalchemy import true, event, text
@@ -207,6 +208,7 @@ class Machine(db.Model):
     bmc_id = db.Column(db.Integer, db.ForeignKey("BMC.id"))
     bmc = db.relationship("BMC", passive_deletes=True)
     bmc_info = db.Column(db.String)
+    state = db.Column(db.String)
 
     interfaces = db.relationship("Interface", back_populates="machine", passive_deletes=True)
     assignments = db.relationship("MachineUsers", back_populates="machine", passive_deletes=True)
@@ -225,6 +227,7 @@ class Machine(db.Model):
         self.netboot_enabled = netboot_enabled
         self.bmc_id = bmc_id
         self.bmc_info = bmc_info
+        self.state = "unknown"
 
     def __repr__(self):
         return "<name: %s, macs: %s, kernel: %d, kernel_opts: %s," \
@@ -361,6 +364,25 @@ class ConsoleToken(db.Model):
     @staticmethod
     def gen_token():
         return binascii.hexlify(urandom(24)).decode('utf-8')
+
+    @staticmethod
+    def create_token_for_machine(machine):
+        if not machine.bmc:
+            raise ValueError('no BMC configured')
+
+        (cmd, args) = machine.sol_command
+
+        command_response = {
+            'command': cmd,
+            'args': args,
+        }
+
+        sol_token = ConsoleToken(command_response=json.dumps(command_response))
+        db.session.add(sol_token)
+        db.session.commit()
+        db.session.refresh(sol_token)
+
+        return sol_token
 
 
 class User(db.Model):

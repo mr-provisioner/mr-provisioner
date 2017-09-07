@@ -3,7 +3,8 @@ from flask import Blueprint, request, g, render_template, jsonify, send_file, re
 import logging
 
 from mr_provisioner import db
-from mr_provisioner.models import Interface, Machine, Image, Preseed, User, Token, MachineUsers
+from mr_provisioner.models import Interface, Machine, Image, Preseed, User, Token, MachineUsers, \
+    ConsoleToken
 from mr_provisioner.bmc_types import BMCError
 from sqlalchemy.exc import DatabaseError, IntegrityError
 
@@ -124,6 +125,16 @@ machine_schema = Schema({
 
 machine_power_schema = Schema({
     'state': And(str, lambda s: s in ('on', 'off', 'reboot', 'pxe_reboot')),
+})
+
+
+machine_state_post_schema = Schema({
+    'state': And(str, lambda s: s in ('provision')),
+})
+
+
+machine_state_put_schema = Schema({
+    'state': And(str, lambda s: s in ('ready', 'error', 'unknown')),
 })
 
 
@@ -513,6 +524,93 @@ def machine_power_post(id):
     machine.set_power(data['state'])
 
     return '', 202
+
+
+@mod.route('/machine/<int:id>/state', methods=['GET'])
+def machine_state_get(id):
+    machine = Machine.query.get(id)
+    if not machine:
+        raise InvalidUsage('machine not found', status_code=404)
+
+    return jsonify({'state': machine.state}), 200
+
+
+@mod.route('/machine/<int:id>/state', methods=['POST'])
+def machine_state_post(id):
+    data = request.get_json(force=True)
+    data = machine_state_post_schema.validate(data)
+
+    machine = Machine.query.get(id)
+    if not machine:
+        raise InvalidUsage('machine not found', status_code=404)
+
+    if not machine.check_permission(g.user, 'assignee'):
+        return '', 403
+
+    if data['state'] == 'provision':
+        if not machine.bmc:
+            raise InvalidUsage('provisioning requires a BMC', status_code=400)
+
+        if not machine.kernel:
+            raise InvalidUsage('provisioning requires a kernel', status_code=400)
+
+        machine.netboot_enabled = True
+        machine.state = 'provisioning'
+        db.session.commit()
+        db.session.refresh(machine)
+
+        machine.set_power('pxe_reboot')
+    else:
+        return '', 400
+
+    return jsonify({'state': machine.state}), 202
+
+
+@mod.route('/machine/<int:id>/state', methods=['PUT'])
+def machine_state_put(id):
+    data = request.get_json(force=True)
+    data = machine_state_put_schema.validate(data)
+
+    machine = Machine.query.get(id)
+    if not machine:
+        raise InvalidUsage('machine not found', status_code=404)
+
+    if not machine.check_permission(g.user, 'assignee'):
+        return '', 403
+
+    machine.state = data['state']
+    db.session.commit()
+    db.session.refresh(machine)
+
+    return jsonify({'state': machine.state}), 200
+
+
+@mod.route('/machine/<int:id>/console', methods=['POST'])
+def machine_console_post(id):
+    machine = Machine.query.get(id)
+    if not machine:
+        raise InvalidUsage('machine not found', status_code=404)
+
+    if not machine.check_permission(g.user, 'assignee'):
+        return '', 403
+
+    if not machine.bmc:
+        raise InvalidUsage('console requires a BMC', status_code=400)
+
+    try:
+        machine.deactivate_sol()
+    except Exception as e:
+        pass
+
+    host = app.config['WSS_EXT_HOST'] if app.config['WSS_EXT_HOST'] != '' else None
+    port = app.config['WSS_EXT_PORT'] if app.config['WSS_EXT_PORT'] != '' else 8866
+    sol_token = ConsoleToken.create_token_for_machine(machine)
+
+    return jsonify({
+        'host': host,
+        'port': port,
+        'token': sol_token.token,
+    })
 
 
 @mod.route('/preseed', methods=['GET'])
