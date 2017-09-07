@@ -105,6 +105,14 @@ def serialize_assignee(assignee):
     }
 
 
+def is_int(s):
+    try:
+        int(s)
+        return True
+    except ValueError:
+        return False
+
+
 machine_schema = Schema({
     Optional('netboot_enabled'): bool,
     Optional('preseed_id'): Or(None, Use(int)),
@@ -409,14 +417,13 @@ def machine_assignee_get(id, assignee_id):
     if not machine:
         raise InvalidUsage('machine not found', status_code=404)
 
-    if int(assignee_id):
-        assigneeid = int(assignee_id)
-    elif assignee_id == 'self':
-        assigneeid = g.user.id
+    if is_int(assignee_id):
+        assignee = MachineUsers.query.filter_by(id=int(assignee_id), machine_id=machine.id).first()
+    elif assignee_id == "self":
+        assignee = MachineUsers.query.filter_by(user_id=g.user.id, machine_id=machine.id).first()
     else:
         return InvalidUsage('Bad Request', 400)
 
-    assignee = MachineUsers.query.filter_by(id=assigneeid, machine_id=machine.id).first()
     if not assignee:
         raise InvalidUsage('assignee not found', status_code=404)
 
@@ -432,18 +439,17 @@ def machine_assignee_put(id, assignee_id):
     if not machine:
         raise InvalidUsage('machine not found', status_code=404)
 
-    if int(assignee_id):
-        assigneeid = int(assignee_id)
-    elif assignee_id == 'self':
-        assigneeid = g.user.id
+    if is_int(assignee_id):
+        assignee = MachineUsers.query.filter_by(id=int(assignee_id), machine_id=machine.id).first()
+    elif assignee_id == "self":
+        assignee = MachineUsers.query.filter_by(user_id=g.user.id, machine_id=machine.id).first()
     else:
         return InvalidUsage('Bad Request', 400)
 
-    assignee = MachineUsers.query.filter_by(id=assigneeid, machine_id=machine.id).first()
     if not assignee:
         raise InvalidUsage('assignee not found', status_code=404)
 
-    if not machine.check_permission(g.user, 'admin'):
+    if not (machine.check_permission(g.user, 'admin') or assignee.user_id == g.user.id):
         raise InvalidUsage('Forbidden', status_code=403)
 
     if 'reason' in data:
@@ -461,14 +467,13 @@ def machine_assignee_delete(id, assignee_id):
     if not machine:
         raise InvalidUsage('machine not found', status_code=404)
 
-    if int(assignee_id):
-        assigneeid = int(assignee_id)
-    elif assignee_id == 'self':
-        assigneeid = g.user.id
+    if is_int(assignee_id):
+        assignee = MachineUsers.query.filter_by(id=int(assignee_id), machine_id=machine.id).first()
+    elif assignee_id == "self":
+        assignee = MachineUsers.query.filter_by(user_id=g.user.id, machine_id=machine.id).first()
     else:
         return InvalidUsage('Bad Request', 400)
 
-    assignee = MachineUsers.query.filter_by(id=assigneeid, machine_id=machine.id).first()
     if not assignee:
         raise InvalidUsage('assignee not found', status_code=404)
 
