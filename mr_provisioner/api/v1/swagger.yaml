@@ -354,6 +354,71 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+
+  /machine/{machine_id}/assignee/self:
+    get:
+      summary: Get own machine assignee
+      description: |
+        This endpoint returns a machine's assignee if the caller is assigned to this particular machine.
+      parameters:
+        - name: machine_id
+          in: path
+          required: true
+          type: integer
+      tags:
+        - Machines
+      responses:
+        200:
+          description: Caller's assignment to this machine
+          schema:
+            $ref: '#/definitions/MachineAssignee'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    put:
+      summary: Modify machine assignment when the caller of the call is the assignee
+      description: |
+        This endpoint modifies a machine assignee.
+      parameters:
+        - name: machine_id
+          in: path
+          required: true
+          type: integer
+        - name: assignee
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/MachineAssigneeModify'
+      tags:
+        - Machines
+      responses:
+        200:
+          description: The modified assignee
+          schema:
+            $ref: '#/definitions/MachineAssignee'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      summary: Remove a machine from the caller's list of assignments
+      description: |
+        This endpoint removes the caller of the endpoint from the assignees list of a machine.
+      parameters:
+        - name: machine_id
+          in: path
+          required: true
+          type: integer
+      tags:
+        - Machines
+      responses:
+        204:
+          description: Empty
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
   /image:
     get:
       summary: List images

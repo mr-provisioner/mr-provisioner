@@ -403,20 +403,27 @@ def machine_assignee_create(id):
     return jsonify(serialize_assignee(assignee)), 201
 
 
-@mod.route('/machine/<int:id>/assignee/<int:assignee_id>', methods=['GET'])
+@mod.route('/machine/<int:id>/assignee/<assignee_id>', methods=['GET'])
 def machine_assignee_get(id, assignee_id):
     machine = Machine.query.get(id)
     if not machine:
         raise InvalidUsage('machine not found', status_code=404)
 
-    assignee = MachineUsers.query.filter_by(id=assignee_id, machine_id=machine.id).first()
+    if int(assignee_id):
+        assigneeid = int(assignee_id)
+    elif assignee_id == 'self':
+        assigneeid = g.user.id
+    else:
+        return InvalidUsage('Bad Request', 400)
+
+    assignee = MachineUsers.query.filter_by(id=assigneeid, machine_id=machine.id).first()
     if not assignee:
         raise InvalidUsage('assignee not found', status_code=404)
 
     return jsonify(serialize_assignee(assignee)), 200
 
 
-@mod.route('/machine/<int:id>/assignee/<int:assignee_id>', methods=['PUT'])
+@mod.route('/machine/<int:id>/assignee/<assignee_id>', methods=['PUT'])
 def machine_assignee_put(id, assignee_id):
     data = request.get_json(force=True)
     data = change_assignee_schema.validate(data)
@@ -425,7 +432,14 @@ def machine_assignee_put(id, assignee_id):
     if not machine:
         raise InvalidUsage('machine not found', status_code=404)
 
-    assignee = MachineUsers.query.filter_by(id=assignee_id, machine_id=machine.id).first()
+    if int(assignee_id):
+        assigneeid = int(assignee_id)
+    elif assignee_id == 'self':
+        assigneeid = g.user.id
+    else:
+        return InvalidUsage('Bad Request', 400)
+
+    assignee = MachineUsers.query.filter_by(id=assigneeid, machine_id=machine.id).first()
     if not assignee:
         raise InvalidUsage('assignee not found', status_code=404)
 
@@ -441,13 +455,20 @@ def machine_assignee_put(id, assignee_id):
     return jsonify(serialize_assignee(assignee)), 200
 
 
-@mod.route('/machine/<int:id>/assignee/<int:assignee_id>', methods=['DELETE'])
+@mod.route('/machine/<int:id>/assignee/<assignee_id>', methods=['DELETE'])
 def machine_assignee_delete(id, assignee_id):
     machine = Machine.query.get(id)
     if not machine:
         raise InvalidUsage('machine not found', status_code=404)
 
-    assignee = MachineUsers.query.filter_by(id=assignee_id, machine_id=machine.id).first()
+    if int(assignee_id):
+        assigneeid = int(assignee_id)
+    elif assignee_id == 'self':
+        assigneeid = g.user.id
+    else:
+        return InvalidUsage('Bad Request', 400)
+
+    assignee = MachineUsers.query.filter_by(id=assigneeid, machine_id=machine.id).first()
     if not assignee:
         raise InvalidUsage('assignee not found', status_code=404)
 
