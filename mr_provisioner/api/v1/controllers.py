@@ -182,6 +182,12 @@ change_image_schema = Schema({
 }, ignore_extra_keys=True)
 
 
+reserve_schema = Schema({
+    'query': Or(None, And(str, lambda s: validators.length(s, min=0, max=300))),
+    Optional('reason'): Or(None, And(str, lambda s: validators.length(s, min=0, max=140))),
+}, ignore_extra_keys=True)
+
+
 @mod.before_request
 def authenticate():
     g.user = None
@@ -209,11 +215,14 @@ def authenticate():
 @mod.route('/machine', methods=['GET'])
 def machines_get():
     show_all = True if request.args.get('show_all', 'false').lower() == 'true' else False
+    query_str = request.args.get('q', None)
+
+    q = Machine.query_by_criteria(query_str)
 
     if show_all:
-        machines = Machine.query.all()
+        machines = q.all()
     else:
-        machines = Machine.query.join(Machine.assignments).filter(MachineUsers.user_id == g.user.id).all()
+        machines = q.join(Machine.assignments).filter(MachineUsers.user_id == g.user.id).all()
 
     return jsonify([serialize_machine(m) for m in machines]), 200
 
@@ -524,6 +533,40 @@ def machine_power_post(id):
     machine.set_power(data['state'])
 
     return '', 202
+
+
+@mod.route('/machine/reservation', methods=['POST'])
+def machine_reserve():
+    data = request.get_json(force=True)
+    data = reserve_schema.validate(data)
+
+    q = Machine.query_by_criteria(data['query'], no_assignees=True)
+
+    # Wrap the query and the commit later on into a transaction so
+    # that it happens atomically; otherwise, there's a race between
+    # querying for an available machine and actually reserving that
+    # machine.
+    for n in range(0, 3):
+        db.session.begin_nested()
+
+        machine = q.first()
+        if machine:
+            assignee = MachineUsers(machine_id=machine.id,
+                                    user_id=g.user.id,
+                                    permissions=0,
+                                    reason=data.get('reason', None))
+            db.session.add(assignee)
+            db.session.flush()
+            db.session.refresh(machine)
+            if len(machine.assignments) == 1:
+                db.session.commit()
+                return jsonify(serialize_machine(machine)), 200
+            else:
+                db.session.rollback()
+        else:
+            raise InvalidUsage('no matching machine', status_code=404)
+
+    raise InvalidUsage('no matching machine', status_code=404)
 
 
 @mod.route('/machine/<int:id>/state', methods=['GET'])

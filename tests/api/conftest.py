@@ -164,3 +164,34 @@ def valid_image_initrd(db, user_admin):
     db.session.refresh(image)
 
     return image
+
+
+@pytest.fixture(scope='function')
+def machines_for_reservation(db, valid_bmc_plain, valid_bmc_moonshot, user_nonadmin):
+    machines = [
+        Machine(name='machine0', bmc_id=valid_bmc_plain.id),
+        Machine(name='machine1', bmc_id=valid_bmc_moonshot.id),
+        Machine(name='machine2', bmc_id=None),
+        Machine(name='machine3', bmc_id=None),
+        Machine(name='machine4', bmc_id=valid_bmc_moonshot.id),
+    ]
+
+    db.session.add_all(machines)
+    db.session.commit()
+    for m in machines:
+        db.session.refresh(m)
+
+    m1u = MachineUsers(machine_id=machines[1].id,
+                       user_id=user_nonadmin.id,
+                       permissions=0,
+                       reason="testing")
+
+    m2u = MachineUsers(machine_id=machines[2].id,
+                       user_id=user_nonadmin.id,
+                       permissions=0,
+                       reason="testing")
+
+    db.session.add_all([m1u, m2u])
+    db.session.commit()
+
+    return machines

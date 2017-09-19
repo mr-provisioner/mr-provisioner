@@ -19,3 +19,4 @@ graphene==1.4
 Flask-GraphQL==1.4.1
 validators==0.12
 netaddr==0.7.19
+sexpdata==0.0.3

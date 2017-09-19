@@ -36,6 +36,11 @@ paths:
       description: |
         This endpoint returns a list of either all machines or all machines assigned to the user.
       parameters:
+        - name: q
+          in: query
+          description: If set, restrict machines to those matching the given query.
+          required: false
+          type: string
         - name: show_all
           in: query
           description: If true, show all machines instead of just machines assigned to me.
@@ -50,6 +55,32 @@ paths:
             type: array
             items:
               $ref: '#/definitions/Machine'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+
+  /machine/reservation:
+    post:
+      summary: Reserve a machine matching a query
+      description: |
+        This endpoint assigns an unused machine, optionally matching criteria in a query, to the user.
+      parameters:
+        - in: body
+          name: reservation
+          schema:
+            $ref: '#/definitions/MachineReservation'
+      tags:
+        - Machines
+      responses:
+        200:
+          description: The newly assigned machine
+          schema:
+            $ref: '#/definitions/Machine'
+        404:
+          description: No machine matching the criteria is available
+          schema:
+            $ref: '#/definitions/Error'
         default:
           description: Unexpected error
           schema:
@@ -894,6 +925,14 @@ definitions:
       state:
         type: string
         enum: ['ready', 'error', 'unknown']
+  MachineReservation:
+    type: object
+    properties:
+      query:
+        description: A valid query, e.g. (= bmc_type "moonshot") or `null` to match any machine.
+        type: string
+      reason:
+        type: string
   ConsoleConnection:
     type: object
     properties:

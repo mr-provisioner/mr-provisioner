@@ -8,6 +8,8 @@ from sqlalchemy import true, event, text
 from sqlalchemy.dialects.postgresql import JSONB, INET, CIDR, MACADDR
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.schema import UniqueConstraint
+from sqlalchemy import func
+from mr_provisioner.util.query import build_filter
 import binascii
 from netaddr import IPSet, IPNetwork
 import itertools
@@ -341,6 +343,40 @@ class Machine(db.Model):
         except NoResultFound:
             return None
 
+    @staticmethod
+    def query_by_criteria(query_str, *, no_assignees=False):
+        intf_subq = (db.session.query(Interface.machine_id,
+                                      func.count(Interface.machine_id).label("interface_count"))
+                     .group_by(Interface.machine_id)).subquery("interface")
+
+        mu_subq = (db.session.query(MachineUsers.machine_id,
+                                    func.count(MachineUsers.machine_id).label("assignee_count"))
+                   .group_by(MachineUsers.machine_id)).subquery("assignee")
+
+        sym_table = {
+            'name': Machine.name,
+            'assignee_count': func.coalesce(mu_subq.c.assignee_count, 0),
+            'interface_count': func.coalesce(intf_subq.c.interface_count, 0),
+            'bmc_type': func.coalesce(BMC.bmc_type, ''),
+            'nil': None,
+        }
+
+        # Build base query, filtering out machines that have assignees already
+        q = db.session.query(Machine) \
+            .outerjoin(BMC, BMC.id == Machine.bmc_id) \
+            .outerjoin(intf_subq, Machine.id == intf_subq.c.machine_id) \
+            .outerjoin(mu_subq, Machine.id == mu_subq.c.machine_id)
+
+        if no_assignees:
+            q = q.filter(func.coalesce(mu_subq.c.assignee_count, 0) == 0)
+
+        # Parse the query string and further filter expression based on it
+        f = build_filter(query_str, sym_table)
+        if f is not None:
+            q = q.filter(f)
+
+        return q
+
 
 class ConsoleToken(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -507,7 +543,7 @@ class MachineUsers(db.Model):
         self.machine_id = machine_id
         self.user_id = user_id
         self.permissions = permissions
-        self.reason = reason
+        self.reason = reason if reason is not None else ""
 
     def __repr__(self):
         return "<machine_id: %d, user_id: %d, permissions: %d, " \

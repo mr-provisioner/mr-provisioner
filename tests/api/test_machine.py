@@ -1,5 +1,5 @@
 import json
-
+from mr_provisioner.models import Machine
 
 def test_empty_machine_list_no_machines(client, valid_headers_nonadmin):
     r = client.get('/api/v1/machine', headers=valid_headers_nonadmin)
@@ -7,6 +7,39 @@ def test_empty_machine_list_no_machines(client, valid_headers_nonadmin):
 
     data = json.loads(r.data)
     assert data == []
+
+
+def test_machine_list_nonadmin_only(client, valid_headers_nonadmin, valid_plain_machine, valid_moonshot_machine):
+    r = client.get('/api/v1/machine', headers=valid_headers_nonadmin)
+    assert r.status_code == 200
+
+    data = json.loads(r.data)
+    assert len(data) == 0
+
+
+def test_machine_list_query(client, valid_headers_nonadmin, machines_for_reservation):
+    q = """
+        (= bmc_type "moonshot")
+    """
+
+    r = client.get('/api/v1/machine?show_all=true&q=%s' % q, headers=valid_headers_nonadmin)
+    assert r.status_code == 200
+
+    data = json.loads(r.data)
+    assert set([m['name'] for m in data]) == set(['machine1', 'machine4'])
+
+
+def test_machine_list_query2(client, valid_headers_nonadmin, machines_for_reservation):
+    q = """
+        (or (= bmc_type "moonshot")
+            (= bmc_type "plain"))
+    """
+
+    r = client.get('/api/v1/machine?show_all=true&q=%s' % q, headers=valid_headers_nonadmin)
+    assert r.status_code == 200
+
+    data = json.loads(r.data)
+    assert set([m['name'] for m in data]) == set(['machine0', 'machine1', 'machine4'])
 
 
 def test_machine_list_nonadmin(client, valid_headers_nonadmin, valid_plain_machine, valid_moonshot_machine):
@@ -172,3 +205,94 @@ def test_get_machine_interface(client, valid_headers_nonadmin, valid_interface_1
     assert data['id'] == valid_interface_1.id
     assert data['mac'] == valid_interface_1.mac
     assert data['network_name'] == valid_interface_1.network.name
+
+
+def test_reserve_machine_any(client, valid_headers_nonadmin, machines_for_reservation):
+    body = json.dumps({
+        'query': None,
+    })
+
+    r = client.post('/api/v1/machine/reservation',
+                    headers=valid_headers_nonadmin,
+                    data=body)
+
+    assert r.status_code == 200
+
+    data = json.loads(r.data)
+
+    assert data['name'] in ['machine0', 'machine3', 'machine4']
+
+
+def test_reserve_machine_bmc_type_eq(client, valid_headers_nonadmin, machines_for_reservation):
+    body = json.dumps({
+        'query': '(= bmc_type "moonshot")',
+    })
+
+    r = client.post('/api/v1/machine/reservation',
+                    headers=valid_headers_nonadmin,
+                    data=body)
+
+    assert r.status_code == 200
+
+    data = json.loads(r.data)
+
+    assert data['name'] in ['machine4']
+    m = Machine.query.get(data['id'])
+    assert len(m.assignees) == 1
+
+
+def test_reserve_machine_bmc_type_and_ne(client, valid_headers_nonadmin, machines_for_reservation):
+    body = json.dumps({
+        'query': """
+            (and (!= bmc_type "plain")
+                 (!= bmc_type "moonshot"))
+        """,
+    })
+
+    r = client.post('/api/v1/machine/reservation',
+                    headers=valid_headers_nonadmin,
+                    data=body)
+
+    assert r.status_code == 200
+
+    data = json.loads(r.data)
+
+    assert data['name'] in ['machine3']
+    m = Machine.query.get(data['id'])
+    assert len(m.assignees) == 1
+
+
+def test_reserve_machine_name_like(client, valid_headers_nonadmin, machines_for_reservation):
+    body = json.dumps({
+        'query': """
+            (or (=~ name "ine2")
+                (=~ name "ine3"))
+        """,
+    })
+
+    r = client.post('/api/v1/machine/reservation',
+                    headers=valid_headers_nonadmin,
+                    data=body)
+
+    assert r.status_code == 200
+
+    data = json.loads(r.data)
+
+    assert data['name'] in ['machine3']
+    m = Machine.query.get(data['id'])
+    assert len(m.assignees) == 1
+
+
+def test_reserve_machine_empty_result(client, valid_headers_nonadmin, machines_for_reservation):
+    body = json.dumps({
+        'query': """
+            (and (= bmc_type "plain")
+                 (= bmc_type "moonshot"))
+        """,
+    })
+
+    r = client.post('/api/v1/machine/reservation',
+                    headers=valid_headers_nonadmin,
+                    data=body)
+
+    assert r.status_code == 404
