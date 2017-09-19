@@ -18,12 +18,19 @@ matrix:
 
     - language: python
       python: 3.3
+      services: postgresql
+      addons:
+        postgresql: "9.4"
       install:
         - pip install -r requirements.txt
         - pip install -r requirements.dev.txt
+      before_script:
+        - psql -c 'create database api_test;' -U postgres
+        - env APP_DATABASE_URI="postgresql+psycopg2://postgres@localhost/api_test" ./run.py db upgrade
       script:
         - make lint
         - make docs
+        - make APP_DATABASE_URI="postgresql+psycopg2://postgres@localhost/api_test" test
 
     - language: node_js
       node_js:
