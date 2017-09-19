@@ -7,7 +7,7 @@ def test_image_empty_list(client, valid_headers_nonadmin):
 
     assert r.status_code == 200
 
-    data = json.loads(r.data)
+    data = json.loads(r.data.decode('utf-8'))
 
     assert data == []
 
@@ -17,7 +17,7 @@ def test_image_list(client, valid_headers_nonadmin, valid_image_kernel, valid_im
 
     assert r.status_code == 200
 
-    data = json.loads(r.data)
+    data = json.loads(r.data.decode('utf-8'))
 
     assert len(data) == 2
     if data[0]['type'] == 'kernel':
@@ -42,7 +42,7 @@ def test_create_image(client, valid_headers_nonadmin, user_nonadmin):
 
     assert r.status_code == 201
 
-    data = json.loads(r.data)
+    data = json.loads(r.data.decode('utf-8'))
 
     assert data['description'] == 'Uploaded image'
     assert len(data['name']) != 0
@@ -53,7 +53,7 @@ def test_get_image(client, valid_headers_nonadmin, valid_image_initrd):
 
     assert r.status_code == 200
 
-    data = json.loads(r.data)
+    data = json.loads(r.data.decode('utf-8'))
 
     assert data['description'] == valid_image_initrd.description
     assert data['name'] == valid_image_initrd.filename
@@ -70,7 +70,7 @@ def test_modify_image(client, valid_headers_admin, valid_image_kernel):
 
     assert r.status_code == 200
 
-    data = json.loads(r.data)
+    data = json.loads(r.data.decode('utf-8'))
 
     assert data['public'] == False
 
