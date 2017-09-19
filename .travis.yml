@@ -43,3 +43,17 @@ matrix:
       script:
         - npm run build
         - npm run lint
+
+    - language: node_js
+      node_js:
+        - node
+        - 7
+      script:
+        - make apidocs
+      deploy:
+        provider: pages
+        skip_cleanup: true
+        github_token: $GITHUB_TOKEN
+        local_dir: docs/apidocs/public
+        on:
+          branch: api
