@@ -35,6 +35,9 @@ instance/
 # Sphinx documentation
 docs/_build/
 
+# API documentation
+docs/apidocs/v1/
+
 # dotenv
 .env
 

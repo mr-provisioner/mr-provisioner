@@ -1,0 +1,14 @@
+{
+  "name": "mr-provisioner-apidocs",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build-v1": "spectacle -t v1 ../../mr_provisioner/api/v1/swagger.yaml"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "spectacle-docs": "^0.9.8"
+  }
+}

@@ -1,6 +1,7 @@
 APP_DIR=mr_provisioner
 FRONTEND_DIR=$(APP_DIR)/admin/ui
 DOCS_DIR=docs
+APIDOCS_DIR=$(DOCS_DIR)/apidocs
 TEST_CONFIG?=
 PYTEST_ARGS?=
 
@@ -15,6 +16,7 @@ lint:
 .PHONY: docs
 docs:
 	make -C $(DOCS_DIR) html
+	make -C $(APIDOCS_DIR) html
 
 .PHONY: dist
 dist: frontend
