@@ -32,12 +32,14 @@ def create_app(config_path=None):
     from mr_provisioner.preseed.controllers import mod as preseed_module
     from mr_provisioner.tftp.controllers import mod as tftp_module
     from mr_provisioner.dhcp.controllers import mod as dhcp_module
+    from mr_provisioner.api.v1.controllers import mod as api_v1_module
 
     app.register_blueprint(admin_module, url_prefix='/admin')
     app.register_blueprint(admin_legacy_module, url_prefix='/admin-legacy')
     app.register_blueprint(preseed_module, url_prefix='/preseed')
     app.register_blueprint(tftp_module, url_prefix='/tftp')
     app.register_blueprint(dhcp_module, url_prefix='/dhcp')
+    app.register_blueprint(api_v1_module, url_prefix='/api/v1')
 
     @app.route('/')
     def index():

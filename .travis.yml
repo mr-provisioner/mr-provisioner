@@ -1,22 +1,36 @@
 matrix:
   include:
     - language: python
-      python: 3.3
+      python: 3.6
+      services: postgresql
+      addons:
+        postgresql: "9.4"
       install:
         - pip install -r requirements.txt
         - pip install -r requirements.dev.txt
+      before_script:
+        - psql -c 'create database api_test;' -U postgres
+        - env APP_DATABASE_URI="postgresql+psycopg2://postgres@localhost/api_test" ./run.py db upgrade
       script:
         - make lint
         - make docs
+        - make APP_DATABASE_URI="postgresql+psycopg2://postgres@localhost/api_test" test
 
     - language: python
-      python: 3.6
+      python: 3.3
+      services: postgresql
+      addons:
+        postgresql: "9.4"
       install:
         - pip install -r requirements.txt
         - pip install -r requirements.dev.txt
+      before_script:
+        - psql -c 'create database api_test;' -U postgres
+        - env APP_DATABASE_URI="postgresql+psycopg2://postgres@localhost/api_test" ./run.py db upgrade
       script:
         - make lint
         - make docs
+        - make APP_DATABASE_URI="postgresql+psycopg2://postgres@localhost/api_test" test
 
     - language: node_js
       node_js:
@@ -29,3 +43,17 @@ matrix:
       script:
         - npm run build
         - npm run lint
+
+    - language: node_js
+      node_js:
+        - node
+        - 7
+      script:
+        - make apidocs
+      deploy:
+        provider: pages
+        skip_cleanup: true
+        github_token: $GITHUB_TOKEN
+        local_dir: docs/apidocs/public
+        on:
+          branch: master

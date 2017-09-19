@@ -1,12 +1,15 @@
 from mr_provisioner import db
 from base64 import b64encode
 from os import urandom
+import json
 from datetime import datetime, timedelta
 from mr_provisioner.bmc_types import resolve_bmc_type, BMCError, list_bmc_types
 from sqlalchemy import true, event, text
 from sqlalchemy.dialects.postgresql import JSONB, INET, CIDR, MACADDR
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.schema import UniqueConstraint
+from sqlalchemy import func
+from mr_provisioner.util.query import build_filter
 import binascii
 from netaddr import IPSet, IPNetwork
 import itertools
@@ -141,6 +144,24 @@ class Interface(db.Model):
     def lease(self):
         return Lease.query.filter_by(mac=self.mac).first()
 
+    @property
+    def config_type_v4(self):
+        if self.network and self.static_ipv4:
+            return 'static'
+        elif self.network and self.reserved_ipv4:
+            return 'dynamic-reserved'
+        else:
+            return 'dynamic'
+
+    @property
+    def configured_ipv4(self):
+        if self.config_type_v4 == 'static':
+            return self.static_ipv4
+        elif self.config_type_v4 == 'dynamic-reserved':
+            return self.reserved_ipv4
+        else:
+            return None
+
     @staticmethod
     def by_mac(mac):
         try:
@@ -189,6 +210,7 @@ class Machine(db.Model):
     bmc_id = db.Column(db.Integer, db.ForeignKey("BMC.id"))
     bmc = db.relationship("BMC", passive_deletes=True)
     bmc_info = db.Column(db.String)
+    state = db.Column(db.String)
 
     interfaces = db.relationship("Interface", back_populates="machine", passive_deletes=True)
     assignments = db.relationship("MachineUsers", back_populates="machine", passive_deletes=True)
@@ -207,6 +229,7 @@ class Machine(db.Model):
         self.netboot_enabled = netboot_enabled
         self.bmc_id = bmc_id
         self.bmc_info = bmc_info
+        self.state = "unknown"
 
     def __repr__(self):
         return "<name: %s, macs: %s, kernel: %d, kernel_opts: %s," \
@@ -320,6 +343,40 @@ class Machine(db.Model):
         except NoResultFound:
             return None
 
+    @staticmethod
+    def query_by_criteria(query_str, *, no_assignees=False):
+        intf_subq = (db.session.query(Interface.machine_id,
+                                      func.count(Interface.machine_id).label("interface_count"))
+                     .group_by(Interface.machine_id)).subquery("interface")
+
+        mu_subq = (db.session.query(MachineUsers.machine_id,
+                                    func.count(MachineUsers.machine_id).label("assignee_count"))
+                   .group_by(MachineUsers.machine_id)).subquery("assignee")
+
+        sym_table = {
+            'name': Machine.name,
+            'assignee_count': func.coalesce(mu_subq.c.assignee_count, 0),
+            'interface_count': func.coalesce(intf_subq.c.interface_count, 0),
+            'bmc_type': func.coalesce(BMC.bmc_type, ''),
+            'nil': None,
+        }
+
+        # Build base query, filtering out machines that have assignees already
+        q = db.session.query(Machine) \
+            .outerjoin(BMC, BMC.id == Machine.bmc_id) \
+            .outerjoin(intf_subq, Machine.id == intf_subq.c.machine_id) \
+            .outerjoin(mu_subq, Machine.id == mu_subq.c.machine_id)
+
+        if no_assignees:
+            q = q.filter(func.coalesce(mu_subq.c.assignee_count, 0) == 0)
+
+        # Parse the query string and further filter expression based on it
+        f = build_filter(query_str, sym_table)
+        if f is not None:
+            q = q.filter(f)
+
+        return q
+
 
 class ConsoleToken(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -343,6 +400,25 @@ class ConsoleToken(db.Model):
     @staticmethod
     def gen_token():
         return binascii.hexlify(urandom(24)).decode('utf-8')
+
+    @staticmethod
+    def create_token_for_machine(machine):
+        if not machine.bmc:
+            raise ValueError('no BMC configured')
+
+        (cmd, args) = machine.sol_command
+
+        command_response = {
+            'command': cmd,
+            'args': args,
+        }
+
+        sol_token = ConsoleToken(command_response=json.dumps(command_response))
+        db.session.add(sol_token)
+        db.session.commit()
+        db.session.refresh(sol_token)
+
+        return sol_token
 
 
 class User(db.Model):
@@ -394,10 +470,15 @@ class User(db.Model):
     def can_create(user):
         return True if user.admin else False
 
+    @staticmethod
+    def by_username(username):
+        return User.query.filter_by(username=username).first()
+
 
 class Token(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
+    user = db.relationship("User", passive_deletes=True)
     token = db.Column(db.String, unique=True, nullable=False)
     desc = db.Column(db.String)
 
@@ -438,6 +519,10 @@ class Token(db.Model):
         return db.session.query(Token).filter_by(user_id=user.id).all()
 
     @staticmethod
+    def by_token(token):
+        return Token.query.filter_by(token=token).first()
+
+    @staticmethod
     def can_create(user):
         return True
 
@@ -458,7 +543,7 @@ class MachineUsers(db.Model):
         self.machine_id = machine_id
         self.user_id = user_id
         self.permissions = permissions
-        self.reason = reason
+        self.reason = reason if reason is not None else ""
 
     def __repr__(self):
         return "<machine_id: %d, user_id: %d, permissions: %d, " \
@@ -558,6 +643,10 @@ class Image(db.Model):
     @staticmethod
     def can_create(user):
         return True
+
+    @staticmethod
+    def all():
+        return db.session.query(Image).all()
 
     @staticmethod
     def all_visible(user):

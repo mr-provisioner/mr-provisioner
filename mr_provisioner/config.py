@@ -58,17 +58,22 @@ def apply_config(app, config_file):
     except configparser.Error:
         pass
 
+    try:
+        db_uri = os.environ['APP_DATABASE_URI']
+    except KeyError:
+        db_uri = config.get('database', 'uri')
+
     # Config settings used by app itself
     app.config.update(
         VERSION=version,
         BANNER_NAME=config.get('ui', 'banner_name', fallback='mr-provisioner'),
         TFTP_JINJA_ENV=tftp_jinja_env,
-        TFTP_ROOT=config.get('files', 'tftp_root'),
-        DHCP_TFTP_PROXY_HOST=config.get('dhcp', 'tftp_proxy_host'),
+        TFTP_ROOT=config.get('files', 'tftp_root', fallback='/tmp'),
+        DHCP_TFTP_PROXY_HOST=config.get('dhcp', 'tftp_proxy_host', fallback='127.0.0.1'),
         DHCP_DEFAULT_BOOTFILE=config.get('dhcp', 'default_bootfile', fallback=''),
         WSS_EXT_HOST=config.get('wssubprocess', 'ext_host', fallback=''),
         WSS_EXT_PORT=int(config.get('wssubprocess', 'ext_port', fallback=8866)),
-        CONTROLLER_ACCESS_URI=config.get('controller', 'access_uri'),
+        CONTROLLER_ACCESS_URI=config.get('controller', 'access_uri', fallback='http://127.0.0.1:5000'),
         PRESEED_DNS=config.get('provisioning', 'preseed_dns', fallback='')
     )
 
@@ -81,7 +86,7 @@ def apply_config(app, config_file):
 
     # Config settings used by Flask SQLAlchemy
     app.config.update(
-        SQLALCHEMY_DATABASE_URI=config.get('database', 'uri'),
+        SQLALCHEMY_DATABASE_URI=db_uri,
         SQLALCHEMY_ECHO=(log_level == logging.DEBUG),
         SQLALCHEMY_TRACK_MODIFICATIONS=True
     )

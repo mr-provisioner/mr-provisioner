@@ -2,7 +2,6 @@ from flask import Blueprint, request, g, render_template, url_for, \
     session, redirect, Response, send_from_directory, jsonify
 
 import logging
-import json
 import os
 import binascii
 from passlib.hash import pbkdf2_sha256
@@ -1048,7 +1047,8 @@ class DeleteMachineAssignee(graphene.Mutation):
         assignment = MachineUsers.query.get(args.get('id'))
         user = assignment.user
         machine = assignment.machine if assignment else None
-        if not assignment or not machine or not machine.check_permission(g.user, 'admin'):
+        if not assignment or not machine or \
+           not (machine.check_permission(g.user, 'admin') or assignment.user_id == g.user.id):
             errors = ['Permission denied']
             return DeleteMachineAssignee(user=None, ok=False, errors=errors)
 
@@ -1920,21 +1920,7 @@ class Query(graphene.ObjectType):
             # XXX: abort 403?
             return None
 
-        if not machine.bmc:
-            raise ValueError('no BMC configured')
-
-        (cmd, args) = machine.sol_command
-
-        command_response = {
-            'command': cmd,
-            'args': args,
-        }
-
-        sol_token = ConsoleToken(command_response=json.dumps(command_response))
-        db.session.add(sol_token)
-        db.session.commit()
-        db.session.refresh(sol_token)
-        return sol_token
+        return ConsoleToken.create_token_for_machine(machine)
 
     def resolve_available_ips(self, args, context, info):
         limit = max(1, min(args.get('limit', 25), 100))

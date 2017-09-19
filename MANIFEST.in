@@ -18,5 +18,9 @@ recursive-include mr_provisioner/admin/ui/public *.js *.css *.map
 recursive-include mr_provisioner/admin_legacy/templates *
 recursive-include mr_provisioner/admin_legacy/static *
 
+recursive-include mr_provisioner/api/v1/templates *
+recursive-include mr_provisioner/api/v1/static *
+recursive-include mr_provisioner/api/v1/swagger.yaml
+
 recursive-include examples/ *
 recursive-include docs/ *.rst
