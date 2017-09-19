@@ -56,4 +56,4 @@ matrix:
         github_token: $GITHUB_TOKEN
         local_dir: docs/apidocs/public
         on:
-          branch: api
+          branch: master
