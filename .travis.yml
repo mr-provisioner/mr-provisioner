@@ -30,7 +30,6 @@ matrix:
       script:
         - make lint
         - make docs
-        - make APP_DATABASE_URI="postgresql+psycopg2://postgres@localhost/api_test" test
 
     - language: node_js
       node_js:
