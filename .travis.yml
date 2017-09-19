@@ -1,7 +1,7 @@
 matrix:
   include:
     - language: python
-      python: 3.3
+      python: 3.6
       services: postgresql
       install:
         - pip install -r requirements.txt
@@ -15,7 +15,7 @@ matrix:
         - make APP_DATABASE_URI="postgresql+psycopg2://postgres@localhost/api_test" test
 
     - language: python
-      python: 3.6
+      python: 3.3
       install:
         - pip install -r requirements.txt
         - pip install -r requirements.dev.txt
