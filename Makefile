@@ -13,10 +13,13 @@ frontend:
 lint:
 	flake8 $(APP_DIR) --exclude node_modules
 
-.PHONY: docs
-docs:
-	make -C $(DOCS_DIR) html
+.PHONY: apidocs
+apidocs:
 	make -C $(APIDOCS_DIR) html
+
+.PHONY: docs
+docs: apidocs
+	make -C $(DOCS_DIR) html
 
 .PHONY: dist
 dist: frontend

@@ -5,4 +5,5 @@ ifdef YARN
 else
 	npm install
 endif
+	mkdir -p public
 	npm run build-v1
