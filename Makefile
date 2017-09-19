@@ -22,5 +22,4 @@ dist: frontend
 
 .PHONY: test
 test:
-	@stat $(TEST_CONFIG) > /dev/null
-	TEST_CONFIG=`readlink -f $(TEST_CONFIG)` pytest $(PYTEST_ARGS)
+	pytest $(PYTEST_ARGS)

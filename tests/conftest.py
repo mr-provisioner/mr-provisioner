@@ -9,7 +9,7 @@ from mr_provisioner import db as db_
 
 @pytest.fixture(scope='session')
 def app(request):
-    test_config_path = os.environ['TEST_CONFIG']
+    test_config_path = os.environ.get('TEST_CONFIG', '')
     app = create_app(test_config_path)
 
     ctx = app.app_context()
