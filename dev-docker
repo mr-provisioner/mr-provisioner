@@ -1,0 +1,28 @@
+#!/bin/sh
+
+set -eu
+
+cp Dockerfile.dev-template Dockerfile.dev
+
+cat << EOF >> Dockerfile.dev
+RUN groupadd -g $(id -g) $(id -gn)
+RUN useradd -m -u $(id -u) -g $(id -g) -s /bin/bash ${USER}
+RUN echo '${USER} ALL=(ALL:ALL) NOPASSWD: ALL' >> /etc/sudoers
+USER ${USER}
+
+CMD sudo pip3 install -r requirements.dev.txt && \
+    (cd mr_provisioner/admin/ui && make dist && npm run build) && \
+    sudo /etc/init.d/postgresql start && \
+    sudo -u postgres psql -c 'create database provisioner;' && \
+    sudo -u postgres psql -c "create role provuser with password 'provuser' login;" && \
+    sudo -u postgres psql -c 'grant all privileges on database provisioner to provuser;' && \
+    ./run.py db upgrade && \
+    make test && \
+    make lint && \
+    ./run.py runserver -h 0.0.0.0 -p 5000 & \
+    bash
+EOF
+
+docker build -t prov -f Dockerfile.dev .
+docker run --rm -p 5000:5000 -v $(pwd):/work -it prov
+

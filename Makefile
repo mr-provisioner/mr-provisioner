@@ -28,3 +28,4 @@ dist: frontend
 .PHONY: test
 test:
 	pytest $(PYTEST_ARGS)
+
