@@ -13,6 +13,7 @@ recursive-include migrations/ *.sql *.ini *.py
 recursive-include mr_provisioner/netboot_templates/ *.tmpl
 
 recursive-include mr_provisioner/admin/templates *
+recursive-include mr_provisioner/admin/static *
 recursive-include mr_provisioner/admin/ui/public *.js *.css *.map
 
 recursive-include mr_provisioner/admin_legacy/templates *

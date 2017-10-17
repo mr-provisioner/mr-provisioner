@@ -68,6 +68,7 @@ def authenticate():
        request.endpoint == 'admin.get_ws_subprocess_command' or \
        request.endpoint == 'admin.index' or \
        request.endpoint == 'admin.ui_assets' or \
+       request.endpoint == 'admin.favicon' or \
        request.endpoint == 'admin.login_post':
         pass
     else:
@@ -2224,6 +2225,11 @@ _ui_basedir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'ui/public
 def ui_assets(filename):
     global _ui_basedir
     return send_from_directory(_ui_basedir, filename, add_etags=True)
+
+
+@mod.route('/favicon.ico')
+def favicon():
+    return send_from_directory(mod.static_folder, 'favicons/favicon.ico', add_etags=True)
 
 
 @mod.errorhandler(DatabaseError)
