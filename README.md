@@ -7,3 +7,5 @@
 It handles the entire network boot process from controlling DHCP and handling TFTP request to providing installation configuration files.
 
 Read the documentation at https://mr-provisioner.readthedocs.io/
+
+API documentation available at https://linaro.github.io/mr-provisioner/v1/
