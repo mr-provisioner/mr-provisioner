@@ -692,7 +692,7 @@ class MachineChangePower(graphene.Mutation):
     def validate(args, machine):
         errors = []
 
-        if not args.get('power_state') in ['on', 'off', 'reboot', 'pxe_reboot']:
+        if not args.get('power_state') in ['on', 'off', 'reboot', 'pxe_reboot', 'disk_reboot']:
             errors.append('Unknown power state: %s' % args.get('power_state'))
 
         if not machine.bmc:
@@ -713,6 +713,8 @@ class MachineChangePower(graphene.Mutation):
             try:
                 if args.get('power_state') == 'pxe_reboot':
                     machine.pxe_reboot()
+                elif args.get('power_state') == 'disk_reboot':
+                    machine.disk_reboot()
                 elif args.get('power_state') == 'reboot':
                     machine.reboot()
                 else:

@@ -300,6 +300,15 @@ class Machine(db.Model):
         else:
             bmc.type_inst.set_power(self, "on")
 
+    def disk_reboot(self):
+        bmc = self.bmc
+        # XXX: raise exception if not bmc
+        bmc.type_inst.set_bootdev(self, "disk")
+        if self.power_state == "on":
+            bmc.type_inst.set_power(self, "reset")
+        else:
+            bmc.type_inst.set_power(self, "on")
+
     def set_power(self, power_state):
         power_state = 'reset' if power_state == 'reboot' else power_state
         bmc = self.bmc

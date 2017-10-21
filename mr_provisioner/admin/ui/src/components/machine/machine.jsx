@@ -502,7 +502,7 @@ class Machine_ extends React.Component {
                   <Button
                     icon={<RefreshIcon />}
                     label="Reboot"
-                    onClick={() => this.handleChangePower('reboot')}
+                    onClick={() => this.handleChangePower('disk_reboot')}
                     plain={true}
                   />
 
