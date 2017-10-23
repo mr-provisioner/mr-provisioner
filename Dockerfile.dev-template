@@ -1,0 +1,21 @@
+FROM debian:stretch
+
+RUN apt-get update && apt-get install -y vim python3 python3-pip postgresql libpq-dev build-essential libssl-dev curl sudo
+
+# Install NPM
+RUN curl -sL https://deb.nodesource.com/setup_8.x | bash -
+RUN apt-get install -y nodejs
+
+#COPY . /work
+WORKDIR /work
+#RUN pip3 install -e -r requirements.dev.txt
+#EXPOSE 5000
+
+#RUN cd /work/mr_provisioner/admin/ui && \
+#    make dist && \
+#    npm run build
+
+ENV APP_DATABASE_URI "postgresql+psycopg2://provuser:provuser@localhost/provisioner"
+
+## log in with admin/linaro
+## http://localhost:5000/api/v1/docs
