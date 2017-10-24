@@ -20,7 +20,7 @@ def test_image_list(client, valid_headers_nonadmin, valid_image_kernel, valid_im
     data = json.loads(r.data.decode('utf-8'))
 
     assert len(data) == 2
-    if data[0]['type'] == 'kernel':
+    if data[0]['type'] == 'Kernel':
         assert data[0]['name'] == valid_image_kernel.filename
         assert data[0]['description'] == valid_image_kernel.description
     else:

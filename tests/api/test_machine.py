@@ -96,6 +96,7 @@ def test_assign_machine_user(client, valid_headers_admin, user_nonadmin, valid_p
         'user': user_nonadmin.username,
         'reason': 'API testing',
     })
+
     r = client.post('/api/v1/machine/%d/assignee' % valid_plain_machine.id, headers=valid_headers_admin, data=body)
     assert r.status_code == 201
 
@@ -173,6 +174,30 @@ def test_change_assignee_self(client, valid_headers_nonadmin, valid_plain_machin
     assert assignees[0].reason == 'API testing'
     assert data['reason'] == 'API testing'
 
+
+def test_set_machine_parameters(client, valid_headers_nonadmin,
+        valid_plain_machine, valid_image_initrd, valid_image_kernel,
+        valid_preseed):
+
+    data = json.dumps({
+        "kernel_id": valid_image_kernel.id,
+        "initrd_id": valid_image_initrd.id,
+        "preseed_id": valid_preseed.id,
+        "kernel_opts": "",
+        "netboot_enabled": True,
+    })
+
+    r = client.put('/api/v1/machine/%d' % valid_plain_machine.id,
+                   headers=valid_headers_nonadmin,
+                   data=data)
+
+    assert r.status_code == 200
+
+    data = json.loads(r.data.decode('utf-8'))
+
+    assert data['initrd_id'] == valid_image_initrd.id
+    assert data['kernel_id'] == valid_image_kernel.id
+    assert data['netboot_enabled'] # is true
 
 def test_machine_interface_empty_list(client, valid_headers_nonadmin, valid_plain_machine):
     r = client.get('/api/v1/machine/%d/interface' % valid_plain_machine.id, headers=valid_headers_nonadmin)

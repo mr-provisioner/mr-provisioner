@@ -1,5 +1,5 @@
 import pytest
-from mr_provisioner.models import User, Token, BMC, Machine, MachineUsers, Interface, Network, Image
+from mr_provisioner.models import User, Token, BMC, Machine, MachineUsers, Interface, Network, Image, Preseed
 from werkzeug.datastructures import Headers
 
 
@@ -145,7 +145,7 @@ def valid_interface_1(db, valid_plain_machine, valid_network):
 @pytest.fixture(scope='function')
 def valid_image_kernel(db, user_admin):
     image = Image(filename='%s/kernel' % user_admin.username, description='kernel',
-                  file_type='kernel', user_id=user_admin.id,
+                  file_type='Kernel', user_id=user_admin.id,
                   known_good=False, public=True)
     db.session.add(image)
     db.session.commit()
@@ -155,9 +155,20 @@ def valid_image_kernel(db, user_admin):
 
 
 @pytest.fixture(scope='function')
+def valid_preseed(db, user_admin):
+    preseed = Preseed(filename="someseed", description="johnnys seed",
+                      file_type="preseed", file_content="",
+                      user_id=user_admin.id, known_good=False, public=True)
+    db.session.add(preseed)
+    db.session.commit()
+    db.session.refresh(preseed)
+
+    return preseed
+
+@pytest.fixture(scope='function')
 def valid_image_initrd(db, user_admin):
     image = Image(filename='%s/initrd' % user_admin.username, description='initrd',
-                  file_type='initrd', user_id=user_admin.id,
+                  file_type='Initrd', user_id=user_admin.id,
                   known_good=False, public=True)
     db.session.add(image)
     db.session.commit()

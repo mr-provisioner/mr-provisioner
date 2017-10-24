@@ -270,7 +270,7 @@ def machine_put(id):
             raise InvalidUsage('no such initrd')
         elif not initrd.check_permission(g.user, 'user'):
             raise InvalidUsage('not allowed to use initrd', status_code=403)
-        elif kernel.file_type != 'Initrd':
+        elif initrd.file_type != 'Initrd':
             raise InvalidUsage('initrd is not an initrd')
 
     if 'netboot_enabled' in data:
