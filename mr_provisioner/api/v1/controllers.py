@@ -124,7 +124,7 @@ machine_schema = Schema({
 
 
 machine_power_schema = Schema({
-    'state': And(str, lambda s: s in ('on', 'off', 'reboot', 'pxe_reboot')),
+    'state': And(str, lambda s: s in ('on', 'off', 'reboot', 'pxe_reboot', 'bios_reboot', 'disk_reboot')),
 })
 
 

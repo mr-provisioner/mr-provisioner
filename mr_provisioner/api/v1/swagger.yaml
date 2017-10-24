@@ -906,7 +906,7 @@ definitions:
     properties:
       state:
         type: string
-        enum: ['on', 'off', 'reboot', 'pxe_reboot']
+        enum: ['on', 'off', 'reboot', 'pxe_reboot', 'bios_reboot', 'disk_reboot']
   MachineState:
     type: object
     properties:
