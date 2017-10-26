@@ -30,6 +30,11 @@ def get_preseed(machine_id):
     ssh_key = assignees[0].ssh_key if len(assignees) > 0 else ''
     ssh_keys = [u.ssh_key for u in assignees]
 
+    kernel_name = machine.kernel.filename if machine.kernel else ""
+    kernel_description = machine.kernel.description if machine.kernel else ""
+    initrd_name = machine.initrd.filename if machine.initrd else ""
+    initrd_description = machine.initrd.description if machine.initrd else ""
+
     interfaces = [PInterface(name=i.identifier,
                              static_ipv4=i.static_ipv4,
                              prefix=i.network.prefix,
@@ -38,7 +43,10 @@ def get_preseed(machine_id):
     template = jinja2.Template(preseed.file_content)
     return Response(
         template.render(ssh_key=ssh_key, ssh_keys=ssh_keys, hostname=machine.hostname,
-                        interfaces=interfaces),
+                        interfaces=interfaces, kernel_name=kernel_name,
+                        kernel_description=kernel_description,
+                        initrd_name=initrd_name,
+                        initrd_description=initrd_description),
         mimetype='text/plain')
 
 
