@@ -165,6 +165,15 @@ preseed_schema = Schema({
     Optional('public'): bool,
 }, ignore_extra_keys=True)
 
+change_preseed_schema = Schema({
+    Optional('name'): And(str, lambda s: validators.length(s, min=2, max=256)),
+    Optional('type'): And(str, lambda s: s in Preseed.list_types()),
+    Optional('description'): Or(None, And(str, lambda s: validators.length(s, min=0, max=256))),
+    Optional('content'): Or(None, And(str, lambda s: validators.length(s, min=0, max=2 * 1024 * 1024))),
+    Optional('known_good'): bool,
+    Optional('public'): bool,
+}, ignore_extra_keys=True)
+
 
 image_schema = Schema({
     'type': And(str, lambda s: s in Image.list_types()),
@@ -708,7 +717,7 @@ def preseed_get(id):
 @mod.route('/preseed/<int:id>', methods=['PUT'])
 def preseed_put(id):
     data = request.get_json(force=True)
-    data = preseed_schema.validate(data)
+    data = change_preseed_schema.validate(data)
 
     preseed = Preseed.query.get(id)
     if not preseed:
