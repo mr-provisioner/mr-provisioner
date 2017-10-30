@@ -46,6 +46,20 @@ function PreseedEditContents_(props) {
           <code>hostname</code>
         </dt>
         <dd>is the machine (host)name.</dd>
+        <dt>
+          <code>kernel</code>
+        </dt>
+        <dd>
+          is a dictionary of kernel attributes: filename, description, and
+          known_good.
+        </dd>
+        <dt>
+          <code>initrd</code>
+        </dt>
+        <dd>
+          is a dictionary of initrd attributes: filename, description, and
+          known_good.
+        </dd>
       </dl>
       <CodeMirror value={content} onChange={onChange} options={options} />
       <Box pad={{ vertical: 'medium', between: 'medium' }} direction="row">
