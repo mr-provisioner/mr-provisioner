@@ -5,7 +5,7 @@ After=network-online.target
 
 [Service]
 ExecStart=/usr/local/bin/tftp-http-proxy \
-	-http-base-url "http://localhost:5000/tftp"
+	-http-base-url "http://localhost:5000/tftp/"
 
 Restart=always
 RestartSec=10
