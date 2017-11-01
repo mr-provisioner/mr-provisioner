@@ -11,6 +11,8 @@ To build Kea and the `mr-provisioner-kea plugin`_, you need some libraries in ad
 
  - log4cplus (e.g. on Ubuntu: liblog4cplus-dev)
  - curl (e.g. on Ubuntu: libcurl4-openssl-dev or libcurl4-gnutls-dev)
+ - openssl (e.g. on Ubuntu: libssl-dev)
+ - boost c++ (e.g. on Ubuntu: libboost-all-dev)
 
 Install Kea
 ~~~~~~~~~~~~

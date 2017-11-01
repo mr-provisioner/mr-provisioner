@@ -22,7 +22,7 @@ Create a virtual env
 
 Set up a virtual environment to run the application::
 
-    virtualenv env
+    virtualenv --python=python3 env
 
 NOTE: Make sure to specify python 3 if your system doesn't use it by detault
 (-p PYTHON_EXE)
@@ -76,7 +76,7 @@ Start up `ws-subprocess`_::
 
 Start up `tftp-http-proxy`_::
 
-    /path/to/tftp-http-proxy -http-base-url "http://localhost:5000/tftp"
+    /path/to/tftp-http-proxy -http-base-url "http://localhost:5000/tftp/"
 
 And finally, start up `mr-provisioner`::
 
