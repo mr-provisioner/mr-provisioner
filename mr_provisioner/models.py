@@ -719,7 +719,7 @@ class Preseed(db.Model):
 
     def kernel_opts(self, machine, config):
         if self.file_type == "preseed":
-            options = "auto=true priority=critical url=%s interface=auto" % (self.preseed_url(machine, config))
+            options = "auto=true priority=critical url=%s interface=auto BOOTIF=01:$net_default_mac" % (self.preseed_url(machine, config))
 
             if config['PRESEED_DNS']:
                 options += " netcfg/get_nameservers=%s" % (config['PRESEED_DNS'])
