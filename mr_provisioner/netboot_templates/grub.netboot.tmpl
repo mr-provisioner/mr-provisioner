@@ -2,7 +2,7 @@ set default="linux"
 set timeout=3
 
 menuentry "linux" {
-	linux (tftp)/{{machine.kernel.filename}} {{machine.kernel_opts_all(config)}}
+	linux (tftp)/{{machine.kernel.filename}} {{machine.kernel_opts_all(config)}} BOOTIF=01:$net_default_mac
 {% if machine.initrd.filename %}
 	initrd (tftp)/{{machine.initrd.filename}}
 {% endif %}
