@@ -54,8 +54,7 @@ First, make sure the virtual env is activated (see above). Then, install the req
 
     pip install -r requirements.txt
 
-NOTE: requirements.txt can be fetched from `mr_provisions github <https://github.com/Linaro/mr-provisioner/blob/master/requirements.txt>`_
-.
+NOTE: requirements.txt is in your local clone of mr-provisioner.
 
 Configuration file
 ------------------
