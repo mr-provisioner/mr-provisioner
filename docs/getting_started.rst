@@ -22,6 +22,12 @@ Additionally, mr-provisioner also relies on the following external services:
  - `ws-subprocess`_
             (Please visit the link and download manually)
 
+Clone mr-provisioner github
+---------------------------
+
+Clone mr-provisioner github to your local machine::
+
+    git clone https://github.com/Linaro/mr-provisioner.git
 
 Create a virtual env
 --------------------
