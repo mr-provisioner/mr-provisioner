@@ -37,6 +37,9 @@ After that, activate the virtual env::
 
     source env/bin/activate
 
+NOTE: on success, you should notice your command prompt prefixed by (env)::
+
+    (env) your-normal-prompt-string $ 
 
 Install requirements
 --------------------
