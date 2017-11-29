@@ -7,14 +7,20 @@ Install external dependencies
 mr-provisioner requires the following external dependencies to be installed:
 
  - virtualenv
+            ($ sudo apt install virtualenv)
  - python-pip
+           ($ sudo apt-get  install python-pip)
  - ipmitool
+           ($sudo apt-get  install ipmitool)
 
 Additionally, mr-provisioner also relies on the following external services:
 
  - postgresql
+            ($ sudo apt-get install postgresql postgresql-contrib)
  - `tftp-http-proxy`_
+            (Please visit the link and download manually)
  - `ws-subprocess`_
+            (Please visit the link and download manually)
 
 
 Create a virtual env
