@@ -82,6 +82,13 @@ Create a new database and user for `mr-provisioner` if you haven't already set o
     CREATE ROLE <username> WITH PASSWORD '<password>' LOGIN;
     GRANT ALL PRIVILEGES ON DATABASE <dbname> TO <username>;
     \q
+    
+    exit
+
+Create required tables
+----------------------
+
+First, make sure the virtual env is activated in the current shell.
 
 Create the required tables by running the database migrations::
 
