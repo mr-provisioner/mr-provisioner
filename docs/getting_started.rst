@@ -81,6 +81,7 @@ Create a new database and user for `mr-provisioner` if you haven't already set o
     CREATE DATABASE <dbname>;
     CREATE ROLE <username> WITH PASSWORD '<password>' LOGIN;
     GRANT ALL PRIVILEGES ON DATABASE <dbname> TO <username>;
+    \q
 
 Create the required tables by running the database migrations::
 
