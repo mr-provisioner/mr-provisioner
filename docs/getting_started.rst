@@ -59,7 +59,14 @@ NOTE: requirements.txt is in your local clone of mr-provisioner.
 Configuration file
 ------------------
 
-Copy the example configuration file from `examples/config.ini` to a location of your chosing, and adjust it according to your needs. At the least, you will have to configure the database uri and the TFTPRoot setting.
+Copy the example configuration file from `examples/config.ini` to a location of your chosing, and adjust it according to your needs. At the least, you will have to configure the database uri and the TFTPRoot setting::
+
+    [database]
+    uri = postgresql+psycopg2://user:pass@localhost/hwserver
+    [files]
+    tftp_root = /var/lib/mr-provisioner/tftp
+
+NOTE: `user:pass` shall be the same as `<username>` and `<password>`, and `hwserver` shall be the same as `<dbname>`, all as you defined when setting up database. See next section.
 
 See :doc:`detailed_config` for more information.
 
