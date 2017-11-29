@@ -66,7 +66,7 @@ Copy the example configuration file from `examples/config.ini` to a location of 
     [files]
     tftp_root = /var/lib/mr-provisioner/tftp
 
-NOTE: `user:pass` shall be the same as `<username>` and `<password>`, and `hwserver` shall be the same as `<dbname>`, all as you defined when setting up database. See next section.
+NOTE: `user:pass` shall be replaced by `<username>` and `<password>`, and `hwserver` shall be replaced by `<dbname>`, all as you define them when setting up database. See next section.
 
 See :doc:`detailed_config` for more information.
 
