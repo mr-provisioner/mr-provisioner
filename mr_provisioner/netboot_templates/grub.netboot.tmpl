@@ -1,8 +1,10 @@
 set default="linux"
 set timeout=3
 
+tr -s net_default_mac_dash : - $net_default_mac
+
 menuentry "linux" {
-	linux (tftp)/{{machine.kernel.filename}} {{machine.kernel_opts_all(config)}} BOOTIF=01:$net_default_mac
+	linux (tftp)/{{machine.kernel.filename}} {{machine.kernel_opts_all(config)}} BOOTIF=01-$net_default_mac_dash
 {% if machine.initrd.filename %}
 	initrd (tftp)/{{machine.initrd.filename}}
 {% endif %}
