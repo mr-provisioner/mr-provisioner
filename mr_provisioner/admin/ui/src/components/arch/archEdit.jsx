@@ -6,37 +6,45 @@ import Form from 'grommet/components/Form'
 import FormField from 'grommet/components/FormField'
 import FormFields from 'grommet/components/FormFields'
 import TextInput from 'grommet/components/TextInput'
+import NumberInput from 'grommet/components/NumberInput'
 import Button from 'grommet/components/Button'
+import AddIcon from 'grommet/components/icons/base/Add'
 import Footer from 'grommet/components/Footer'
 import Select from '../select'
-import withForm from '../../hoc/withForm'
-import withSubmit from '../../hoc/withSubmit'
 import { NetworkLoading, NetworkError } from '../network'
 import { withApolloStatus } from '../../hoc/apollo'
+import withForm from '../../hoc/withForm'
+import withSubmit from '../../hoc/withSubmit'
 import { graphql } from 'react-apollo'
 import { withHandlers, compose } from 'recompose'
 import { connect } from 'react-redux'
 import { bindActionCreators } from 'redux'
-import { Validator, ArrayValidator } from '../../util/validation'
 import {
-  validateLength,
-  validateAscii,
-  validateNonNull,
-} from '../../util/validators'
+  Validator,
+  ArrayValidator,
+  ExtendedValidator,
+} from '../../util/validation'
+import { validateLength, validateAscii } from '../../util/validators'
 import validator from 'validator'
-import { changeImageMetaGQL, imageGQL } from '../../graphql/image'
-import { archsListGQL } from '../../graphql/arch'
+import { changeArchGQL, archsListGQL } from '../../graphql/arch'
 import * as messageActions from '../../actions/message'
 
-function ImageEditMeta_({ fields, fieldErrors, ...props }) {
+function ArchEdit_({ fields, fieldErrors, ...props }) {
   return (
     <div>
       <Header>
-        <Heading tag="h2">Edit Overview</Heading>
+        <Heading tag="h2">Edit Architecture</Heading>
       </Header>
       <Form>
         <FormFields>
           <fieldset>
+            <FormField
+              label="Name"
+              help={null}
+              error={props.showFieldErrors && fieldErrors.name}
+            >
+              <TextInput value={fields.name} onDOMChange={props.onChangeName} />
+            </FormField>
             <FormField
               label="Description"
               help={null}
@@ -47,46 +55,11 @@ function ImageEditMeta_({ fields, fieldErrors, ...props }) {
                 onDOMChange={props.onChangeDescription}
               />
             </FormField>
-
-            <FormField
-              label="Type"
-              help={null}
-              error={props.showFieldErrors && fieldErrors.fileType}
-            >
-              <Select
-                required={true}
-                options={[
-                  { name: 'Kernel' },
-                  { name: 'Initrd' },
-                  { name: 'bootloader' },
-                ]}
-                value={fields.fileType}
-                searchKeys={['name']}
-                onChange={props.onChangeFileType}
-                valueKey="name"
-                labelFn={t => t.name}
-              />
-            </FormField>
-
-            <FormField
-              label="Architecture"
-              help={null}
-              error={props.showFieldErrors && fieldErrors.archId}
-            >
-              <Select
-                options={props.data.archs}
-                value={fields.archId}
-                searchKeys={['name', 'description']}
-                onChange={props.onChangeArchId}
-                valueKey="id"
-                labelFn={arch => `${arch.name} (${arch.description || ''})`}
-              />
-            </FormField>
           </fieldset>
         </FormFields>
         <Footer pad={{ vertical: 'medium' }}>
           <Button
-            label="Save changes"
+            label="Edit Architecture"
             type="submit"
             primary={true}
             onClick={props.handleSubmit}
@@ -98,18 +71,24 @@ function ImageEditMeta_({ fields, fieldErrors, ...props }) {
 }
 
 const formFields = {
-  fileType: { defaultValue: ({ image }) => image.fileType, accessor: e => e },
-  description: {
-    defaultValue: ({ image }) => image.description,
+  name: {
+    defaultValue: ({ arch }) => arch.name,
     accessor: e => e.target.value,
   },
-  archId: {
-    defaultValue: ({ image }) => (image.arch && image.arch.id) || null,
-    accessor: e => e,
+  description: {
+    defaultValue: ({ arch }) => arch.description || '',
+    accessor: e => e.target.value,
   },
 }
 
-const validationRules = {
+const validationRules = props => ({
+  name: [
+    Validator(
+      validateLength({ min: 2, max: 256 }),
+      'Must be between 2 and 256 characters long'
+    ),
+    Validator(validateAscii, 'Must contain only ASCII characters'),
+  ],
   description: [
     Validator(
       validateLength({ min: 0, max: 256 }),
@@ -117,8 +96,7 @@ const validationRules = {
     ),
     Validator(validateAscii, 'Must contain only ASCII characters'),
   ],
-  archId: [Validator(validateNonNull, 'Must be selected')],
-}
+})
 
 const mapDispatchToProps = dispatch => ({
   actions: bindActionCreators({ ...messageActions }, dispatch),
@@ -126,14 +104,14 @@ const mapDispatchToProps = dispatch => ({
 
 const mutationHandlers = {
   mutationResponse: ({ actions, onDone = null }) => ({
-    data: { changeImageMeta: { ok, image, errors } },
+    data: { changeArch: { ok, arch, errors } },
   }) => {
     if (ok && errors.length > 0)
       actions.showWarningMessage(
-        `Changes to ${image.filename} saved, but: ${errors.join(', ')}.`
+        `Changes to ${arch.name} saved, but: ${errors.join(', ')}.`
       )
     else if (ok)
-      actions.showOkMessage(`Changes to ${image.filename} saved successfully.`)
+      actions.showOkMessage(`Changes to ${arch.name} saved successfully.`)
     else actions.showErrorMessage(`Error saving changes: ${errors.join(', ')}.`)
 
     if (ok && onDone) onDone()
@@ -143,35 +121,30 @@ const mutationHandlers = {
 }
 
 const mapFieldsToVars = (fields, props) => ({
-  id: props.image.id,
+  id: props.arch.id,
   ...fields,
 })
 
-export const ImageEditMeta = compose(
-  graphql(archsListGQL, { options: { notifyOnNetworkStatusChange: true } }),
-  graphql(changeImageMetaGQL, {
-    name: 'changeImageMeta',
-    options: ({ match, image }) => ({
+export const ArchEdit = compose(
+  graphql(changeArchGQL, {
+    name: 'changeArchMutation',
+    options: {
       refetchQueries: [
         {
-          query: imageGQL,
-          variables: {
-            id: image.id,
-          },
+          query: archsListGQL,
         },
       ],
-    }),
+    },
   }),
   connect(null, mapDispatchToProps),
   withHandlers(mutationHandlers),
   withForm(formFields, validationRules),
   withSubmit(
-    'changeImageMeta',
+    'changeArchMutation',
     'mutationResponse',
     'mutationFailed',
     mapFieldsToVars
-  ),
-  withApolloStatus(NetworkLoading, NetworkError)
-)(ImageEditMeta_)
+  )
+)(ArchEdit_)
 
-export default ImageEditMeta
+export default ArchEdit

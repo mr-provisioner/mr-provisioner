@@ -12,7 +12,7 @@ from sqlalchemy.exc import IntegrityError
 from mr_provisioner import db
 from sqlalchemy.exc import DatabaseError
 from mr_provisioner.models import User, Token, Machine, Image, Preseed, BMC, MachineUsers, \
-    ConsoleToken, Interface, Network, DiscoveredMAC
+    ConsoleToken, Interface, Network, DiscoveredMAC, Arch, Subarch
 from mr_provisioner.bmc_types import BMCError
 from mr_provisioner.util import trim_to_none
 
@@ -222,6 +222,7 @@ class ImageType(graphene.ObjectType):
     user = graphene.Field(UserType)
     date = graphene.types.datetime.DateTime()
     machines = graphene.Dynamic(lambda: graphene.List(MachineType))
+    arch = graphene.Dynamic(lambda: graphene.Field(ArchType))
 
 
 class PreseedType(graphene.ObjectType):
@@ -249,6 +250,307 @@ class MachineType(graphene.ObjectType):
     bmc = graphene.Field(BMCType)
     bmc_info = graphene.String()
     power_state = graphene.String()
+    arch = graphene.Dynamic(lambda: graphene.Field(ArchType))
+    subarch = graphene.Dynamic(lambda: graphene.Field(SubarchType))
+
+
+class SubarchType(graphene.ObjectType):
+    id = graphene.ID()
+    name = graphene.String()
+    description = graphene.String()
+    bootloader = graphene.Field(ImageType)
+    arch = graphene.Dynamic(lambda: graphene.Field(ArchType))
+
+
+class ArchType(graphene.ObjectType):
+    id = graphene.ID()
+    name = graphene.String()
+    description = graphene.String()
+    subarchs = graphene.List(SubarchType)
+    machines = graphene.Dynamic(lambda: graphene.List(MachineType))
+
+
+class CreateArch(graphene.Mutation):
+    class Input:
+        name = graphene.String()
+        description = graphene.String()
+
+    ok = graphene.Boolean()
+    errors = graphene.List(graphene.String)
+    arch = graphene.Field(ArchType)
+
+    @staticmethod
+    def validate(args):
+        errors = []
+
+        if not validators.length(args.get('name'), min=2, max=256):
+            errors.append('Architecture name must be between 2 and 256 characters long')
+
+        if not validators.length(args.get('description', ''), min=0, max=256):
+            errors.append('description must be between 0 and 256 characters long')
+
+        return (len(errors) == 0, errors)
+
+    @staticmethod
+    def mutate(root, args, context, info):
+        errors = []
+
+        if not Arch.can_create(g.user):
+            errors = ['Permission denied']
+            return CreateArch(arch=None, ok=False, errors=errors)
+
+        ok, errors = CreateArch.validate(args)
+        if ok:
+            arch = Arch(name=args.get('name'),
+                        description=args.get('description', None))
+
+            db.session.add(arch)
+            try:
+                db.session.commit()
+                db.session.refresh(arch)
+            except IntegrityError as e:
+                db.session.rollback()
+                return CreateArch(arch=None, ok=False, errors=['An architecture with that name already exists'])
+
+            return CreateArch(arch=arch, ok=True, errors=errors)
+        else:
+            return CreateArch(arch=None, ok=False, errors=errors)
+
+
+class ChangeArch(graphene.Mutation):
+    class Input:
+        id = graphene.Int()
+        name = graphene.String()
+        description = graphene.String()
+
+    ok = graphene.Boolean()
+    errors = graphene.List(graphene.String)
+    arch = graphene.Field(ArchType)
+
+    @staticmethod
+    def validate(args):
+        errors = []
+
+        if not validators.length(args.get('name'), min=2, max=256):
+            errors.append('Architecture name must be between 2 and 256 characters long')
+
+        if not validators.length(args.get('description', ''), min=0, max=256):
+            errors.append('Description must be between 0 and 256 characters long')
+
+        return (len(errors) == 0, errors)
+
+    @staticmethod
+    def mutate(root, args, context, info):
+        errors = []
+
+        arch = Arch.query.get(args.get('id'))
+
+        if not arch or not arch.check_permission(g.user, 'admin'):
+            errors = ['Permission denied']
+            return ChangeArch(arch=None, ok=False, errors=errors)
+
+        ok, errors = ChangeArch.validate(args)
+        if ok:
+            arch.name = args.get('name')
+            arch.description = args.get('description')
+
+            try:
+                db.session.commit()
+                db.session.refresh(arch)
+            except IntegrityError as e:
+                db.session.rollback()
+                return ChangeArch(arch=None, ok=False, errors=['An architecture with that name already exists'])
+
+            return ChangeArch(arch=arch, ok=True, errors=errors)
+        else:
+            return ChangeArch(arch=None, ok=False, errors=errors)
+
+
+class DeleteArch(graphene.Mutation):
+    class Input:
+        id = graphene.Int()
+
+    ok = graphene.Boolean()
+    errors = graphene.List(graphene.String)
+    arch = graphene.Field(ArchType)
+
+    @staticmethod
+    def validate(args):
+        return (True, [])
+
+    @staticmethod
+    def mutate(root, args, context, info):
+        errors = []
+        arch = Arch.query.get(args.get('id'))
+        if not arch or not arch.check_permission(g.user, 'admin'):
+            errors = ["Permission denied"]
+            return DeleteArch(arch=None, ok=False, errors=errors)
+
+        ok, errors = DeleteArch.validate(args)
+        if ok:
+            db.session.delete(arch)
+            db.session.commit()
+
+            return DeleteArch(arch=arch, ok=True, errors=errors)
+        else:
+            return DeleteArch(arch=arch, ok=False, errors=errors)
+
+
+class CreateSubarch(graphene.Mutation):
+    class Input:
+        arch_id = graphene.Int()
+        name = graphene.String()
+        description = graphene.String()
+        bootloader_id = graphene.Int()
+
+    ok = graphene.Boolean()
+    errors = graphene.List(graphene.String)
+    subarch = graphene.Field(SubarchType)
+
+    @staticmethod
+    def validate(args, bootloader, arch):
+        errors = []
+
+        if not validators.length(args.get('name'), min=2, max=256):
+            errors.append('Architecture name must be between 2 and 256 characters long')
+
+        if not validators.length(args.get('description', ''), min=0, max=256):
+            errors.append('Description must be between 0 and 256 characters long')
+
+        if bootloader and bootloader.file_type != 'bootloader':
+            errors.append('Specified image is not a bootloader')
+
+        if bootloader and bootloader.arch_id != arch.id:
+            errors.append('Bootloader architecture must match architecture')
+
+        return (len(errors) == 0, errors)
+
+    @staticmethod
+    def mutate(root, args, context, info):
+        errors = []
+        arch = Arch.query.get(args.get('arch_id'))
+        bootloader = Image.query.get(args.get('bootloader_id')) if args.get('bootloader_id') else None
+
+        if not arch:
+            errors = ['No such architecture']
+            return CreateSubarch(subarch=None, ok=False, errors=errors)
+
+        if not Subarch.can_create(g.user):
+            errors = ['Permission denied']
+            return CreateSubarch(subarch=None, ok=False, errors=errors)
+
+        ok, errors = CreateSubarch.validate(args, bootloader, arch)
+        if ok:
+            subarch = Subarch(name=args.get('name'),
+                              description=args.get('description', None),
+                              arch_id=arch.id)
+
+            if bootloader:
+                subarch.bootloader_id = bootloader.id
+
+            db.session.add(subarch)
+            try:
+                db.session.commit()
+                db.session.refresh(subarch)
+            except IntegrityError as e:
+                db.session.rollback()
+                return CreateSubarch(subarch=None, ok=False,
+                                     errors=['A subarchitecture with that name already exists under this architecture'])
+
+            return CreateSubarch(subarch=subarch, ok=True, errors=errors)
+        else:
+            return CreateSubarch(subarch=None, ok=False, errors=errors)
+
+
+class ChangeSubarch(graphene.Mutation):
+    class Input:
+        id = graphene.Int()
+        name = graphene.String()
+        description = graphene.String()
+        bootloader_id = graphene.Int()
+
+    ok = graphene.Boolean()
+    errors = graphene.List(graphene.String)
+    subarch = graphene.Field(SubarchType)
+
+    @staticmethod
+    def validate(args, bootloader, arch_id):
+        errors = []
+
+        if not validators.length(args.get('name'), min=2, max=256):
+            errors.append('Architecture name must be between 2 and 256 characters long')
+
+        if not validators.length(args.get('description', ''), min=0, max=256):
+            errors.append('description must be between 0 and 256 characters long')
+
+        if bootloader and bootloader.file_type != 'bootloader':
+            errors.append('Specified image is not a bootloader')
+
+        if bootloader and bootloader.arch_id != arch_id:
+            errors.append('Bootloader architecture must match architecture')
+
+        return (len(errors) == 0, errors)
+
+    @staticmethod
+    def mutate(root, args, context, info):
+        errors = []
+        subarch = Subarch.query.get(args.get('id'))
+
+        bootloader = Image.query.get(args.get('bootloader_id')) if args.get('bootloader_id') else None
+
+        if not subarch or not subarch.check_permission(g.user, 'admin'):
+            errors = ['Permission denied']
+            return ChangeSubarch(subarch=None, ok=False, errors=errors)
+
+        ok, errors = ChangeSubarch.validate(args, bootloader, subarch.arch_id)
+        if ok:
+            subarch.name = args.get('name')
+            subarch.description = args.get('description')
+            subarch.bootloader_id = args.get('bootloader_id')
+
+            try:
+                db.session.commit()
+                db.session.refresh(subarch)
+            except IntegrityError as e:
+                db.session.rollback()
+                return ChangeSubarch(subarch=None, ok=False,
+                                     errors=['A subarchitecture with that name already exists under this architecture'])
+
+            return ChangeSubarch(subarch=subarch, ok=True, errors=errors)
+        else:
+            return ChangeSubarch(subarch=None, ok=False, errors=errors)
+
+
+class DeleteSubarch(graphene.Mutation):
+    class Input:
+        id = graphene.Int()
+
+    ok = graphene.Boolean()
+    errors = graphene.List(graphene.String)
+    subarch = graphene.Field(SubarchType)
+
+    @staticmethod
+    def validate(args):
+        errors = []
+
+        return (len(errors) == 0, errors)
+
+    @staticmethod
+    def mutate(root, args, context, info):
+        errors = []
+        subarch = Subarch.query.get(args.get('id'))
+        if not subarch or not subarch.check_permission(g.user, 'admin'):
+            errors = ["Permission denied"]
+            return DeleteSubarch(subarch=None, ok=False, errors=errors)
+
+        ok, errors = DeleteSubarch.validate(args)
+        if ok:
+            db.session.delete(subarch)
+            db.session.commit()
+
+            return DeleteSubarch(subarch=subarch, ok=True, errors=errors)
+        else:
+            return DeleteSubarch(subarch=subarch, ok=False, errors=errors)
 
 
 class CreateBMC(graphene.Mutation):
@@ -418,6 +720,7 @@ class CreateMachine(graphene.Mutation):
         macs = graphene.List(graphene.String)
         bmc_id = graphene.Int()
         bmc_info = graphene.String()
+        arch_id = graphene.Int()
 
     ok = graphene.Boolean()
     errors = graphene.List(graphene.String)
@@ -429,6 +732,9 @@ class CreateMachine(graphene.Mutation):
 
         if not validators.length(args.get('name'), min=2, max=256):
             errors.append('Machine name must be between 2 and 256 characters long')
+
+        if 'arch_id' not in args:
+            errors.append('architecture is required')
 
         if args.get('bmc_id'):
             bmc = BMC.query.get(args.get('bmc_id'))
@@ -459,9 +765,15 @@ class CreateMachine(graphene.Mutation):
 
         ok, errors = CreateMachine.validate(args)
         if ok:
+            arch = Arch.query.get(args.get('arch_id'))
+            if not arch:
+                errors = ['No such architecture']
+                return CreateMachine(machine=None, ok=False, errors=errors)
+
             machine = Machine(name=args.get('name'),
                               bmc_id=args.get('bmc_id'),
                               bmc_info=args.get('bmc_info'),
+                              arch_id=arch.id,
                               netboot_enabled=False)
 
             db.session.add(machine)
@@ -491,6 +803,7 @@ class ChangeMachineOverview(graphene.Mutation):
     class Input:
         id = graphene.Int()
         name = graphene.String()
+        arch_id = graphene.Int()
         bmc_id = graphene.Int()
         bmc_info = graphene.String()
 
@@ -504,6 +817,9 @@ class ChangeMachineOverview(graphene.Mutation):
 
         if not validators.length(args.get('name'), min=2, max=256):
             errors.append('Machine name must be between 2 and 256 characters long')
+
+        if 'arch_id' not in args:
+            errors.append('architecture is required')
 
         if args.get('bmc_id'):
             bmc = BMC.query.get(args.get('bmc_id'))
@@ -527,9 +843,15 @@ class ChangeMachineOverview(graphene.Mutation):
 
         ok, errors = ChangeMachineOverview.validate(args)
         if ok:
+            arch = Arch.query.get(args.get('arch_id'))
+            if not arch:
+                errors = ['No such architecture']
+                return ChangeMachineOverview(machine=None, ok=False, errors=errors)
+
             machine.name = args.get('name')
             machine.bmc_id = args.get('bmc_id')
             machine.bmc_info = args.get('bmc_info')
+            machine.arch_id = args.get('arch_id')
 
             try:
                 db.session.commit()
@@ -551,13 +873,14 @@ class ChangeMachineProvisioning(graphene.Mutation):
         kernel_opts = graphene.String()
         initrd_id = graphene.Int()
         preseed_id = graphene.Int()
+        subarch_id = graphene.Int()
 
     ok = graphene.Boolean()
     errors = graphene.List(graphene.String)
     machine = graphene.Field(MachineType)
 
     @staticmethod
-    def validate(args):
+    def validate(args, machine):
         errors = []
 
         if not validators.length(args.get('kernel_opts'), min=0, max=1024):
@@ -584,6 +907,17 @@ class ChangeMachineProvisioning(graphene.Mutation):
             elif not preseed.check_permission(g.user, 'user'):
                 errors.append('Not authorized to use preseed %s' % preseed.description)
 
+        if args.get('subarch_id'):
+            subarch = Subarch.query.get(args.get('subarch_id'))
+            if not subarch:
+                errors.append('A subarch with id=%d does not exist' % args.get('subarch_id'))
+            elif subarch.arch_id != machine.arch_id:
+                errors.append('The specified subarch is not compatible with the machine architecture')
+
+            if machine.netboot_enabled:
+                if subarch.bootloader is None:
+                    return errors.append('When netboot is enabled, the subarchitecture must have a bootloader')
+
         return (len(errors) == 0, errors)
 
     @staticmethod
@@ -594,12 +928,13 @@ class ChangeMachineProvisioning(graphene.Mutation):
             errors = ["Permission denied"]
             return ChangeMachineProvisioning(machine=None, ok=False, errors=errors)
 
-        ok, errors = ChangeMachineProvisioning.validate(args)
+        ok, errors = ChangeMachineProvisioning.validate(args, machine)
         if ok:
             machine.kernel_id = args.get('kernel_id')
             machine.kernel_opts = args.get('kernel_opts')
             machine.initrd_id = args.get('initrd_id')
             machine.preseed_id = args.get('preseed_id')
+            machine.subarch_id = args.get('subarch_id')
 
             db.session.commit()
             db.session.refresh(machine)
@@ -634,6 +969,13 @@ class ChangeMachineNetboot(graphene.Mutation):
 
         ok, errors = ChangeMachineNetboot.validate(args)
         if ok:
+            if args.get('netboot_enabled'):
+                if machine.subarch is None:
+                    errors = ["Cannot enable netboot without a subarchitecture"]
+                    return ChangeMachineNetboot(machine=machine, ok=False, errors=errors)
+                elif machine.subarch.bootloader is None:
+                    errors = ["Cannot enable netboot without a subarchitecture with bootloader"]
+                    return ChangeMachineNetboot(machine=machine, ok=False, errors=errors)
             machine.netboot_enabled = args.get('netboot_enabled')
             db.session.commit()
 
@@ -1120,7 +1462,7 @@ class CreatePreseed(graphene.Mutation):
             errors.append('content must be less than 2MB')
 
         if not validators.length(args.get('description', ''), min=0, max=256):
-            errors.append('description must be between 0 and 256 characters long')
+            errors.append('Description must be between 0 and 256 characters long')
 
         return (len(errors) == 0, errors)
 
@@ -1326,6 +1668,7 @@ class CreateImage(graphene.Mutation):
         file_content = graphene.String()
         known_good = graphene.Boolean()
         public = graphene.Boolean()
+        arch_id = graphene.Int()
 
     ok = graphene.Boolean()
     errors = graphene.List(graphene.String)
@@ -1344,6 +1687,9 @@ class CreateImage(graphene.Mutation):
         if not validators.length(args.get('description', ''), min=0, max=256):
             errors.append('description must be between 0 and 256 characters long')
 
+        if 'arch_id' not in args:
+            errors.append('architecture is required')
+
         if 'file' not in request.files:
             errors.append('no file was uploaded')
 
@@ -1358,6 +1704,11 @@ class CreateImage(graphene.Mutation):
 
         ok, errors = CreateImage.validate(args)
         if ok:
+            arch = Arch.query.get(args.get('arch_id'))
+            if not arch:
+                errors = ['No such architecture']
+                return CreateImage(image=None, ok=False, errors=errors)
+
             f = request.files['file']
             random_suffix = binascii.hexlify(os.urandom(4)).decode('utf-8')
             filename = "%s.%s" % (secure_filename(f.filename), random_suffix)
@@ -1372,7 +1723,8 @@ class CreateImage(graphene.Mutation):
                           description=args.get('description', None),
                           file_type=args.get('file_type'),
                           public=args.get('public', False),
-                          known_good=args.get('known_good', False))
+                          known_good=args.get('known_good', False),
+                          arch_id=arch.id)
 
             db.session.add(image)
             try:
@@ -1393,6 +1745,7 @@ class ChangeImageMeta(graphene.Mutation):
         id = graphene.Int()
         file_type = graphene.String()
         description = graphene.String()
+        arch_id = graphene.Int()
 
     ok = graphene.Boolean()
     errors = graphene.List(graphene.String)
@@ -1408,6 +1761,9 @@ class ChangeImageMeta(graphene.Mutation):
         if not validators.length(args.get('description', ''), min=0, max=256):
             errors.append('description must be between 0 and 256 characters long')
 
+        if 'arch_id' not in args:
+            errors.append('architecture is required')
+
         return (len(errors) == 0, errors)
 
     @staticmethod
@@ -1420,10 +1776,17 @@ class ChangeImageMeta(graphene.Mutation):
 
         ok, errors = ChangeImageMeta.validate(args)
         if ok:
+            arch = Arch.query.get(args.get('arch_id'))
+            if not arch:
+                errors = ['No such architecture']
+                return ChangeImageMeta(image=None, ok=False, errors=errors)
+
             if 'file_type' in args:
                 image.file_type = args.get('file_type')
             if 'description' in args:
                 image.description = args.get('description')
+            if arch:
+                image.arch_id = arch.id
 
             try:
                 db.session.commit()
@@ -1840,6 +2203,9 @@ class Query(graphene.ObjectType):
     bmcs = graphene.List(BMCType)
     bmc = graphene.Field(BMCType, id=graphene.Int())
 
+    archs = graphene.List(ArchType)
+    arch = graphene.Field(ArchType, id=graphene.Int())
+
     images = graphene.List(ImageType)
     image = graphene.Field(ImageType, id=graphene.Int())
 
@@ -1903,6 +2269,12 @@ class Query(graphene.ObjectType):
 
     def resolve_network(self, args, context, info):
         return Network.query.get(args['id'])
+
+    def resolve_archs(self, args, context, info):
+        return Arch.query.all()
+
+    def resolve_arch(self, args, context, info):
+        return Arch.query.get(args['id'])
 
     def resolve_discovered_macs(self, args, context, info):
         if not DiscoveredMAC.can_list(g.user):
@@ -2189,6 +2561,14 @@ class Mutation(graphene.ObjectType):
     create_network = CreateNetwork.Field()
     change_network = ChangeNetwork.Field()
     delete_network = DeleteNetwork.Field()
+
+    create_arch = CreateArch.Field()
+    change_arch = ChangeArch.Field()
+    delete_arch = DeleteArch.Field()
+
+    create_subarch = CreateSubarch.Field()
+    change_subarch = ChangeSubarch.Field()
+    delete_subarch = DeleteSubarch.Field()
 
 
 class ExceptionHandlerMiddleware(object):

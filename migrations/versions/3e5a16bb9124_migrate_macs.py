@@ -43,6 +43,6 @@ def downgrade():
         macs = m.macs
         if len(macs) > 0:
             s = sa.sql.text('UPDATE machine SET mac=:mac WHERE id=:id')
-            session.execute(s, mac=macs[0], id=m.id)
+            session.execute(s, {'mac': macs[0], 'id': m.id})
 
     session.commit()

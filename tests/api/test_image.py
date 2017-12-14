@@ -28,10 +28,11 @@ def test_image_list(client, valid_headers_nonadmin, valid_image_kernel, valid_im
         assert data[0]['description'] == valid_image_initrd.description
 
 
-def test_create_image(client, valid_headers_nonadmin, user_nonadmin):
+def test_create_image(client, valid_headers_nonadmin, user_nonadmin, valid_arch):
     q = json.dumps({
         'description': 'Uploaded image',
         'type': 'Kernel',
+        'arch': valid_arch.name,
         'public': True,
         'known_good': True
         })
@@ -47,6 +48,22 @@ def test_create_image(client, valid_headers_nonadmin, user_nonadmin):
     assert data['description'] == 'Uploaded image'
     assert len(data['name']) != 0
     assert data['user'] == user_nonadmin.username
+
+
+def test_create_image_noarch(client, valid_headers_nonadmin, user_nonadmin):
+    q = json.dumps({
+        'description': 'Uploaded image',
+        'type': 'Kernel',
+        'public': True,
+        'known_good': True
+        })
+
+    data = {'q': q, 'file': (io.BytesIO('hello there'.encode(encoding='utf-8')), 'hello.txt')}
+
+    r = client.post('/api/v1/image', headers=valid_headers_nonadmin, data=data)
+
+    assert r.status_code == 400
+
 
 def test_get_image(client, valid_headers_nonadmin, valid_image_initrd):
     r = client.get('/api/v1/image/%d' % valid_image_initrd.id, headers=valid_headers_nonadmin)

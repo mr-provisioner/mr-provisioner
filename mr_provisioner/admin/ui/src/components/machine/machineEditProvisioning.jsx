@@ -38,13 +38,32 @@ function MachineEditProvisioning_({ fields, fieldErrors, ...props }) {
         <FormFields>
           <fieldset>
             <FormField
+              label="Subarchitecture"
+              help={null}
+              error={props.showFieldErrors && fieldErrors.subarchId}
+            >
+              <Select
+                options={props.machine.arch ? props.machine.arch.subarchs : []}
+                value={fields.subarchId}
+                searchKeys={['name', 'description']}
+                onChange={props.onChangeSubarchId}
+                valueKey="id"
+                labelFn={subarch =>
+                  `${subarch.name} (${subarch.description || ''})`}
+              />
+            </FormField>
+          </fieldset>
+          <fieldset>
+            <FormField
               label="Kernel"
               help={null}
               error={props.showFieldErrors && fieldErrors.kernelId}
             >
               <Select
                 options={filter(
-                  i => i.fileType === 'Kernel',
+                  i =>
+                    i.fileType === 'Kernel' &&
+                    i.arch.id === props.machine.arch.id,
                   props.data.images.map(i => ({
                     ...i,
                     knownGoodText: i.knownGood ? 'known good' : '',
@@ -80,7 +99,9 @@ function MachineEditProvisioning_({ fields, fieldErrors, ...props }) {
             >
               <Select
                 options={filter(
-                  i => i.fileType === 'Initrd',
+                  i =>
+                    i.fileType === 'Initrd' &&
+                    i.arch.id === props.machine.arch.id,
                   props.data.images.map(i => ({
                     ...i,
                     knownGoodText: i.knownGood ? 'known good' : '',
@@ -154,6 +175,11 @@ const formFields = {
   preseedId: {
     defaultValue: ({ machine }) =>
       machine.preseed ? machine.preseed.id : null,
+    accessor: e => e,
+  },
+  subarchId: {
+    defaultValue: ({ machine }) =>
+      machine.subarch ? machine.subarch.id : null,
     accessor: e => e,
   },
 }

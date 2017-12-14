@@ -801,6 +801,9 @@ definitions:
       hostname:
         type: string
         description: Hostname
+      arch:
+        type: string
+        description: Architecture
       initrd_id:
         type: integer
         description: ID of initrd to use for netboot
@@ -819,6 +822,9 @@ definitions:
   MachineModify:
     type: object
     properties:
+      subarch:
+        type: string
+        description: Name of a subarchitecture of the machine's architecture
       initrd_id:
         type: integer
         description: ID of initrd to use for netboot
@@ -953,7 +959,9 @@ definitions:
         type: string
       type:
         type: string
-        enum: [Kernel, Initrd]
+        enum: [Kernel, Initrd, bootloader]
+      arch:
+        type: string
       upload_date:
         type: string
       user:
@@ -970,6 +978,8 @@ definitions:
       type:
         type: string
         enum: [Kernel, Initrd]
+      arch:
+        type: string
       known_good:
         type: boolean
       public:

@@ -18,6 +18,10 @@ export const imageGQL = gql`
         id
         name
       }
+      arch {
+        id
+        name
+      }
     }
   }
 `
@@ -36,6 +40,10 @@ export const imagesListGQL = gql`
         id
         username
       }
+      arch {
+        id
+        name
+      }
     }
   }
 `
@@ -45,8 +53,14 @@ export const changeImageMetaGQL = gql`
     $id: Int!
     $fileType: String!
     $description: String!
+    $archId: Int
   ) {
-    changeImageMeta(id: $id, fileType: $fileType, description: $description) {
+    changeImageMeta(
+      id: $id
+      fileType: $fileType
+      description: $description
+      archId: $archId
+    ) {
       ok
       errors
       image {
@@ -92,12 +106,14 @@ export const createImageGQL = gql`
     $knownGood: Boolean
     $public: Boolean
     $description: String
+    $archId: Int
   ) {
     createImage(
       fileType: $fileType
       knownGood: $knownGood
       public: $public
       description: $description
+      archId: $archId
     ) {
       ok
       errors

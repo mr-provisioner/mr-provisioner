@@ -5,7 +5,8 @@ import tempfile
 import shutil
 from mr_provisioner import create_app
 from mr_provisioner import db as db_
-from mr_provisioner.models import User, BMC, Machine, MachineUsers, Interface, Network, Image, Preseed
+from mr_provisioner.models import User, Token, BMC, Machine, MachineUsers, Interface, Network, Image, Preseed, \
+        Arch, Subarch
 
 
 @pytest.fixture(scope='session')
@@ -77,6 +78,7 @@ def user_nonadmin(db):
 
     return user
 
+
 # XXX: Figure out if I need a second user for anything, if not, delete this fixture
 @pytest.fixture(scope='function')
 def user_nonadmin2(db):
@@ -119,8 +121,53 @@ def valid_bmc_plain(db):
 
 
 @pytest.fixture(scope='function')
-def valid_moonshot_machine(db, valid_bmc_moonshot):
-    machine = Machine(name='c1n1', bmc_id=valid_bmc_moonshot.id, bmc_info='3')
+def valid_arch(db):
+    arch = Arch(name='some-arch', description='arch description')
+    db.session.add(arch)
+    db.session.commit()
+    db.session.refresh(arch)
+
+    return arch
+
+
+@pytest.fixture(scope='function')
+def valid_arch2(db):
+    arch = Arch(name='some-other-arch', description='arch description')
+    db.session.add(arch)
+    db.session.commit()
+    db.session.refresh(arch)
+
+    return arch
+
+
+@pytest.fixture(scope='function')
+def valid_subarch_no_bl(db, valid_arch):
+    subarch = Subarch(name='some-subarch-no-bl',
+                      description='some sub arch without bootloader',
+                      arch_id=valid_arch.id)
+    db.session.add(subarch)
+    db.session.commit()
+    db.session.refresh(subarch)
+
+    return subarch
+
+
+@pytest.fixture(scope='function')
+def valid_subarch_bl(db, valid_arch, valid_image_bootloader):
+    subarch = Subarch(name='some-subarch-with-bl',
+                      description='some sub arch with bootloader',
+                      arch_id=valid_arch.id,
+                      bootloader_id=valid_image_bootloader.id)
+    db.session.add(subarch)
+    db.session.commit()
+    db.session.refresh(subarch)
+
+    return subarch
+
+
+@pytest.fixture(scope='function')
+def valid_moonshot_machine(db, valid_bmc_moonshot, valid_arch):
+    machine = Machine(name='c1n1', bmc_id=valid_bmc_moonshot.id, bmc_info='3', arch_id=valid_arch.id)
     db.session.add(machine)
     db.session.commit()
     db.session.refresh(machine)
@@ -129,8 +176,8 @@ def valid_moonshot_machine(db, valid_bmc_moonshot):
 
 
 @pytest.fixture(scope='function')
-def valid_plain_machine(db, valid_bmc_plain):
-    machine = Machine(name='plain01', bmc_id=valid_bmc_plain.id)
+def valid_plain_machine(db, valid_bmc_plain, valid_arch):
+    machine = Machine(name='plain01', bmc_id=valid_bmc_plain.id, arch_id=valid_arch.id)
     db.session.add(machine)
     db.session.commit()
     db.session.refresh(machine)
@@ -174,9 +221,10 @@ def valid_interface_1(db, valid_plain_machine, valid_network):
 
 
 @pytest.fixture(scope='function')
-def valid_image_kernel(db, user_admin):
+def valid_image_kernel(db, user_admin, valid_arch):
     image = Image(filename='%s/kernel' % user_admin.username, description='kernel',
                   file_type='Kernel', user_id=user_admin.id,
+                  arch_id=valid_arch.id,
                   known_good=False, public=True)
     db.session.add(image)
     db.session.commit()
@@ -196,10 +244,12 @@ def valid_preseed(db, user_admin):
 
     return preseed
 
+
 @pytest.fixture(scope='function')
-def valid_image_initrd(db, user_admin):
+def valid_image_initrd(db, user_admin, valid_arch):
     image = Image(filename='%s/initrd' % user_admin.username, description='initrd',
                   file_type='Initrd', user_id=user_admin.id,
+                  arch_id=valid_arch.id,
                   known_good=False, public=True)
     db.session.add(image)
     db.session.commit()
@@ -209,13 +259,26 @@ def valid_image_initrd(db, user_admin):
 
 
 @pytest.fixture(scope='function')
-def machines_for_reservation(db, valid_bmc_plain, valid_bmc_moonshot, user_nonadmin):
+def valid_image_bootloader(db, user_admin, valid_arch):
+    image = Image(filename='%s/bootloader' % user_admin.username, description='bootloader',
+                  file_type='bootloader', user_id=user_admin.id,
+                  arch_id=valid_arch.id,
+                  known_good=False, public=True)
+    db.session.add(image)
+    db.session.commit()
+    db.session.refresh(image)
+
+    return image
+
+
+@pytest.fixture(scope='function')
+def machines_for_reservation(db, valid_bmc_plain, valid_bmc_moonshot, user_nonadmin, valid_arch, valid_arch2):
     machines = [
-        Machine(name='machine0', bmc_id=valid_bmc_plain.id),
-        Machine(name='machine1', bmc_id=valid_bmc_moonshot.id),
-        Machine(name='machine2', bmc_id=None),
-        Machine(name='machine3', bmc_id=None),
-        Machine(name='machine4', bmc_id=valid_bmc_moonshot.id),
+        Machine(name='machine0', bmc_id=valid_bmc_plain.id, arch_id=valid_arch.id),
+        Machine(name='machine1', bmc_id=valid_bmc_moonshot.id, arch_id=valid_arch.id),
+        Machine(name='machine2', bmc_id=None, arch_id=valid_arch2.id),
+        Machine(name='machine3', bmc_id=None, arch_id=valid_arch.id),
+        Machine(name='machine4', bmc_id=valid_bmc_moonshot.id, arch_id=valid_arch2.id),
     ]
 
     db.session.add_all(machines)

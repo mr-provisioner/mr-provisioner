@@ -4,7 +4,7 @@ import logging
 
 from mr_provisioner import db
 from mr_provisioner.models import Interface, Machine, Image, Preseed, User, Token, MachineUsers, \
-    ConsoleToken
+    ConsoleToken, Arch, Subarch
 from mr_provisioner.bmc_types import BMCError
 from sqlalchemy.exc import DatabaseError, IntegrityError
 
@@ -46,6 +46,8 @@ def serialize_machine(machine):
         'id': machine.id,
         'name': machine.name,
         'hostname': machine.hostname,
+        'arch': machine.arch.name if machine.arch else None,
+        'subarch': machine.subarch.name if machine.subarch else None,
         'kernel_id': machine.kernel_id,
         'kernel_opts': machine.kernel_opts,
         'initrd_id': machine.initrd_id,
@@ -60,6 +62,7 @@ def serialize_image(image):
         'name': image.filename,
         'description': image.description,
         'type': image.file_type,
+        'arch': image.arch.name if image.arch else None,
         'upload_date': image.date,
         'user': image.user.username,
         'known_good': image.known_good,
@@ -116,6 +119,7 @@ def is_int(s):
 
 machine_schema = Schema({
     Optional('netboot_enabled'): bool,
+    Optional('subarch'): Or(None, And(str, lambda s: validators.length(s, min=0, max=256))),
     Optional('preseed_id'): Or(None, Use(int)),
     Optional('kernel_id'): Or(None, Use(int)),
     Optional('kernel_opts'): And(str, lambda s: validators.length(s, min=0, max=1024)),
@@ -178,6 +182,7 @@ change_preseed_schema = Schema({
 image_schema = Schema({
     'type': And(str, lambda s: s in Image.list_types()),
     Optional('description'): Or(None, And(str, lambda s: validators.length(s, min=0, max=256))),
+    Optional('arch'): Or(None, And(str, lambda s: validators.length(s, min=0, max=256))),
     Optional('known_good'): bool,
     Optional('public'): bool,
 }, ignore_extra_keys=True)
@@ -186,6 +191,7 @@ image_schema = Schema({
 change_image_schema = Schema({
     Optional('type'): And(str, lambda s: s in Image.list_types()),
     Optional('description'): Or(None, And(str, lambda s: validators.length(s, min=0, max=256))),
+    Optional('arch'): Or(None, And(str, lambda s: validators.length(s, min=0, max=256))),
     Optional('known_good'): bool,
     Optional('public'): bool,
 }, ignore_extra_keys=True)
@@ -249,6 +255,7 @@ def machine_get(id):
 def machine_put(id):
     data = request.get_json(force=True)
     data = machine_schema.validate(data)
+    subarch = None
 
     machine = Machine.query.get(id)
     if not machine:
@@ -257,7 +264,14 @@ def machine_put(id):
     if not machine.check_permission(g.user, 'owner'):
         raise InvalidUsage('Forbidden', status_code=403)
 
-    if 'preseed_id' in data:
+    if 'subarch' in data:
+        if not machine.arch:
+            raise InvalidUsage('machine has no architecture')
+        subarch = Subarch.query.filter_by(arch_id=machine.arch_id, name=data['subarch']).one_or_none()
+        if not subarch:
+            raise InvalidUsage('no such subarch for architecture %s' % machine.arch.name)
+
+    if 'preseed_id' in data and data['preseed_id'] is not None:
         preseed = Preseed.query.get(data['preseed_id'])
         if not preseed:
             raise InvalidUsage('no such preseed')
@@ -273,7 +287,7 @@ def machine_put(id):
         elif kernel.file_type != 'Kernel':
             raise InvalidUsage('kernel is not a kernel')
 
-    if 'initrd_id' in data:
+    if 'initrd_id' in data and data['initrd_id'] is not None:
         initrd = Image.query.get(data['initrd_id'])
         if not initrd:
             raise InvalidUsage('no such initrd')
@@ -292,6 +306,11 @@ def machine_put(id):
         machine.kernel_opts = data['kernel_opts']
     if 'initrd_id' in data:
         machine.initrd_id = data['initrd_id']
+    if subarch:
+        machine.subarch_id = subarch.id
+
+    if machine.netboot_enabled and (machine.subarch is None or machine.subarch.bootloader is None):
+        raise InvalidUsage('Enabled netboot requires a subarch with a valid bootloader')
 
     db.session.commit()
     db.session.refresh(machine)
@@ -606,6 +625,12 @@ def machine_state_post(id):
         if not machine.kernel:
             raise InvalidUsage('provisioning requires a kernel', status_code=400)
 
+        if not machine.subarch:
+            raise InvalidUsage('provisioning requires a subarch', status_code=400)
+
+        if not machine.subarch.bootloader:
+            raise InvalidUsage('provisioning requires the subarch to have a bootloader', status_code=400)
+
         machine.netboot_enabled = True
         machine.state = 'provisioning'
         db.session.commit()
@@ -784,6 +809,13 @@ def image_create():
     if 'type' not in data:
         raise InvalidUsage('type is required')
 
+    if 'arch' not in data:
+        raise InvalidUsage('arch is required')
+
+    arch = Arch.query.filter_by(name=data['arch']).one_or_none()
+    if not arch:
+        raise InvalidUsage('no such architecture')
+
     f = request.files['file']
     random_suffix = binascii.hexlify(os.urandom(4)).decode('utf-8')
     filename = "%s.%s" % (secure_filename(f.filename), random_suffix)
@@ -797,6 +829,7 @@ def image_create():
                   user_id=g.user.id,
                   description=data.get('description', None),
                   file_type=data.get('type'),
+                  arch_id=arch.id,
                   public=data.get('public', False),
                   known_good=data.get('known_good', False))
 
@@ -841,6 +874,11 @@ def image_put(id):
         image.known_good = data['known_good']
     if 'public' in data:
         image.public = data['public']
+    if 'arch' in data:
+        arch = Arch.query.filter_by(name=data['arch']).one_or_none()
+        if not arch:
+            raise InvalidUsage('no such architecture')
+        image.arch_id = arch.id
 
     db.session.commit()
     db.session.refresh(image)

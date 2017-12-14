@@ -4,6 +4,8 @@ import ipaddr from 'ipaddr.js'
 export const validateMacField = mac =>
   validator.isEmpty(mac) || validator.isMACAddress(mac)
 
+export const validateNonNull = f => typeof f !== 'undefined' && f !== null
+
 export const validateLength = opts => field => validator.isLength(field, opts)
 
 export const validateFile = f =>
