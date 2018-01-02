@@ -1,6 +1,15 @@
 Getting started
 ================
 
+Install mr-provisioner
+----------------------
+
+Release binaries for linux amd64 platforms can be downloaded from the `Releases page <https://github.com/Linaro/mr-provisioner/releases>`_
+.
+
+To build from source, clone the `repository <https://github.com/Linaro/mr-provisioner>`_
+.
+
 Install external dependencies
 -----------------------------
 
