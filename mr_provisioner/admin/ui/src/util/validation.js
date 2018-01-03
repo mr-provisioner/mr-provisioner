@@ -12,7 +12,7 @@ export const ArrayValidator = (val, message) => (field, otherFields) =>
       const valResult = val(elem, otherFields)
       return [
         !(!result[0] || !valResult),
-        Array.concat(result[1], valResult ? [null] : [message]),
+        Array.prototype.concat(result[1], valResult ? [null] : [message]),
       ]
     },
     [true, []]

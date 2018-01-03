@@ -46,7 +46,7 @@ export class Select extends React.Component {
     }))
 
     if (this.state.searchText.length === 0 && !this.props.required) {
-      options = Array.concat(
+      options = Array.prototype.concat(
         [
           {
             value: null,

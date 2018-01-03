@@ -56,7 +56,7 @@ export const withForm = (fields, validationRules) => BaseComponent => {
   const createAddHandler = (field, defaultVal) => props => () => {
     props.setFields(state => ({
       ...state,
-      [field]: Array.concat(state[field], [defaultVal]),
+      [field]: Array.prototype.concat(state[field], [defaultVal]),
     }))
   }
 
