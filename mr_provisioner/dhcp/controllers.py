@@ -79,8 +79,11 @@ def index():
     }
 
     if machine.netboot_enabled:
+        bootloader_image = machine.bootloader
+        bootfile = bootloader_image.filename if bootloader_image else app.config['DHCP_DEFAULT_BOOTFILE']
+
         data['next-server'] = app.config['DHCP_TFTP_PROXY_HOST']
-        data['options'].append({'option': 67, 'value': app.config['DHCP_DEFAULT_BOOTFILE']})
+        data['options'].append({'option': 67, 'value': bootfile})
 
     use_static = True if interface.static_ipv4 else False
 

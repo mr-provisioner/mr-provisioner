@@ -264,6 +264,10 @@ class Machine(db.Model):
         return machine_user if machine_user else None
 
     @property
+    def bootloader(self):
+        self.subarch.bootloader if self.subarch else None
+
+    @property
     def hostname(self):
         return re.sub(r'[^a-zA-Z0-9]', '-', self.name)
 
