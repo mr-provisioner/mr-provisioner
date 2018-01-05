@@ -13,6 +13,7 @@ logger = logging.getLogger('preseed')
 
 
 PInterface = namedtuple('object', ['name', 'static_ipv4', 'prefix', 'netmask'])
+PImage = namedtuple('object', ['filename', 'description', 'known_good'])
 
 
 @mod.route('/<machine_id>', methods=['GET'])
@@ -35,10 +36,22 @@ def get_preseed(machine_id):
                              prefix=i.network.prefix,
                              netmask=i.network.netmask) for i in machine.interfaces if i.static_ipv4]
 
+    kernel = None
+    if machine.kernel:
+        kernel = PImage(filename=machine.kernel.filename,
+                        description=machine.kernel.description,
+                        known_good=machine.kernel.known_good)
+    initrd = None
+    if machine.initrd:
+        initrd = PImage(filename=machine.initrd.filename,
+                        description=machine.initrd.description,
+                        known_good=machine.initrd.known_good)
+
     template = jinja2.Template(preseed.file_content)
     return Response(
-        template.render(ssh_key=ssh_key, ssh_keys=ssh_keys, hostname=machine.hostname,
-                        interfaces=interfaces),
+        template.render(ssh_key=ssh_key, ssh_keys=ssh_keys,
+                        hostname=machine.hostname, interfaces=interfaces,
+                        kernel=kernel, initrd=initrd),
         mimetype='text/plain')
 
 
