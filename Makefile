@@ -9,6 +9,18 @@ PYTEST_ARGS?=
 frontend:
 	make -C $(FRONTEND_DIR)
 
+.PHONY: frontend-dev
+frontend-dev:
+	make -C $(FRONTEND_DIR) dev
+
+.PHONY: frontend-watch-dev
+frontend-watch-dev:
+	make -C $(FRONTEND_DIR) watch-dev
+
+.PHONY: frontend-clean
+frontend-clean:
+	make -C $(FRONTEND_DIR) clean
+
 .PHONY: lint
 lint:
 	flake8 $(APP_DIR) --exclude node_modules

@@ -6,6 +6,7 @@
   "scripts": {
     "build": "NODE_ENV=production webpack --config webpack.config.js --progress --profile --colors",
     "build-dev": "NODE_ENV=development webpack --config webpack.config.js --progress --profile --colors",
+    "watch-dev": "NODE_ENV=development webpack --config webpack.config.js --progress --profile --colors --watch --watch-poll=5",
     "start": "webpack-dev-server --progress --profile --colors",
     "dev": "WEBPACK_DASHBOARD=true webpack-dashboard -- webpack-dev-server --progress --profile --colors",
     "prettier": "prettier --no-semi --trailing-comma es5 --single-quote --write 'src/**/*.js' 'src/**/*.jsx'",
