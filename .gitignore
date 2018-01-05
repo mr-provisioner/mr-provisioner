@@ -56,4 +56,4 @@ ENV/
 
 node_modules
 
-/app/admin/ui/public
+/mr_provisioner/admin/ui/public
