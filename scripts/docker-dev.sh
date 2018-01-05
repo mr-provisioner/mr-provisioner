@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Usage: ./dev.sh
+# Usage: docker-dev.sh
 #
 # Create a standalone local development environment in an ephemeral docker
 # container.
@@ -20,16 +20,27 @@
 
 set -eu
 
-cp dev/Dockerfile.dev-template dev/Dockerfile.dev
+DOCKER=docker
+DOCKER_DEV_DIR=scripts/docker-dev
+OUT_DOCKERFILE=${DOCKER_DEV_DIR}/Dockerfile.dev
 
-cat << EOF >> dev/Dockerfile.dev
+if [ ! -d "mr_provisioner" ]; then
+	>&2 echo "Script must be run from the mr-provisioner repository root."
+	exit 1
+fi
+
+cp ${DOCKER_DEV_DIR}/Dockerfile.dev-template ${OUT_DOCKERFILE}
+
+cat << EOF >> ${OUT_DOCKERFILE}
 RUN groupadd -g $(id -g) $(id -gn)
 RUN useradd -m -u $(id -u) -g $(id -g) -s /bin/bash ${USER}
 RUN echo '${USER} ALL=(ALL:ALL) NOPASSWD: ALL' >> /etc/sudoers
 USER ${USER}
 
-CMD dev/test-and-run.sh; bash
+ADD test-and-run.sh /test-and-run.sh
+
+CMD /test-and-run.sh; bash
 EOF
 
-docker build -t prov -f dev/Dockerfile.dev .
-docker run --rm -p 5000:5000 -v $(pwd):/work -it prov
+${DOCKER} build -t prov -f ${OUT_DOCKERFILE} ${DOCKER_DEV_DIR}
+${DOCKER} run --rm -p 5000:5000 -v $(pwd):/work -it prov

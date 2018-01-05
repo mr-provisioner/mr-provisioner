@@ -24,9 +24,9 @@ Alternatively, use the standalone docker development environment.
 
 Usage:
 
-    ./dev.sh
+    ./scripts/docker-dev.sh
 
-dev.sh creates a standalone local development environment in an ephemeral
+The script creates a standalone local development environment in an ephemeral
 docker container.
 
 The container will operate as your UID and mount in your local mr-provisioner
@@ -40,4 +40,3 @@ editing files in real-time.
 
 Log into the web interface with username admin, password linaro @
 http://localhost:5000/
-

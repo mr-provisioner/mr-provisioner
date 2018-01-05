@@ -14,6 +14,10 @@ endif
 dist: deps
 	npm run build
 
+.PHONY: lint
+lint: deps
+	npm run lint
+
 .PHONY: dev
 dev: deps
 	npm run build-dev
