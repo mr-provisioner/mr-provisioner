@@ -1,4 +1,5 @@
 import React from 'react'
+import DocumentTitle from 'react-document-title'
 import Header from 'grommet/components/Header'
 import Title from 'grommet/components/Title'
 import Box from 'grommet/components/Box'
@@ -429,6 +430,7 @@ class Machine_ extends React.Component {
 
     return (
       <div>
+        <DocumentTitle title={`${data.machine.name} - ${globalBannerName}`} />
         <Split
           flex="left"
           priority="left"
