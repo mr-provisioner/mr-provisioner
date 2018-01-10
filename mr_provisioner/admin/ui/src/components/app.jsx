@@ -1,4 +1,5 @@
 import React from 'react'
+import DocumentTitle from 'react-document-title'
 import AppContainer from 'grommet/components/App'
 import Header from 'grommet/components/Header'
 import Title from 'grommet/components/Title'
@@ -243,13 +244,15 @@ export function App(props) {
   return (
     <div>
       <Notifications />
-      <AppContainer centered={false}>
-        <AppHeader />
-        <RequireLogin>
-          <AppMain />
-        </RequireLogin>
-        <AppFooter />
-      </AppContainer>
+      <DocumentTitle title={`${globalBannerName} - mr-provisioner`}>
+        <AppContainer centered={false}>
+          <AppHeader />
+          <RequireLogin>
+            <AppMain />
+          </RequireLogin>
+          <AppFooter />
+        </AppContainer>
+      </DocumentTitle>
     </div>
   )
 }

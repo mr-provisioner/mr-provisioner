@@ -28,6 +28,7 @@
     "react": "^15.6.1",
     "react-apollo": "^1.4.2",
     "react-codemirror": "^1.0.0",
+    "react-document-title": "^2.0.3",
     "react-dom": "^15.6.1",
     "react-motion": "^0.5.0",
     "react-paginate": "^4.4.3",

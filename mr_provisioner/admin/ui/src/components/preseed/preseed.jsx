@@ -1,4 +1,5 @@
 import React from 'react'
+import DocumentTitle from 'react-document-title'
 import Header from 'grommet/components/Header'
 import Title from 'grommet/components/Title'
 import Box from 'grommet/components/Box'
@@ -225,6 +226,9 @@ class Preseed_ extends React.Component {
 
     return (
       <div>
+        <DocumentTitle
+          title={`${data.preseed.filename} - ${globalBannerName}`}
+        />
         <Split
           flex="left"
           priority="left"
