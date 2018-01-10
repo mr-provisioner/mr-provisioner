@@ -105,9 +105,7 @@ class MachineConsole_ extends React.Component {
 
   handleOpenLog = ev => {
     ev.preventDefault()
-    window.open(
-      'data:text/plain;base64,' + encodeURIComponent(window.btoa(this.log))
-    )
+    window.open().document.write(this.log)
   }
 
   render() {
