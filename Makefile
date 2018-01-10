@@ -21,6 +21,10 @@ frontend-watch-dev:
 frontend-clean:
 	make -C $(FRONTEND_DIR) clean
 
+.PHONY: frontend-lint
+frontend-lint:
+	make -C $(FRONTEND_DIR) lint
+
 .PHONY: lint
 lint:
 	flake8 $(APP_DIR) --exclude node_modules

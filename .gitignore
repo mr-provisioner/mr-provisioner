@@ -57,3 +57,4 @@ ENV/
 node_modules
 
 /mr_provisioner/admin/ui/public
+/scripts/docker-dev/Dockerfile.dev
