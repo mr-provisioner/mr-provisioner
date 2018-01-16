@@ -206,7 +206,10 @@ class Machine(db.Model):
     initrd_id = db.Column(db.Integer, db.ForeignKey("image.id"))
     initrd = db.relationship("Image", foreign_keys=[initrd_id], passive_deletes=True)
     netboot_enabled = db.Column(db.Boolean)
-    # arch needed?
+    arch_id = db.Column(db.Integer, db.ForeignKey("arch.id"), nullable=False)
+    arch = db.relationship("Arch", foreign_keys=[arch_id], passive_deletes=True)
+    subarch_id = db.Column(db.Integer, db.ForeignKey("subarch.id"), nullable=True)
+    subarch = db.relationship("Subarch", foreign_keys=[subarch_id], passive_deletes=True)
     bmc_id = db.Column(db.Integer, db.ForeignKey("BMC.id"))
     bmc = db.relationship("BMC", passive_deletes=True)
     bmc_info = db.Column(db.String)
@@ -215,13 +218,16 @@ class Machine(db.Model):
     interfaces = db.relationship("Interface", back_populates="machine", passive_deletes=True)
     assignments = db.relationship("MachineUsers", back_populates="machine", passive_deletes=True)
 
-    def __init__(self, name, pdu=None, pdu_port=None, serial=None, serial_port=None, kernel_id=None, kernel_opts="",
-                 preseed_id=None, initrd_id=None, netboot_enabled=False, bmc_id=None, bmc_info=""):
+    def __init__(self, name, arch_id, subarch_id=None, pdu=None, pdu_port=None, serial=None,
+                 serial_port=None, kernel_id=None, kernel_opts="", preseed_id=None,
+                 initrd_id=None, netboot_enabled=False, bmc_id=None, bmc_info=""):
         self.name = name
         self.pdu = pdu
         self.pdu_port = pdu_port
         self.serial = serial
         self.serial_port = serial_port
+        self.arch_id = arch_id
+        self.subarch_id = subarch_id
         self.kernel_id = kernel_id
         self.kernel_opts = kernel_opts
         self.preseed_id = preseed_id
@@ -230,16 +236,6 @@ class Machine(db.Model):
         self.bmc_id = bmc_id
         self.bmc_info = bmc_info
         self.state = "unknown"
-
-    def __repr__(self):
-        return "<name: %s, macs: %s, kernel: %d, kernel_opts: %s," \
-               "initrd: %d, netboot_enabled: %b, bmc_id %s>" % (self.name,
-                                                                ",".join(self.macs),
-                                                                self.kernel_id,
-                                                                self.kernel_opts,
-                                                                self.initrd_id,
-                                                                self.netboot_enabled,
-                                                                self.bmc_id)
 
     @property
     def macs(self):
@@ -266,6 +262,10 @@ class Machine(db.Model):
         # XXX: support multiple
         machine_user = MachineUsers.query.filter_by(machine_id=self.id).first()
         return machine_user if machine_user else None
+
+    @property
+    def bootloader(self):
+        self.subarch.bootloader if self.subarch else None
 
     @property
     def hostname(self):
@@ -383,12 +383,14 @@ class Machine(db.Model):
             'assignee_count': func.coalesce(mu_subq.c.assignee_count, 0),
             'interface_count': func.coalesce(intf_subq.c.interface_count, 0),
             'bmc_type': func.coalesce(BMC.bmc_type, ''),
+            'arch': func.coalesce(Arch.name, ''),
             'nil': None,
         }
 
         # Build base query, filtering out machines that have assignees already
         q = db.session.query(Machine) \
             .outerjoin(BMC, BMC.id == Machine.bmc_id) \
+            .outerjoin(Arch, Arch.id == Machine.arch_id) \
             .outerjoin(intf_subq, Machine.id == intf_subq.c.machine_id) \
             .outerjoin(mu_subq, Machine.id == mu_subq.c.machine_id)
 
@@ -401,6 +403,68 @@ class Machine(db.Model):
             q = q.filter(f)
 
         return q
+
+
+# Architectures are AArch64/ARM/x86_64
+class Arch(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, unique=True, nullable=False)
+    description = db.Column(db.String)
+    subarchs = db.relationship("Subarch", back_populates="arch", passive_deletes=True)
+
+    def __init__(self, name, description=None):
+        self.name = name
+        self.description = description
+
+    def check_permission(self, user, min_priv_level='any'):
+        if user.admin:
+            return True
+        elif min_priv_level == 'admin':
+            return False
+
+        return False
+
+    @property
+    def machines(self):
+        return Machine.query.filter((Machine.arch_id == self.id)).all()
+
+    @staticmethod
+    def can_create(user):
+        return True if user.admin else False
+
+
+# Sub architectures are UEFI/BIOS/etc
+class Subarch(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, nullable=False)
+    description = db.Column(db.String)
+    arch_id = db.Column(db.Integer, db.ForeignKey("arch.id", ondelete="CASCADE"), nullable=False)
+    arch = db.relationship("Arch", foreign_keys=[arch_id], passive_deletes=True)
+    bootloader_id = db.Column(db.Integer, db.ForeignKey("image.id"))
+    bootloader = db.relationship("Image", foreign_keys=[bootloader_id], passive_deletes=True)
+
+    def __init__(self, name, arch_id, description=None, bootloader_id=None):
+        self.name = name
+        self.description = description
+        self.arch_id = arch_id
+        self.bootloader_id = bootloader_id
+
+    def check_permission(self, user, min_priv_level='any'):
+        if user.admin:
+            return True
+        elif min_priv_level == 'admin':
+            return False
+
+        return False
+
+    @staticmethod
+    def can_create(user):
+        return True if user.admin else False
+
+
+# Ensure each architecture only has one of each sub architectures
+# i.e. only one ARM64 - UEFI
+db.Index('subarch_arch_name_uniq', Subarch.arch_id, Subarch.name, unique=True)
 
 
 class ConsoleToken(db.Model):
@@ -619,13 +683,15 @@ class Image(db.Model):
     filename = db.Column(db.String, unique=True, nullable=False)
     description = db.Column(db.String)
     file_type = db.Column(db.String, nullable=False)
+    arch_id = db.Column(db.Integer, db.ForeignKey("arch.id"), nullable=False)
+    arch = db.relationship("Arch", foreign_keys=[arch_id], passive_deletes=True)
     date = db.Column(db.DateTime, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
     user = db.relationship("User", passive_deletes=True)
     known_good = db.Column(db.Boolean, nullable=False)
     public = db.Column(db.Boolean, nullable=False)
 
-    def __init__(self, filename, description, file_type, user_id, known_good, public):
+    def __init__(self, filename, description, file_type, user_id, known_good, public, arch_id=None):
         self.date = datetime.now()
         self.filename = filename
         self.description = description
@@ -633,6 +699,7 @@ class Image(db.Model):
         self.user_id = user_id
         self.known_good = known_good
         self.public = public
+        self.arch_id = arch_id
 
     def __repr__(self):
         return '<filename: %s, user_id: %d, known_good: %s>' % (self.filename, self.user_id, self.known_good)
@@ -643,6 +710,7 @@ class Image(db.Model):
             'description': self.description,
             'file_type': self.file_type,
             'date': self.date.strftime("%Y-%m-%d %H:%M"),
+            'arch_id': self.arch_id,
             'user_id': self.user_id,
             'known_good': self.known_good,
             'public': self.public
@@ -682,7 +750,7 @@ class Image(db.Model):
 
     @staticmethod
     def list_types():
-        return ['Initrd', 'Kernel']
+        return ['Initrd', 'Kernel', 'bootloader']
 
 
 class Preseed(db.Model):

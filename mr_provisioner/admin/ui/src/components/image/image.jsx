@@ -68,6 +68,27 @@ function ImageOverview({
               {image.fileType}
             </span>
           </Box>
+
+          <Box justify="between" direction="row" pad="small">
+            <span>
+              <Label>Architecture</Label>
+            </span>
+            <span className="secondary">
+              {image.arch
+                ? <Link to={'/archs/' + image.arch.id}>{`${image.arch
+                    .name} (${image.arch.description || ''})`}</Link>
+                : 'None'}
+            </span>
+          </Box>
+
+          <Box justify="between" direction="row" pad="small">
+            <span>
+              <Label>Owner</Label>
+            </span>
+            <span className="secondary">
+              {image.user ? image.user.username : '(none)'}
+            </span>
+          </Box>
         </Box>
         <Box pad={{ horizontal: 'medium', vertical: 'small' }}>
           <Box justify="between" direction="row" pad="small">

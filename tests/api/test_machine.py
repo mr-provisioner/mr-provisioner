@@ -177,12 +177,13 @@ def test_change_assignee_self(client, valid_headers_nonadmin, valid_plain_machin
 
 def test_set_machine_parameters(client, valid_headers_nonadmin,
         valid_plain_machine, valid_image_initrd, valid_image_kernel,
-        valid_preseed):
+        valid_preseed, valid_subarch_bl):
 
     data = json.dumps({
         "kernel_id": valid_image_kernel.id,
         "initrd_id": valid_image_initrd.id,
         "preseed_id": valid_preseed.id,
+        "subarch": valid_subarch_bl.name,
         "kernel_opts": "",
         "netboot_enabled": True,
     })
@@ -197,7 +198,29 @@ def test_set_machine_parameters(client, valid_headers_nonadmin,
 
     assert data['initrd_id'] == valid_image_initrd.id
     assert data['kernel_id'] == valid_image_kernel.id
+    assert data['subarch'] == valid_subarch_bl.name
     assert data['netboot_enabled'] # is true
+
+
+def test_set_netboot_without_bootloader(client, valid_headers_nonadmin,
+        valid_plain_machine, valid_image_initrd, valid_image_kernel,
+        valid_preseed, valid_subarch_no_bl):
+
+    data = json.dumps({
+        "kernel_id": valid_image_kernel.id,
+        "initrd_id": valid_image_initrd.id,
+        "preseed_id": valid_preseed.id,
+        "subarch": valid_subarch_no_bl.name,
+        "kernel_opts": "",
+        "netboot_enabled": True,
+    })
+
+    r = client.put('/api/v1/machine/%d' % valid_plain_machine.id,
+                   headers=valid_headers_nonadmin,
+                   data=data)
+
+    assert r.status_code == 400
+
 
 def test_machine_interface_empty_list(client, valid_headers_nonadmin, valid_plain_machine):
     r = client.get('/api/v1/machine/%d/interface' % valid_plain_machine.id, headers=valid_headers_nonadmin)
@@ -308,6 +331,26 @@ def test_reserve_machine_name_like(client, valid_headers_nonadmin, machines_for_
     assert len(m.assignees) == 1
 
 
+def test_reserve_machine_arch_like(client, valid_headers_nonadmin, machines_for_reservation):
+    body = json.dumps({
+        'query': """
+            (= arch "some-other-arch")
+        """,
+    })
+
+    r = client.post('/api/v1/machine/reservation',
+                    headers=valid_headers_nonadmin,
+                    data=body)
+
+    assert r.status_code == 200
+
+    data = json.loads(r.data.decode('utf-8'))
+
+    assert data['name'] in ['machine4']
+    m = Machine.query.get(data['id'])
+    assert len(m.assignees) == 1
+
+
 def test_reserve_machine_empty_result(client, valid_headers_nonadmin, machines_for_reservation):
     body = json.dumps({
         'query': """
@@ -321,3 +364,27 @@ def test_reserve_machine_empty_result(client, valid_headers_nonadmin, machines_f
                     data=body)
 
     assert r.status_code == 404
+
+
+def test_change_subarch(client, valid_headers_nonadmin, valid_plain_machine, valid_subarch_bl, valid_image_kernel, valid_image_initrd):
+    data = json.dumps({
+        "subarch": valid_subarch_bl.name,
+        "kernel_id": valid_image_kernel.id,
+        "initrd_id": valid_image_initrd.id,
+        "preseed_id": None,
+        "kernel_opts": "",
+        "netboot_enabled": True,
+    })
+
+    r = client.put('/api/v1/machine/%d' % valid_plain_machine.id,
+                   headers=valid_headers_nonadmin,
+                   data=data)
+
+    assert r.status_code == 200
+
+    data = json.loads(r.data.decode('utf-8'))
+
+    assert data['subarch'] == valid_subarch_bl.name
+    assert data['initrd_id'] == valid_image_initrd.id
+    assert data['kernel_id'] == valid_image_kernel.id
+    assert data['netboot_enabled'] # is true

@@ -28,6 +28,7 @@ import {
   validateLength,
   validateMacField,
   validateAscii,
+  validateNonNull,
 } from '../../util/validators'
 import validator from 'validator'
 import {
@@ -56,6 +57,21 @@ function MachineNew_({ fields, fieldErrors, ...props }) {
               error={props.showFieldErrors && fieldErrors.name}
             >
               <TextInput value={fields.name} onDOMChange={props.onChangeName} />
+            </FormField>
+
+            <FormField
+              label="Architecture"
+              help={null}
+              error={props.showFieldErrors && fieldErrors.archId}
+            >
+              <Select
+                options={props.data.archs}
+                value={fields.archId}
+                searchKeys={['name', 'description']}
+                onChange={props.onChangeArchId}
+                valueKey="id"
+                labelFn={arch => `${arch.name} (${arch.description || ''})`}
+              />
             </FormField>
 
             <FormField
@@ -127,6 +143,7 @@ const formFields = {
   },
   bmcId: { defaultValue: null, accessor: e => e },
   bmcInfo: { defaultValue: '', accessor: e => e },
+  archId: { defaultValue: null, accessor: e => e },
   macs: {
     array: true,
     defaultValue: props => (props.addWithMac ? [props.addWithMac] : ['']),
@@ -148,6 +165,7 @@ const validationRules = props => ({
   bmcInfo: [
     ExtendedValidator(validateBmcInfo, props && props.data && props.data.bmcs),
   ],
+  archId: [Validator(validateNonNull, 'Must be selected')],
 })
 
 const mapDispatchToProps = dispatch => ({

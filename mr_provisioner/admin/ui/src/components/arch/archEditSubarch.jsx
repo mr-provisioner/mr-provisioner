@@ -6,6 +6,7 @@ import Form from 'grommet/components/Form'
 import FormField from 'grommet/components/FormField'
 import FormFields from 'grommet/components/FormFields'
 import TextInput from 'grommet/components/TextInput'
+import { TextInput2 } from '../grommetHacks'
 import Button from 'grommet/components/Button'
 import Footer from 'grommet/components/Footer'
 import Select from '../select'
@@ -17,32 +18,24 @@ import { graphql } from 'react-apollo'
 import { withHandlers, compose } from 'recompose'
 import { connect } from 'react-redux'
 import { bindActionCreators } from 'redux'
-import {
-  Validator,
-  ArrayValidator,
-  ExtendedValidator,
-} from '../../util/validation'
-import {
-  validateLength,
-  validateAscii,
-  validateNonNull,
-} from '../../util/validators'
+import { Validator, ArrayValidator } from '../../util/validation'
+import { validateLength, validateAscii } from '../../util/validators'
 import validator from 'validator'
-import {
-  machineNewGQL,
-  changeMachineOverviewGQL,
-  machineGQL,
-} from '../../graphql/machine'
+import { changeSubarchGQL, archGQL } from '../../graphql/arch'
+import { imagesListGQL } from '../../graphql/image'
 import * as messageActions from '../../actions/message'
-import { BMCInfoField, validateBmcInfo } from './bmcInfoField'
+import filter from 'ramda/src/filter'
 
-function MachineEditOverview_({ fields, fieldErrors, ...props }) {
-  const bmc = props.data.bmcs.find(b => b.id === fields.bmcId)
-
+function ArchEditSubarch_({
+  fields,
+  fieldErrors,
+  data: { images } = {},
+  ...props
+}) {
   return (
     <div>
       <Header>
-        <Heading tag="h2">Edit Overview</Heading>
+        <Heading tag="h2">Edit subarchitecture</Heading>
       </Header>
       <Form>
         <FormFields>
@@ -56,47 +49,47 @@ function MachineEditOverview_({ fields, fieldErrors, ...props }) {
             </FormField>
 
             <FormField
-              label="Architecture"
+              label="Description"
               help={null}
-              error={props.showFieldErrors && fieldErrors.archId}
+              error={props.showFieldErrors && fieldErrors.description}
             >
-              <Select
-                options={props.data.archs}
-                value={fields.archId}
-                searchKeys={['name', 'description']}
-                onChange={props.onChangeArchId}
-                valueKey="id"
-                labelFn={arch => `${arch.name} (${arch.description || ''})`}
+              <TextInput
+                value={fields.description}
+                onDOMChange={props.onChangeDescription}
               />
             </FormField>
+          </fieldset>
 
+          <fieldset>
             <FormField
-              label="BMC"
+              label="Bootloader"
               help={null}
-              error={props.showFieldErrors && fieldErrors.bmcId}
+              error={props.showFieldErrors && fieldErrors.bootloaderId}
             >
               <Select
-                options={props.data.bmcs}
-                value={fields.bmcId}
-                searchKeys={['name', 'ip']}
-                onChange={props.onChangeBmcId}
+                options={filter(
+                  i =>
+                    i.fileType === 'bootloader' && i.arch.id === props.arch.id,
+                  images.map(i => ({
+                    ...i,
+                    knownGoodText: i.knownGood ? 'known good' : '',
+                  }))
+                )}
+                value={fields.bootloaderId}
+                searchKeys={['filename', 'description', 'knownGoodText']}
+                onChange={props.onChangeBootloaderId}
                 valueKey="id"
-                labelFn={bmc => `${bmc.name} (${bmc.ip})`}
+                labelFn={image =>
+                  `${image.description} (${image.filename})${image.knownGood
+                    ? ' - known good'
+                    : ''}`}
               />
             </FormField>
-
-            <BMCInfoField
-              bmc={bmc}
-              onChange={props.onChangeBmcInfo}
-              showFieldErrors={props.showFieldErrors}
-              value={fields.bmcInfo}
-              error={fieldErrors.bmcInfo}
-            />
           </fieldset>
         </FormFields>
         <Footer pad={{ vertical: 'medium' }}>
           <Button
-            label="Save changes"
+            label="Edit subarchitecture"
             type="submit"
             primary={true}
             onClick={props.handleSubmit}
@@ -109,21 +102,21 @@ function MachineEditOverview_({ fields, fieldErrors, ...props }) {
 
 const formFields = {
   name: {
-    defaultValue: ({ machine }) => machine.name,
+    defaultValue: ({ subarch }) => subarch.name,
     accessor: e => e.target.value,
   },
-  bmcId: {
-    defaultValue: ({ machine }) => (machine.bmc ? machine.bmc.id : null),
+  description: {
+    defaultValue: ({ subarch }) => subarch.description || '',
+    accessor: e => e.target.value,
+  },
+  bootloaderId: {
+    defaultValue: ({ subarch }) =>
+      subarch.bootloader ? subarch.bootloader.id : null,
     accessor: e => e,
   },
-  archId: {
-    defaultValue: ({ machine }) => (machine.arch ? machine.arch.id : null),
-    accessor: e => e,
-  },
-  bmcInfo: { defaultValue: ({ machine }) => machine.bmcInfo, accessor: e => e },
 }
 
-const validationRules = props => ({
+const validationRules = {
   name: [
     Validator(
       validateLength({ min: 2, max: 256 }),
@@ -131,11 +124,14 @@ const validationRules = props => ({
     ),
     Validator(validateAscii, 'Must contain only ASCII characters'),
   ],
-  bmcInfo: [
-    ExtendedValidator(validateBmcInfo, props && props.data && props.data.bmcs),
+  description: [
+    Validator(
+      validateLength({ min: 0, max: 256 }),
+      'Must be between 0 and 256 characters long'
+    ),
+    Validator(validateAscii, 'Must contain only ASCII characters'),
   ],
-  archId: [Validator(validateNonNull, 'Must be selected')],
-})
+}
 
 const mapDispatchToProps = dispatch => ({
   actions: bindActionCreators({ ...messageActions }, dispatch),
@@ -143,15 +139,22 @@ const mapDispatchToProps = dispatch => ({
 
 const mutationHandlers = {
   mutationResponse: ({ actions, onDone = null }) => ({
-    data: { changeMachineOverview: { ok, machine, errors } },
+    data: { changeSubarch: { ok, subarch, errors } },
   }) => {
     if (ok && errors.length > 0)
       actions.showWarningMessage(
-        `Changes to ${machine.name} saved, but: ${errors.join(', ')}.`
+        `Subarchitecture ${subarch.name} added successfully, but: ${errors.join(
+          ', '
+        )}.`
       )
     else if (ok)
-      actions.showOkMessage(`Changes to ${machine.name} saved successfully.`)
-    else actions.showErrorMessage(`Error saving changes: ${errors.join(', ')}.`)
+      actions.showOkMessage(
+        `Subarchitecture ${subarch.name} added successfully.`
+      )
+    else
+      actions.showErrorMessage(
+        `Error adding subarchitecture: ${errors.join(', ')}.`
+      )
 
     if (ok && onDone) onDone()
   },
@@ -160,20 +163,20 @@ const mutationHandlers = {
 }
 
 const mapFieldsToVars = (fields, props) => ({
-  id: props.machine.id,
+  id: props.subarch.id,
   ...fields,
 })
 
-export const MachineEditOverview = compose(
-  graphql(machineNewGQL, { options: { notifyOnNetworkStatusChange: true } }),
-  graphql(changeMachineOverviewGQL, {
-    name: 'changeMachineOverview',
-    options: ({ match, machine }) => ({
+export const ArchEditSubarch = compose(
+  graphql(imagesListGQL, { options: { notifyOnNetworkStatusChange: true } }),
+  graphql(changeSubarchGQL, {
+    name: 'changeSubarch',
+    options: ({ match, arch }) => ({
       refetchQueries: [
         {
-          query: machineGQL,
+          query: archGQL,
           variables: {
-            id: machine.id,
+            id: arch.id,
           },
         },
       ],
@@ -183,12 +186,12 @@ export const MachineEditOverview = compose(
   withHandlers(mutationHandlers),
   withForm(formFields, validationRules),
   withSubmit(
-    'changeMachineOverview',
+    'changeSubarch',
     'mutationResponse',
     'mutationFailed',
     mapFieldsToVars
   ),
   withApolloStatus(NetworkLoading, NetworkError)
-)(MachineEditOverview_)
+)(ArchEditSubarch_)
 
-export default MachineEditOverview
+export default ArchEditSubarch

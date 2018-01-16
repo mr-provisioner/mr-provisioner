@@ -14,6 +14,15 @@ export const machineNewGQL = gql`
       description
       fileType
       knownGood
+      arch {
+        id
+        name
+      }
+    }
+    archs {
+      id
+      name
+      description
     }
     preseeds {
       id
@@ -28,11 +37,18 @@ export const machineNewGQL = gql`
 export const createMachineGQL = gql`
   mutation createMachine(
     $name: String!
+    $archId: Int
     $bmcId: Int
     $bmcInfo: String
     $macs: [String]
   ) {
-    createMachine(name: $name, bmcId: $bmcId, bmcInfo: $bmcInfo, macs: $macs) {
+    createMachine(
+      name: $name
+      archId: $archId
+      bmcId: $bmcId
+      bmcInfo: $bmcInfo
+      macs: $macs
+    ) {
       ok
       errors
       machine {
@@ -87,12 +103,14 @@ export const changeMachineOverviewGQL = gql`
   mutation changeMachineOverview(
     $id: Int!
     $name: String!
+    $archId: Int
     $bmcId: Int
     $bmcInfo: String
   ) {
     changeMachineOverview(
       id: $id
       name: $name
+      archId: $archId
       bmcId: $bmcId
       bmcInfo: $bmcInfo
     ) {
@@ -113,6 +131,7 @@ export const changeMachineProvisioningGQL = gql`
     $kernelOpts: String
     $initrdId: Int
     $preseedId: Int
+    $subarchId: Int
   ) {
     changeMachineProvisioning(
       id: $id
@@ -120,6 +139,7 @@ export const changeMachineProvisioningGQL = gql`
       kernelOpts: $kernelOpts
       initrdId: $initrdId
       preseedId: $preseedId
+      subarchId: $subarchId
     ) {
       ok
       errors
@@ -282,6 +302,10 @@ export const machinesListGQL = gql`
       id
       name
       netbootEnabled
+      arch {
+        id
+        name
+      }
       bmc {
         id
         name
@@ -337,6 +361,21 @@ export const machineGQL = gql`
         ip
         username
         password
+      }
+      arch {
+        id
+        name
+        description
+        subarchs {
+          id
+          name
+          description
+        }
+      }
+      subarch {
+        id
+        name
+        description
       }
       kernel {
         id

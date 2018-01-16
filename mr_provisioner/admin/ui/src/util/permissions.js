@@ -11,6 +11,7 @@ export const perms = {
   PRESEED_ADMIN: '@@perms/preseed/admin',
   PRESEED_OWNER: '@@perms/preseed/owner',
   NETWORK_ADMIN: '@@perms/network/admin',
+  ARCH_ADMIN: '@@perms/arch/admin',
 }
 
 export function check(self, privLevel, entity) {

@@ -30,6 +30,7 @@ const sortByAssignee = comparators.string([
 ])
 const sortByNetboot = comparators.boolean(['netbootEnabled'])
 const sortByBmc = comparators.string(['bmc', 'name'])
+const sortByArch = comparators.string(['arch', 'name'])
 
 function InterfacesCell({ data }) {
   return (
@@ -75,6 +76,7 @@ class MachinesList_ extends React.Component {
           filterKeys={[
             'name',
             'interfaces.mac',
+            'arch.name',
             'bmc.name',
             'bmc.ip',
             'assignments.reason',
@@ -99,6 +101,17 @@ class MachinesList_ extends React.Component {
               <LinkCell
                 linkFn={m => `/machines/${m.id}`}
                 textFn={m => m.name}
+              />
+            }
+          />
+          <TableColumn
+            label="Arch"
+            sortFn={sortByArch}
+            cell={
+              <LinkCell
+                cond={m => m.arch}
+                linkFn={m => `/archs/${m.arch.id}`}
+                textFn={m => m.arch.name}
               />
             }
           />

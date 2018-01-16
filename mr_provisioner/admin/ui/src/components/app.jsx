@@ -23,6 +23,8 @@ import ImagesList from './image/imagesList'
 import Image from './image/image'
 import NetworksList from './network/networksList'
 import Network from './network/network'
+import ArchsList from './arch/archsList'
+import Arch from './arch/arch'
 import UsersList from './user/usersList'
 import User from './user/user'
 import Self from './self/self'
@@ -112,6 +114,18 @@ export function AppHeader_({ loggedIn, self, actions, history }) {
                   path="/networks"
                 >
                   Networks
+                </Anchor>
+              </Check>
+              <Check permission={perms.ARCH_ADMIN}>
+                <Anchor
+                  className={
+                    history.location.pathname.startsWith('/archs')
+                      ? 'active'
+                      : ''
+                  }
+                  path="/archs"
+                >
+                  Architectures
                 </Anchor>
               </Check>
               <Check permission={perms.USER_ADMIN}>
@@ -216,6 +230,12 @@ export function AppMain(props) {
           <Switch>
             <Route exact path="/networks" component={NetworksList} />
             <Route path="/networks/:network_id" component={Network} />
+          </Switch>
+        </Route>
+        <Route path="/archs">
+          <Switch>
+            <Route exact path="/archs" component={ArchsList} />
+            <Route path="/archs/:arch_id" component={Arch} />
           </Switch>
         </Route>
         <Route path="/users">

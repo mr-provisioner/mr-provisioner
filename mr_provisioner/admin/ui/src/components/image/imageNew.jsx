@@ -11,6 +11,8 @@ import Footer from 'grommet/components/Footer'
 import Select from '../select'
 import withForm from '../../hoc/withForm'
 import withSubmit from '../../hoc/withSubmit'
+import { NetworkLoading, NetworkError } from '../network'
+import { withApolloStatus } from '../../hoc/apollo'
 import { graphql } from 'react-apollo'
 import { withHandlers, compose } from 'recompose'
 import { connect } from 'react-redux'
@@ -20,9 +22,11 @@ import {
   validateLength,
   validateFile,
   validateAscii,
+  validateNonNull,
 } from '../../util/validators'
 import validator from 'validator'
 import { createImageGQL, imagesListGQL } from '../../graphql/image'
+import { archsListGQL } from '../../graphql/arch'
 import * as messageActions from '../../actions/message'
 
 function ImageNew_({ fields, fieldErrors, ...props }) {
@@ -52,12 +56,31 @@ function ImageNew_({ fields, fieldErrors, ...props }) {
             >
               <Select
                 required={true}
-                options={[{ name: 'Kernel' }, { name: 'Initrd' }]}
+                options={[
+                  { name: 'Kernel' },
+                  { name: 'Initrd' },
+                  { name: 'bootloader' },
+                ]}
                 value={fields.fileType}
                 searchKeys={['name']}
                 onChange={props.onChangeFileType}
                 valueKey="name"
                 labelFn={t => t.name}
+              />
+            </FormField>
+
+            <FormField
+              label="Architecture"
+              help={null}
+              error={props.showFieldErrors && fieldErrors.archId}
+            >
+              <Select
+                options={props.data.archs}
+                value={fields.archId}
+                searchKeys={['name', 'description']}
+                onChange={props.onChangeArchId}
+                valueKey="id"
+                labelFn={arch => `${arch.name} (${arch.description || ''})`}
               />
             </FormField>
 
@@ -87,6 +110,7 @@ const formFields = {
   fileType: { defaultValue: 'Kernel', accessor: e => e },
   description: { defaultValue: '', accessor: e => e.target.value },
   file: { defaultValue: null, accessor: e => e.target.files },
+  archId: { defaultValue: null, accessor: e => e },
 }
 
 const validationRules = {
@@ -98,6 +122,7 @@ const validationRules = {
     Validator(validateAscii, 'Must contain only ASCII characters'),
   ],
   file: [Validator(validateFile, 'Must be a valid file')],
+  archId: [Validator(validateNonNull, 'Must be selected')],
 }
 
 const mapDispatchToProps = dispatch => ({
@@ -123,6 +148,7 @@ const mutationHandlers = {
 }
 
 export const ImageNew = compose(
+  graphql(archsListGQL, { options: { notifyOnNetworkStatusChange: true } }),
   graphql(createImageGQL, {
     name: 'createImage',
     options: {
@@ -136,7 +162,8 @@ export const ImageNew = compose(
   connect(null, mapDispatchToProps),
   withHandlers(mutationHandlers),
   withForm(formFields, validationRules),
-  withSubmit('createImage', 'mutationResponse', 'mutationFailed')
+  withSubmit('createImage', 'mutationResponse', 'mutationFailed'),
+  withApolloStatus(NetworkLoading, NetworkError)
 )(ImageNew_)
 
 export default ImageNew

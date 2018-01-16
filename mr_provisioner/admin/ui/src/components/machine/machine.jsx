@@ -75,6 +75,22 @@ function MachineOverview({ machine, onEdit }) {
               {machine.powerState}
             </span>
           </Box>
+
+          <Box justify="between" direction="row" pad="small">
+            <span>
+              <Label>Architecture</Label>
+            </span>
+            <span className="secondary">
+              {machine.arch
+                ? <Link
+                    to={'/archs/' + machine.arch.id}
+                    title={machine.arch.description}
+                  >
+                    {machine.arch.name}
+                  </Link>
+                : 'None'}
+            </span>
+          </Box>
         </Box>
         {machine.bmc
           ? <Box pad={{ horizontal: 'medium', vertical: 'small' }}>
@@ -109,6 +125,21 @@ function MachineProvisioning({ machine, ownUser, onEdit, onNetbootChange }) {
       </Box>
       <Columns maxCount={2} size="large" justify="between" responsive={false}>
         <Box pad={{ horizontal: 'medium', vertical: 'small' }}>
+          <Box justify="between" direction="row" pad="small">
+            <span>
+              <Label>Subarchitecture</Label>
+            </span>
+            <span className="secondary">
+              {machine.subarch
+                ? <Link
+                    to={'/archs/' + machine.arch.id}
+                    title={machine.subarch.description}
+                  >
+                    {machine.subarch.name}
+                  </Link>
+                : 'None'}
+            </span>
+          </Box>
           <Box justify="between" direction="row" pad="small">
             <span>
               <Label>Kernel</Label>

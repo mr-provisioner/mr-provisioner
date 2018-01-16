@@ -19,10 +19,13 @@ import withOwnUser from '../../hoc/withOwnUser'
 import * as prefsActions from '../../actions/prefs'
 import * as comparators from '../../util/comparators'
 
+const archName = image => (image.arch ? image.arch.name : 'None')
+
 const sortByName = comparators.string(['filename'])
 const sortByDesc = comparators.string(['description'])
 const sortByType = comparators.string(['fileType'])
 const sortByUser = comparators.string(['user', 'username'])
+const sortByArch = comparators.string([], archName)
 const sortByUploadDate = comparators.date(['date'])
 const sortByKnownGood = comparators.boolean(['knownGood'])
 const sortByPublic = comparators.boolean(['public'])
@@ -50,7 +53,13 @@ class ImagesList_ extends React.Component {
         <Table
           keyCol="id"
           data={images}
-          filterKeys={['filename', 'description', 'fileType', 'user.username']}
+          filterKeys={[
+            'filename',
+            'description',
+            'fileType',
+            'arch.name',
+            'user.username',
+          ]}
           pagination={true}
           additionalControls={
             <CheckBox
@@ -84,6 +93,11 @@ class ImagesList_ extends React.Component {
             cell={<TextCell col="fileType" />}
           />
           <TableColumn
+            label="Arch"
+            sortFn={sortByArch}
+            cell={<TextCell textFn={archName} />}
+          />
+          <TableColumn
             label="Known Good"
             sortFn={sortByKnownGood}
             cell={
@@ -110,7 +124,9 @@ class ImagesList_ extends React.Component {
           <TableColumn
             label="Owner"
             sortFn={sortByUser}
-            cell={<TextCell textFn={p => p.user.username} />}
+            cell={
+              <TextCell textFn={p => (p.user ? p.user.username : '(none)')} />
+            }
           />
 
           <TableColumn
