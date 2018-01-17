@@ -272,6 +272,19 @@ def valid_image_bootloader(db, user_admin, valid_arch):
 
 
 @pytest.fixture(scope='function')
+def valid_image_bootloader_no_user(db, valid_arch):
+    image = Image(filename='bootloader', description='bootloader',
+                  file_type='bootloader', user_id=None,
+                  arch_id=valid_arch.id,
+                  known_good=False, public=True)
+    db.session.add(image)
+    db.session.commit()
+    db.session.refresh(image)
+
+    return image
+
+
+@pytest.fixture(scope='function')
 def machines_for_reservation(db, valid_bmc_plain, valid_bmc_moonshot, user_nonadmin, valid_arch, valid_arch2):
     machines = [
         Machine(name='machine0', bmc_id=valid_bmc_plain.id, arch_id=valid_arch.id),

@@ -2,6 +2,10 @@
 
 ## v0.2.8 (unreleased)
 
+Bug fixes:
+
+ - api: fix bug around listing images (#68)
+
 ## v0.2.7 (2018-01-16)
 
 Big-ticket items:
