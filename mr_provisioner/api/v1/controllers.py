@@ -64,7 +64,7 @@ def serialize_image(image):
         'type': image.file_type,
         'arch': image.arch.name if image.arch else None,
         'upload_date': image.date,
-        'user': image.user.username,
+        'user': image.user.username if image.user else None,
         'known_good': image.known_good,
         'public': image.public,
     }

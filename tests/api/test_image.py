@@ -28,6 +28,16 @@ def test_image_list(client, valid_headers_nonadmin, valid_image_kernel, valid_im
         assert data[0]['description'] == valid_image_initrd.description
 
 
+def test_image_list_with_default_bootloader(client, valid_headers_nonadmin, valid_image_kernel, valid_image_initrd, valid_image_bootloader_no_user):
+    r = client.get('/api/v1/image?show_all=true', headers=valid_headers_nonadmin)
+
+    assert r.status_code == 200
+
+    data = json.loads(r.data.decode('utf-8'))
+
+    assert len(data) == 3
+
+
 def test_create_image(client, valid_headers_nonadmin, user_nonadmin, valid_arch):
     q = json.dumps({
         'description': 'Uploaded image',
