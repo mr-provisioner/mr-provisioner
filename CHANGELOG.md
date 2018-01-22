@@ -1,6 +1,8 @@
 # CHANGELOG
 
-## v0.2.8 (unreleased)
+## v0.2.9 (unreleased)
+
+## v0.2.8 (2018-01-22)
 
 Bug fixes:
 
