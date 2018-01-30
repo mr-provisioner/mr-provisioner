@@ -265,7 +265,7 @@ class Machine(db.Model):
 
     @property
     def bootloader(self):
-        self.subarch.bootloader if self.subarch else None
+        return self.subarch.bootloader if self.subarch else None
 
     @property
     def hostname(self):
