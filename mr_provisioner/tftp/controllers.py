@@ -4,7 +4,7 @@ import logging
 import re
 import os
 
-from mr_provisioner.models import Machine
+from mr_provisioner.models import Machine, MachineEvent
 from mr_provisioner import db
 from sqlalchemy.exc import DatabaseError
 
@@ -40,6 +40,9 @@ def handle_config_request(client_ip, filename):
     machine = Machine.by_mac(m.group(1).replace('-', ':').lower()) if m else None
 
     use_def_config = any(re.search(regex, filename) for regex in DEFAULT_FILE_REGEXES)
+
+    if machine:
+        MachineEvent.tftp_request(machine.id, None, filename)
 
     if machine or use_def_config:
         return render_config(is_pxelinux_path(filename), machine)

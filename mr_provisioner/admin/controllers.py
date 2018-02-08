@@ -12,7 +12,7 @@ from sqlalchemy.exc import IntegrityError
 from mr_provisioner import db
 from sqlalchemy.exc import DatabaseError
 from mr_provisioner.models import User, Token, Machine, Image, Preseed, BMC, MachineUsers, \
-    ConsoleToken, Interface, Network, DiscoveredMAC, Arch, Subarch
+    ConsoleToken, Interface, Network, DiscoveredMAC, Arch, Subarch, MachineEvent
 from mr_provisioner.bmc_types import BMCError
 from mr_provisioner.util import trim_to_none
 
@@ -117,6 +117,8 @@ def get_ws_subprocess_command():
     sol_token = ConsoleToken.query.filter_by(token=token).first()
     if not sol_token:
         return "", 404
+
+    MachineEvent.console_accessed(sol_token.machine_id, sol_token.user)
 
     return Response(sol_token.command_response, mimetype='application/json')
 
@@ -235,6 +237,20 @@ class PreseedType(graphene.ObjectType):
     public = graphene.Boolean()
     user = graphene.Field(UserType)
     machines = graphene.Dynamic(lambda: graphene.List(MachineType))
+
+
+class MachineEventType(graphene.ObjectType):
+    id = graphene.ID()
+    username = graphene.String()
+    date = graphene.types.datetime.DateTime()
+    event_type = graphene.Int()
+    info = graphene.types.json.JSONString()
+
+    def resolve_username(self, args, context, info):
+        if self.user:
+            return self.user.username
+        else:
+            return self.username
 
 
 class MachineType(graphene.ObjectType):
@@ -1057,6 +1073,8 @@ class MachineChangePower(graphene.Mutation):
                     machine.reboot()
                 else:
                     machine.set_power(args.get('power_state'))
+
+                MachineEvent.power_changed(machine.id, g.user, args.get('power_state'))
 
                 return MachineChangePower(machine=machine, ok=True, errors=errors)
             except BMCError as e:
@@ -2200,6 +2218,8 @@ class Query(graphene.ObjectType):
     machines = graphene.List(MachineType, description='List of machines')
     machine = graphene.Field(MachineType, id=graphene.Int())
 
+    machine_events = graphene.List(MachineEventType, id=graphene.Int(), limit=graphene.Int())
+
     bmcs = graphene.List(BMCType)
     bmc = graphene.Field(BMCType, id=graphene.Int())
 
@@ -2237,6 +2257,9 @@ class Query(graphene.ObjectType):
 
     def resolve_machine(self, args, context, info):
         return Machine.query.get(args['id'])
+
+    def resolve_machine_events(self, args, context, info):
+        return MachineEvent.by_machine_id(args['id'], args['limit'])
 
     def resolve_bmcs(self, args, context, info):
         return BMC.query.all()
@@ -2291,7 +2314,7 @@ class Query(graphene.ObjectType):
             # XXX: abort 403?
             return None
 
-        return ConsoleToken.create_token_for_machine(machine)
+        return ConsoleToken.create_token_for_machine(machine, g.user)
 
     def resolve_available_ips(self, args, context, info):
         limit = max(1, min(args.get('limit', 25), 100))

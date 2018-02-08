@@ -1,9 +1,10 @@
-from flask import Blueprint, Response
+from flask import Blueprint, Response, request
 
 import logging
 import jinja2
+import jinja2.utils
 
-from mr_provisioner.models import Machine
+from mr_provisioner.models import Machine, MachineEvent
 from mr_provisioner import db
 from sqlalchemy.exc import DatabaseError
 from collections import namedtuple
@@ -16,6 +17,40 @@ PInterface = namedtuple('object', ['name', 'static_ipv4', 'prefix', 'netmask'])
 PImage = namedtuple('object', ['filename', 'description', 'known_good'])
 
 
+def make_reporting_undefined(machine, request, base=jinja2.Undefined):
+    def report(undef):
+        if undef._undefined_hint is None:
+            if undef._undefined_obj is jinja2.utils.missing:
+                hint = '%s is undefined' % undef._undefined_name
+            else:
+                hint = '%s has no attribute %s' % (
+                    jinja2.utils.object_type_repr(undef._undefined_obj),
+                    undef._undefined_name)
+        else:
+            hint = undef._undefined_hint
+
+        MachineEvent.preseed_error(machine.id, None, request.remote_addr, hint)
+
+    class ReportingUndefined(base):
+        def __str__(self):
+            report(self)
+            return base.__str__(self)
+
+        def __iter__(self):
+            report(self)
+            return base.__iter__(self)
+
+        def __bool__(self):
+            report(self)
+            return base.__bool__(self)
+
+        def __len__(self):
+            report(self)
+            return base.__len__(self)
+
+    return ReportingUndefined
+
+
 @mod.route('/<machine_id>', methods=['GET'])
 def get_preseed(machine_id):
     machine = Machine.query.get(machine_id)
@@ -25,6 +60,8 @@ def get_preseed(machine_id):
     preseed = machine.preseed
     if not preseed:
         return "", 404
+
+    MachineEvent.preseed_accessed(machine.id, None, request.remote_addr)
 
     assignees = machine.assignees
 
@@ -47,12 +84,19 @@ def get_preseed(machine_id):
                         description=machine.initrd.description,
                         known_good=machine.initrd.known_good)
 
-    template = jinja2.Template(preseed.file_content)
-    return Response(
-        template.render(ssh_key=ssh_key, ssh_keys=ssh_keys,
-                        hostname=machine.hostname, interfaces=interfaces,
-                        kernel=kernel, initrd=initrd),
-        mimetype='text/plain')
+    try:
+        template = jinja2.Template(preseed.file_content,
+                                   undefined=make_reporting_undefined(machine, request))
+
+        return Response(
+            template.render(ssh_key=ssh_key, ssh_keys=ssh_keys,
+                            hostname=machine.hostname, interfaces=interfaces,
+                            kernel=kernel, initrd=initrd),
+            mimetype='text/plain')
+    except jinja2.TemplateSyntaxError as e:
+        MachineEvent.preseed_error(machine.id, None, request.remote_addr, e.message, e.lineno)
+    except jinja2.TemplateError as e:
+        MachineEvent.preseed_error(machine.id, None, request.remote_addr, e.message)
 
 
 @mod.errorhandler(DatabaseError)

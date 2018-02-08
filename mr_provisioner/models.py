@@ -472,12 +472,18 @@ class ConsoleToken(db.Model):
     token = db.Column(db.String, unique=True, nullable=False)
     created_at = db.Column(db.DateTime, nullable=False)
     command_response = db.Column(db.Text)
+    machine_id = db.Column(db.Integer, db.ForeignKey("machine.id", ondelete="CASCADE"))
+    machine = db.relationship("Machine", passive_deletes=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id", ondelete="CASCADE"))
+    user = db.relationship("User", passive_deletes=True)
 
-    def __init__(self, command_response):
+    def __init__(self, *, command_response, machine_id, user_id):
         self.command_response = command_response
         self.token = ConsoleToken.gen_token()
         print("Token: %s " % self.token)
         self.created_at = datetime.utcnow()
+        self.machine_id = machine_id
+        self.user_id = user_id
 
     @staticmethod
     def cleanup():
@@ -491,7 +497,7 @@ class ConsoleToken(db.Model):
         return binascii.hexlify(urandom(24)).decode('utf-8')
 
     @staticmethod
-    def create_token_for_machine(machine):
+    def create_token_for_machine(machine, user):
         if not machine.bmc:
             raise ValueError('no BMC configured')
 
@@ -502,7 +508,8 @@ class ConsoleToken(db.Model):
             'args': args,
         }
 
-        sol_token = ConsoleToken(command_response=json.dumps(command_response))
+        sol_token = ConsoleToken(command_response=json.dumps(command_response),
+                                 machine_id=machine.id, user_id=user.id)
         db.session.add(sol_token)
         db.session.commit()
         db.session.refresh(sol_token)
@@ -676,6 +683,133 @@ class AuditLog(db.Model):
             'start_date': self.start_date,
             'end_date': self.end_date
         }
+
+
+class MachineEventType:
+    CONSOLE_ACCESS = 1
+    # info: { }
+
+    POWER_CHANGE = 2
+    # info: { "power": string }
+
+    PRESEED_ACCESS = 3
+    # info: { "client_ip": string }
+
+    PRESEED_ERROR = 4
+    # info: { "client_ip": string, "message": string, "lineno": int }
+
+    PHONE_HOME = 5
+    # info: { "client_ip": string }
+
+    STATE_CHANGE = 6
+    # info: { "state": string, "reason": string (one of: api/phone_home) }
+
+    DHCP_REQ = 7
+    # info: { "discover": bool }
+
+    TFTP_REQ = 8
+    # info: { "filename": string }
+
+
+class MachineEvent(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    machine_id = db.Column(db.Integer, db.ForeignKey("machine.id", ondelete="CASCADE"))
+    machine = db.relationship("Machine", passive_deletes=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
+    user = db.relationship("User", passive_deletes=True)
+    username = db.Column(db.String, nullable=True)
+    date = db.Column(db.DateTime, nullable=False)
+    event_type = db.Column(db.Integer, nullable=False)
+    info = db.Column(JSONB)
+
+    def __init__(self, *, event_type, info, machine_id, user):
+        self.date = datetime.now()
+        self.event_type = event_type
+        self.info = info
+        self.machine_id = machine_id
+        self.user_id = user.id if user else None
+        self.username = user.username if user else None
+
+    @staticmethod
+    def by_machine_id(machine_id, limit=0):
+        q = MachineEvent.query.filter_by(machine_id=machine_id).order_by(MachineEvent.date.desc())
+        if limit and limit > 0:
+            q = q.limit(limit)
+        return q.all()
+
+    @staticmethod
+    def cleanup():
+        db.session.query(MachineEvent).filter(
+            MachineEvent.date <= (datetime.utcnow() - timedelta(days=30))
+        ).delete()
+
+    @staticmethod
+    def console_accessed(machine_id, user):
+        event = MachineEvent(event_type=MachineEventType.CONSOLE_ACCESS,
+                             info={},
+                             machine_id=machine_id,
+                             user=user)
+        db.session.add(event)
+        db.session.commit()
+
+    @staticmethod
+    def power_changed(machine_id, user, power_state):
+        event = MachineEvent(event_type=MachineEventType.POWER_CHANGE,
+                             info={'power': power_state},
+                             machine_id=machine_id,
+                             user=user)
+        db.session.add(event)
+        db.session.commit()
+
+    @staticmethod
+    def state_changed(machine_id, user, state, reason):
+        event = MachineEvent(event_type=MachineEventType.STATE_CHANGE,
+                             info={'state': state, 'reason': reason},
+                             machine_id=machine_id,
+                             user=user)
+        db.session.add(event)
+        db.session.commit()
+
+    @staticmethod
+    def preseed_accessed(machine_id, user, client_ip):
+        event = MachineEvent(event_type=MachineEventType.PRESEED_ACCESS,
+                             info={'client_ip': client_ip},
+                             machine_id=machine_id,
+                             user=user)
+        db.session.add(event)
+        db.session.commit()
+
+    @staticmethod
+    def preseed_error(machine_id, user, client_ip, message, lineno=0):
+        event = MachineEvent(event_type=MachineEventType.PRESEED_ERROR,
+                             info={'client_ip': client_ip, 'message': message, 'lineno': lineno},
+                             machine_id=machine_id,
+                             user=user)
+        db.session.add(event)
+        db.session.commit()
+
+    @staticmethod
+    def dhcp_request(machine_id, user, discover):
+        event = MachineEvent(event_type=MachineEventType.DHCP_REQ,
+                             info={'discover': discover},
+                             machine_id=machine_id,
+                             user=user)
+        db.session.add(event)
+        db.session.commit()
+
+    @staticmethod
+    def tftp_request(machine_id, user, filename):
+        event = MachineEvent(event_type=MachineEventType.TFTP_REQ,
+                             info={'filename': filename},
+                             machine_id=machine_id,
+                             user=user)
+        db.session.add(event)
+        db.session.commit()
+
+
+@event.listens_for(MachineEvent, 'after_insert')
+def machine_event_after_insert(mapper, connection, target):
+    MachineEvent.cleanup()
 
 
 class Image(db.Model):
