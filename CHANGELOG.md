@@ -5,6 +5,7 @@
 Bug fixes:
 
  - bootloader: multiple subarchitectures feature not serving the right bootfile (#74)
+ - ui: fix listing user's images when one of them has no owner (#75)
 
 ## v0.2.8 (2018-01-22)
 

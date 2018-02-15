@@ -46,7 +46,7 @@ class ImagesList_ extends React.Component {
     let images = data.images
 
     if (prefs['imagesList.onlyMine'])
-      images = images.filter(m => m.user.id == ownUser.id)
+      images = images.filter(m => m.user && m.user.id == ownUser.id)
 
     return (
       <div>
