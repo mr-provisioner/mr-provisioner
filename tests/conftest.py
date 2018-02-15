@@ -16,9 +16,12 @@ def app(request):
 
     ctx = app.app_context()
     ctx.push()
+    rctx = app.test_request_context()
+    rctx.push()
 
     def teardown():
         ctx.pop()
+        rctx.pop()
 
     request.addfinalizer(teardown)
     return app
