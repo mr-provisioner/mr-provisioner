@@ -2,6 +2,10 @@
 
 ## v0.3.0 (unreleased)
 
+Bug fixes:
+
+ - grub.netboot.tmpl: fixing position of BOOTIF= argument to solve problems with --- in cmdline being used from UI.
+
 ## v0.2.9 (2018-02-16)
 
 Big-ticket items:
