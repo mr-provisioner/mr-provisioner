@@ -418,3 +418,15 @@ export const machineConsoleGQL = gql`
     }
   }
 `
+
+export const machineEventLogGQL = gql`
+  query($id: Int!, $limit: Int) {
+    machineEvents(id: $id, limit: $limit) {
+      id
+      username
+      date
+      eventType
+      info
+    }
+  }
+`

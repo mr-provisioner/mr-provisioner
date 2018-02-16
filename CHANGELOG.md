@@ -2,6 +2,10 @@
 
 ## v0.2.9 (unreleased)
 
+Big-ticket items:
+
+ - Add an event log around machine events such as power state changes, DHCP/TFTP/preseed accesses, etc (#17)
+
 Bug fixes:
 
  - bootloader: multiple subarchitectures feature not serving the right bootfile (#74)

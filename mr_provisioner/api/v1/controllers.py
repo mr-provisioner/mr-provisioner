@@ -4,7 +4,7 @@ import logging
 
 from mr_provisioner import db
 from mr_provisioner.models import Interface, Machine, Image, Preseed, User, Token, MachineUsers, \
-    ConsoleToken, Arch, Subarch
+    ConsoleToken, Arch, Subarch, MachineEvent
 from mr_provisioner.bmc_types import BMCError
 from sqlalchemy.exc import DatabaseError, IntegrityError
 
@@ -560,6 +560,8 @@ def machine_power_post(id):
 
     machine.set_power(data['state'])
 
+    MachineEvent.power_changed(machine.id, g.user, data['state'])
+
     return '', 202
 
 
@@ -637,6 +639,8 @@ def machine_state_post(id):
         db.session.refresh(machine)
 
         machine.set_power('pxe_reboot')
+
+        MachineEvent.state_changed(machine.id, g.user, machine.state, "api")
     else:
         return '', 400
 
@@ -658,6 +662,8 @@ def machine_state_put(id):
     machine.state = data['state']
     db.session.commit()
     db.session.refresh(machine)
+
+    MachineEvent.state_changed(machine.id, g.user, machine.state, "api")
 
     return jsonify({'state': machine.state}), 200
 
@@ -681,7 +687,7 @@ def machine_console_post(id):
 
     host = app.config['WSS_EXT_HOST'] if app.config['WSS_EXT_HOST'] != '' else None
     port = app.config['WSS_EXT_PORT'] if app.config['WSS_EXT_PORT'] != '' else 8866
-    sol_token = ConsoleToken.create_token_for_machine(machine)
+    sol_token = ConsoleToken.create_token_for_machine(machine, g.user)
 
     return jsonify({
         'host': host,

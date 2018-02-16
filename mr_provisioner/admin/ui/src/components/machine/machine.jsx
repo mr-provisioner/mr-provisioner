@@ -22,13 +22,16 @@ import Timestamp from 'grommet/components/Timestamp'
 import Section from 'grommet/components/Section'
 import Label from 'grommet/components/Label'
 import Anchor from 'grommet/components/Anchor'
+import List from 'grommet/components/List'
+import ListItem from 'grommet/components/ListItem'
+import Status from 'grommet/components/icons/Status'
 import { Link } from 'react-router-dom'
 import { Table, TableColumn, LinkCell, TextCell, AnyCell } from '../table'
 import Layer from '../layer'
 import { NetworkLoading, NetworkError } from '../network'
 import { withApolloStatus } from '../../hoc/apollo'
 import { graphql } from 'react-apollo'
-import { withHandlers, withProps, compose } from 'recompose'
+import { withState, withHandlers, withProps, compose } from 'recompose'
 import { parse } from 'query-string'
 import { connect } from 'react-redux'
 import { bindActionCreators } from 'redux'
@@ -37,6 +40,7 @@ import {
   changeMachineNetbootGQL,
   machineResetConsoleGQL,
   machineChangePowerGQL,
+  machineEventLogGQL,
 } from '../../graphql/machine'
 import * as messageActions from '../../actions/message'
 import MachineEditOverview from './machineEditOverview'
@@ -357,6 +361,122 @@ function MachineAssignees({ machine, onAdd, onEdit, onRemove }) {
   )
 }
 
+function MachineEventLogEntry({ event }) {
+  const info = JSON.parse(event.info)
+  let status = 'unknown'
+  let message = 'Something happened'
+
+  switch (event.eventType) {
+    case 1:
+      status = 'warning'
+      message = (
+        <span>
+          Console accessed by <b>{event.username}</b>
+        </span>
+      )
+      break
+
+    case 2:
+      status = 'warning'
+      message = (
+        <span>
+          Power state changed to <b>{info.power}</b> by <b>{event.username}</b>
+        </span>
+      )
+      break
+
+    case 3:
+      status = 'ok'
+      message = (
+        <span>
+          Preseed loaded from <b>{info.client_ip}</b>
+        </span>
+      )
+      break
+
+    case 4:
+      status = 'critical'
+      message = (
+        <span>
+          Error generating preseed for <b>{info.client_ip}</b> on line{' '}
+          <b>{info.lineno}</b>: {info.message}
+        </span>
+      )
+      break
+
+    case 6:
+      status = 'warning'
+      message = (
+        <span>
+          Machine state changed to <b>{info.state}</b> by{' '}
+          <b>{event.username}</b> (reason: {info.reason})
+        </span>
+      )
+      break
+
+    case 7:
+      status = 'ok'
+      message = (
+        <span>
+          <b>{info.discover ? 'DHCPDISCOVER' : 'DHCPREQUEST'}</b> packet seen
+        </span>
+      )
+      break
+
+    case 8:
+      status = 'ok'
+      message = (
+        <span>
+          TFTP config request for file: <b>{info.filename}</b>
+        </span>
+      )
+      break
+  }
+
+  return (
+    <ListItem align="start" justify="between" separator="horizontal">
+      <Box direction="row" pad={{ between: 'small' }}>
+        <Status size="small" value={status} />
+        <span>
+          {message}
+        </span>
+      </Box>
+      <Box direction="row" pad={{ between: 'small' }}>
+        <Timestamp value={event.date} fields={['date', 'time', 'second']} />
+      </Box>
+    </ListItem>
+  )
+}
+
+function MachineEventLog_({ data }) {
+  const events = data.machineEvents
+
+  return (
+    <Section>
+      <Box>
+        <Heading tag="h3" style={{ marginBottom: 0 }}>
+          Events
+        </Heading>
+      </Box>
+      <List>
+        {events.map(e => <MachineEventLogEntry key={e.id} event={e} />)}
+      </List>
+    </Section>
+  )
+}
+
+const MachineEventLog = compose(
+  withState('showAll', 'updateShowAll', false),
+  graphql(machineEventLogGQL, {
+    options: ({ machine, showAll }) => ({
+      notifyOnNetworkStatusChange: true,
+      pollInterval: 12500,
+      variables: { id: machine.id, limit: showAll ? 0 : 15 },
+    }),
+  }),
+  withApolloStatus(NetworkLoading, NetworkError)
+)(MachineEventLog_)
+
 class Machine_ extends React.Component {
   handleNetbootChange = ev => {
     const { actions, data } = this.props
@@ -498,6 +618,8 @@ class Machine_ extends React.Component {
               onEdit={props.openEditAssignee}
               onRemove={props.openRemoveAssignee}
             />
+
+            <MachineEventLog machine={data.machine} />
           </Box>
           <Sidebar full={true} size="small" pad={{ horizontal: 'medium' }}>
             <Check permission={perms.MACHINE_USER} entity={data.machine}>

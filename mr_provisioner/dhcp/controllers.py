@@ -6,7 +6,7 @@ import ipaddress
 from datetime import datetime
 
 from mr_provisioner import db
-from mr_provisioner.models import Interface, Machine, Lease, DiscoveredMAC
+from mr_provisioner.models import Interface, Machine, Lease, DiscoveredMAC, MachineEvent
 from mr_provisioner.util import MAC_REGEX, DHCP_ARCH_CODES, mac_vendor
 from sqlalchemy.exc import DatabaseError
 
@@ -124,7 +124,8 @@ def seen():
 
     interface = Interface.by_mac(data['mac'])
     if interface:
-        # Already assigned, don't care.
+        # Already assigned, don't care - but log an event
+        MachineEvent.dhcp_request(interface.machine.id, None, discover=data['discover'])
         return "", 200
 
     options = {o['option']: o['value'] for o in data['options']}
