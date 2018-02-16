@@ -1,6 +1,8 @@
 # CHANGELOG
 
-## v0.2.9 (unreleased)
+## v0.3.0 (unreleased)
+
+## v0.2.9 (2018-02-16)
 
 Big-ticket items:
 
