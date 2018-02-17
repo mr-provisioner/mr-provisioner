@@ -448,15 +448,25 @@ function MachineEventLogEntry({ event }) {
   )
 }
 
-function MachineEventLog_({ data }) {
+function MachineEventLog_({ data, showAll, onShowAllChange }) {
   const events = data.machineEvents
 
   return (
     <Section>
-      <Box>
+      <Box direction="row" justify="between">
         <Heading tag="h3" style={{ marginBottom: 0 }}>
           Events
         </Heading>
+        <Box direction="row">
+          <span style={{ marginRight: '1em' }}>
+            <Label>Show all</Label>
+          </span>
+          <CheckBox
+            toggle={true}
+            checked={showAll}
+            onChange={onShowAllChange}
+          />
+        </Box>
       </Box>
       <List>
         {events.map(e => <MachineEventLogEntry key={e.id} event={e} />)}
@@ -467,6 +477,11 @@ function MachineEventLog_({ data }) {
 
 const MachineEventLog = compose(
   withState('showAll', 'updateShowAll', false),
+  withHandlers({
+    onShowAllChange: ({ updateShowAll }) => ev => {
+      updateShowAll(ev.target.checked)
+    },
+  }),
   graphql(machineEventLogGQL, {
     options: ({ machine, showAll }) => ({
       notifyOnNetworkStatusChange: true,
