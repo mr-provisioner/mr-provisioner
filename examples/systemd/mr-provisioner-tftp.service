@@ -4,6 +4,9 @@ Requires=network-online.target
 After=network-online.target
 
 [Service]
+User=nobody
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+AmbientCapabilities=CAP_NET_BIND_SERVICE
 ExecStart=/usr/local/bin/tftp-http-proxy \
 	-http-base-url "http://localhost:5000/tftp/"
 
