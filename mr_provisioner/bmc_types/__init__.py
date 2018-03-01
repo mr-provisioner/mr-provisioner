@@ -27,3 +27,4 @@ def list_bmc_types():
 
 importlib.import_module('.plain', 'mr_provisioner.bmc_types')
 importlib.import_module('.moonshot', 'mr_provisioner.bmc_types')
+importlib.import_module('.libvirt_bmc', 'mr_provisioner.bmc_types')

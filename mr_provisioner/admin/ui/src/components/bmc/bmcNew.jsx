@@ -45,7 +45,11 @@ function BmcNew_({ fields, fieldErrors, ...props }) {
             >
               <Select
                 required={true}
-                options={[{ name: 'plain' }, { name: 'moonshot' }]}
+                options={[
+                  { name: 'plain' },
+                  { name: 'moonshot' },
+                  { name: 'libvirt_bmc' },
+                ]}
                 value={fields.bmcType}
                 searchKeys={['name']}
                 onChange={props.onChangeBmcType}
