@@ -14,7 +14,7 @@ class LibvirtBMC(BMCType):
 
     def set_bootdev(self, machine, bootdev):
         bmc = machine.bmc
-        url = 'http://' + bmc.ip + ':9001/service/' + bmc.name + '/state_controller/'
+        url = 'http://' + bmc.ip + ':9001/service/' + machine.name + '/state_controller/'
         if bootdev == 'pxe':
             url += 'pxeboot'
             r = requests.get(url)
@@ -36,7 +36,7 @@ class LibvirtBMC(BMCType):
 
     def set_power(self, machine, power_state):
         bmc = machine.bmc
-        url = 'http://' + bmc.ip + ':9001/service/' + bmc.name + '/state_controller/'
+        url = 'http://' + bmc.ip + ':9001/service/' + machine.name + '/state_controller/'
         if power_state == 'on' or power_state == 'off':
             url += 'cyclepower'
             r = requests.get(url)
@@ -58,7 +58,7 @@ class LibvirtBMC(BMCType):
 
     def get_power(self, machine):
         bmc = machine.bmc
-        url = 'http://' + bmc.ip + ':9001/service/' + bmc.name + '/state_controller/status'
+        url = 'http://' + bmc.ip + ':9001/service/' + machine.name + '/state_controller/status'
         r = requests.get(url)
         if r.status_code != 200:
             raise BMCError("libvirt BMC error on getting status : %s" %
