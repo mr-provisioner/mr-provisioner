@@ -36,7 +36,7 @@ This will install the plugin as `libkea-hook-mr-provisioner.so` under `$(KEA_PRE
 Configure
 ----------
 
-Add the following section to your Kea Dhcp4/Dhcp6 configuration section(s), adjusting the URL to your deployment of mr-provisioner::
+Add the following section to your Kea Dhcp4/Dhcp6 configuration (see `$(KEA_PREFIX)/etc/kea/kea.conf`) section(s), adjusting the URL to your deployment of mr-provisioner::
 
     "hooks-libraries": [
         {

@@ -1,21 +1,42 @@
 Getting started
 ================
 
+Install mr-provisioner
+----------------------
+
+Release binaries for linux amd64 platforms can be downloaded from the `Releases page <https://github.com/Linaro/mr-provisioner/releases>`_
+.
+
+To build from source, clone the `repository <https://github.com/Linaro/mr-provisioner>`_
+.
+
 Install external dependencies
 -----------------------------
 
 mr-provisioner requires the following external dependencies to be installed:
 
  - virtualenv
+            ($ sudo apt install virtualenv)
  - python-pip
+           ($ sudo apt-get  install python-pip)
  - ipmitool
+           ($sudo apt-get  install ipmitool)
 
 Additionally, mr-provisioner also relies on the following external services:
 
  - postgresql
+            ($ sudo apt-get install postgresql postgresql-contrib)
  - `tftp-http-proxy`_
+            (Please visit the link and download manually)
  - `ws-subprocess`_
+            (Please visit the link and download manually)
 
+Clone mr-provisioner github
+---------------------------
+
+Clone mr-provisioner github to your local machine::
+
+    git clone https://github.com/Linaro/mr-provisioner.git
 
 Create a virtual env
 --------------------
@@ -31,6 +52,9 @@ After that, activate the virtual env::
 
     source env/bin/activate
 
+NOTE: on success, you should notice your command prompt prefixed by (env)::
+
+    (env) your-normal-prompt-string $ 
 
 Install requirements
 --------------------
@@ -39,11 +63,19 @@ First, make sure the virtual env is activated (see above). Then, install the req
 
     pip install -r requirements.txt
 
+NOTE: requirements.txt is in your local clone of mr-provisioner.
 
 Configuration file
 ------------------
 
-Copy the example configuration file from `examples/config.ini` to a location of your chosing, and adjust it according to your needs. At the least, you will have to configure the database uri and the TFTPRoot setting.
+Copy the example configuration file from `examples/config.ini` to a location of your chosing, and adjust it according to your needs. At the least, you will have to configure the database uri and the TFTPRoot setting::
+
+    [database]
+    uri = postgresql+psycopg2://user:pass@localhost/hwserver
+    [files]
+    tftp_root = /var/lib/mr-provisioner/tftp
+
+NOTE: `user:pass` shall be replaced by `<username>` and `<password>`, and `hwserver` shall be replaced by `<dbname>`, all as you define them when setting up database. See next section.
 
 See :doc:`detailed_config` for more information.
 
@@ -58,6 +90,14 @@ Create a new database and user for `mr-provisioner` if you haven't already set o
     CREATE DATABASE <dbname>;
     CREATE ROLE <username> WITH PASSWORD '<password>' LOGIN;
     GRANT ALL PRIVILEGES ON DATABASE <dbname> TO <username>;
+    \q
+    
+    exit
+
+Create required tables
+----------------------
+
+First, make sure the virtual env is activated in the current shell.
 
 Create the required tables by running the database migrations::
 
