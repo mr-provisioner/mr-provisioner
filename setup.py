@@ -16,12 +16,12 @@ if (3, 0) <= sys.version_info < (3, 3):
 setup(
     name='mr-provisioner',
     version=open(os.path.join(os.path.dirname(__file__), 'VERSION')).read().strip(),
-    author='Linaro',
+    author='mr-provisioner contributors',
     author_email='...',
     packages=find_packages(),
     include_package_data=True,
     zip_safe=False,
-    url='https://github.com/Linaro/mr-provisioner',
+    url='https://github.com/mr-provisioner/mr-provisioner',
     license='MIT',
     description='lightweight provisioning tool',
     classifiers=[

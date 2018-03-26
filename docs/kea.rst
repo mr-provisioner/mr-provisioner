@@ -51,5 +51,5 @@ Add the following section to your Kea Dhcp4/Dhcp6 configuration section(s), adju
 For additional setup information including systemd files, see :doc:`deploy`.
 
 .. _Kea website: https://www.isc.org/kea/
-.. _mr-provisioner-kea plugin: https://github.com/Linaro/mr-provisioner-kea
-.. _mr-provisioner-kea releases: https://github.com/Linaro/mr-provisioner-kea/releases
+.. _mr-provisioner-kea plugin: https://github.com/mr-provisioner/mr-provisioner-kea
+.. _mr-provisioner-kea releases: https://github.com/mr-provisioner/mr-provisioner-kea/releases
