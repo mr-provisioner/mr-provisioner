@@ -95,8 +95,12 @@ def get_preseed(machine_id):
             mimetype='text/plain')
     except jinja2.TemplateSyntaxError as e:
         MachineEvent.preseed_error(machine.id, None, request.remote_addr, e.message, e.lineno)
-    except jinja2.TemplateError as e:
+        return Response(
+            "Syntax error on preseed template: {} - line: {}".format(e.message, e.lineno), status=400)
+    except (jinja2.TemplateError, Exception) as e:
         MachineEvent.preseed_error(machine.id, None, request.remote_addr, e.message)
+        return Response(
+            "Exception raised while rendering preseed template: {}".format(e.message), status=400)
 
 
 @mod.errorhandler(DatabaseError)
