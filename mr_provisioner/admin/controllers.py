@@ -275,6 +275,7 @@ class SubarchType(graphene.ObjectType):
     name = graphene.String()
     description = graphene.String()
     bootloader = graphene.Field(ImageType)
+    efiboot = graphene.Boolean()
     arch = graphene.Dynamic(lambda: graphene.Field(ArchType))
 
 
@@ -418,6 +419,7 @@ class CreateSubarch(graphene.Mutation):
         name = graphene.String()
         description = graphene.String()
         bootloader_id = graphene.Int()
+        efiboot = graphene.Boolean()
 
     ok = graphene.Boolean()
     errors = graphene.List(graphene.String)
@@ -463,6 +465,8 @@ class CreateSubarch(graphene.Mutation):
 
             if bootloader:
                 subarch.bootloader_id = bootloader.id
+            if 'efiboot' in args:
+                subarch.efiboot = args.get('efiboot')
 
             db.session.add(subarch)
             try:
@@ -484,6 +488,7 @@ class ChangeSubarch(graphene.Mutation):
         name = graphene.String()
         description = graphene.String()
         bootloader_id = graphene.Int()
+        efiboot = graphene.Boolean()
 
     ok = graphene.Boolean()
     errors = graphene.List(graphene.String)
@@ -523,6 +528,9 @@ class ChangeSubarch(graphene.Mutation):
             subarch.name = args.get('name')
             subarch.description = args.get('description')
             subarch.bootloader_id = args.get('bootloader_id')
+
+            if 'efiboot' in args:
+                subarch.efiboot = args.get('efiboot')
 
             try:
                 db.session.commit()
