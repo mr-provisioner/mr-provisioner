@@ -12,8 +12,13 @@ class PlainBMC(BMCType):
 
     def set_bootdev(self, machine, bootdev):
         bmc = machine.bmc
+
+        opts = None
+        if bootdev == "pxe" and machine.subarch and machine.subarch.efiboot:
+            opts = "efiboot"
+
         try:
-            set_bootdev(bootdev, host=bmc.ip, username=bmc.username, password=bmc.password)
+            set_bootdev(bootdev, opts, host=bmc.ip, username=bmc.username, password=bmc.password)
         except IPMIError as e:
             raise BMCError("BMC error: %s" % str(e))
 

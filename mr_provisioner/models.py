@@ -442,12 +442,14 @@ class Subarch(db.Model):
     arch = db.relationship("Arch", foreign_keys=[arch_id], passive_deletes=True)
     bootloader_id = db.Column(db.Integer, db.ForeignKey("image.id"))
     bootloader = db.relationship("Image", foreign_keys=[bootloader_id], passive_deletes=True)
+    efiboot = db.Column(db.Boolean, nullable=False)
 
-    def __init__(self, name, arch_id, description=None, bootloader_id=None):
+    def __init__(self, name, arch_id, description=None, bootloader_id=None, efiboot=False):
         self.name = name
         self.description = description
         self.arch_id = arch_id
         self.bootloader_id = bootloader_id
+        self.efiboot = efiboot
 
     def check_permission(self, user, min_priv_level='any'):
         if user.admin:

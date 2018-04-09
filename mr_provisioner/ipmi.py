@@ -63,11 +63,16 @@ def run_command(command):
         raise IPMIError("IPMI error: %s (%s)" % (str(e), e.output))
 
 
-def set_bootdev(bootdev, **kwargs):
+def set_bootdev(bootdev, options=None, **kwargs):
     if bootdev not in ALLOWED_BOOTDEVS:
         raise IPMIError("IPMI error: Uknown bootdev %s" % (bootdev))
 
-    command = build_command(["chassis", "bootdev", bootdev], **kwargs)
+    cmd = ["chassis", "bootdev", bootdev]
+    if options:
+        cmd += ["options=%s" % options]
+
+    command = build_command(cmd, **kwargs)
+
     return run_command(command)
 
 

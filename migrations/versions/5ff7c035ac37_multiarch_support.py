@@ -7,8 +7,8 @@ Create Date: 2017-11-29 14:39:17.075985
 """
 from alembic import op
 import sqlalchemy as sa
-from mr_provisioner.models import Arch, Subarch, Image
 from flask import current_app
+from datetime import datetime
 
 from sqlalchemy.orm import sessionmaker
 import logging
@@ -60,39 +60,38 @@ def upgrade():
     # ### end Alembic commands ###
 
     session = Session(bind=bind)
-    arch = Arch(name='default')
-    session.add(arch)
+    s = sa.sql.text('INSERT INTO arch(name, description) VALUES(:name, :description) RETURNING *')
+    result = session.execute(s, {'name': 'default', 'description': 'Default architecture'})
+    arch_id = result.fetchone()['id']
     session.commit()
 
-    image = None
+    image_id = None
     bootfile = current_app.config.get('DHCP_DEFAULT_BOOTFILE')
 
     if bootfile and bootfile != '':
         session = Session(bind=bind)
-        image = Image(filename=bootfile,
-                      description='Default bootloader',
-                      file_type='bootloader',
-                      arch_id=arch.id,
-                      user_id=None,
-                      known_good=True,
-                      public=True)
-        session.add(image)
+        s = sa.sql.text('INSERT INTO image(filename, description, file_type, arch_id, known_good, public, date) VALUES(:filename, :description, :file_type, :arch_id, :known_good, :public, :date) RETURNING *')
+        result = session.execute(s, {'filename': bootfile, 'description': 'Default bootloader', 'arch_id': arch_id,
+            'file_type': 'bootloader', 'known_good': True, 'public': True, 'date': datetime.utcnow()})
+        image_id = result.fetchone()['id']
         session.commit()
 
     session = Session(bind=bind)
-    subarch = Subarch(name='default', arch_id=arch.id, bootloader_id=image.id if image else None)
-    session.add(subarch)
+    s = sa.sql.text('INSERT INTO subarch(name, description, arch_id, bootloader_id) VALUES(:name, :description, :arch_id, :bootloader_id) RETURNING *')
+    result = session.execute(s, {'name': 'default', 'description': 'Default sub-architecture', 'arch_id': arch_id,
+                                 'bootloader_id': image_id})
+    subarch_id = result.fetchone()['id']
     session.commit()
 
     session = Session(bind=bind)
     s = sa.sql.text('UPDATE machine SET arch_id=:arch_id WHERE arch_id IS NULL')
-    session.execute(s, {'arch_id': arch.id})
+    session.execute(s, {'arch_id': arch_id})
 
     s = sa.sql.text('UPDATE machine SET subarch_id=:subarch_id WHERE subarch_id IS NULL')
-    session.execute(s, {'subarch_id': subarch.id})
+    session.execute(s, {'subarch_id': subarch_id})
 
     s = sa.sql.text('UPDATE image SET arch_id=:arch_id WHERE arch_id IS NULL')
-    session.execute(s, {'arch_id': arch.id})
+    session.execute(s, {'arch_id': arch_id})
 
     session.commit()
 
