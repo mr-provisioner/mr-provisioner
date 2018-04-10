@@ -7,6 +7,7 @@ import FormField from 'grommet/components/FormField'
 import FormFields from 'grommet/components/FormFields'
 import TextInput from 'grommet/components/TextInput'
 import { TextInput2 } from '../grommetHacks'
+import CheckBox from 'grommet/components/CheckBox'
 import Button from 'grommet/components/Button'
 import Footer from 'grommet/components/Footer'
 import Select from '../select'
@@ -61,6 +62,15 @@ function ArchEditSubarch_({
           </fieldset>
 
           <fieldset>
+            <FormField label="EFI boot" help={null}>
+              <CheckBox
+                disabled={false}
+                toggle={true}
+                checked={fields.efiboot}
+                onChange={props.onChangeEfiboot}
+              />
+            </FormField>
+
             <FormField
               label="Bootloader"
               help={null}
@@ -113,6 +123,10 @@ const formFields = {
     defaultValue: ({ subarch }) =>
       subarch.bootloader ? subarch.bootloader.id : null,
     accessor: e => e,
+  },
+  efiboot: {
+    defaultValue: ({ subarch }) => subarch.efiboot,
+    accessor: e => e.target.checked,
   },
 }
 

@@ -7,6 +7,7 @@ export const archsListGQL = gql`
       name
       description
       subarchs {
+        efiboot
         id
         name
       }
@@ -24,6 +25,7 @@ export const archGQL = gql`
         id
         name
         description
+        efiboot
         bootloader {
           id
           filename
@@ -83,18 +85,21 @@ export const createSubarchGQL = gql`
     $name: String!
     $description: String
     $bootloaderId: Int
+    $efiboot: Boolean
   ) {
     createSubarch(
       archId: $archId
       name: $name
       description: $description
       bootloaderId: $bootloaderId
+      efiboot: $efiboot
     ) {
       ok
       errors
       subarch {
         id
         name
+        efiboot
         arch {
           id
           name
@@ -110,18 +115,21 @@ export const changeSubarchGQL = gql`
     $name: String!
     $description: String
     $bootloaderId: Int
+    $efiboot: Boolean
   ) {
     changeSubarch(
       id: $id
       name: $name
       description: $description
       bootloaderId: $bootloaderId
+      efiboot: $efiboot
     ) {
       ok
       errors
       subarch {
         id
         name
+        efiboot
         arch {
           id
           name

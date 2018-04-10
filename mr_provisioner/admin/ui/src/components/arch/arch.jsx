@@ -15,6 +15,7 @@ import Timestamp from 'grommet/components/Timestamp'
 import Section from 'grommet/components/Section'
 import Label from 'grommet/components/Label'
 import Anchor from 'grommet/components/Anchor'
+import CheckBox from 'grommet/components/CheckBox'
 import { Link } from 'react-router-dom'
 import { Table, TableColumn, LinkCell, TextCell, AnyCell } from '../table'
 import Layer from '../layer'
@@ -71,6 +72,7 @@ const bootloaderName = subarch =>
 const sortByName = comparators.string(['name'])
 const sortByDescription = comparators.string(['description'])
 const sortByBootloader = comparators.string([], bootloaderName)
+const sortByEfiboot = comparators.boolean(['efiboot'])
 
 function ArchSubarchs({ arch, onAdd, onEdit, onRemove }) {
   return (
@@ -98,6 +100,16 @@ function ArchSubarchs({ arch, onAdd, onEdit, onRemove }) {
           label="Bootloader"
           sortFn={sortByBootloader}
           cell={<TextCell textFn={bootloaderName} />}
+        />
+        <TableColumn
+          label="Efiboot"
+          sortFn={sortByEfiboot}
+          cell={
+            <AnyCell
+              fn={p =>
+                <CheckBox disabled={true} toggle={true} checked={p.efiboot} />}
+            />
+          }
         />
         <TableColumn
           label=""
