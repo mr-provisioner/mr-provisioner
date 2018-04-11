@@ -1,6 +1,8 @@
 # CHANGELOG
 
-## v0.3.0 (unreleased)
+## v0.3.1 (unreleased)
+
+## v0.3.0 (2018-04-11)
 
 Bug fixes:
 
