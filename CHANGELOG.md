@@ -7,6 +7,7 @@ Bug fixes:
  - grub.netboot.tmpl: fixing position of BOOTIF= argument to solve problems with --- in cmdline being used from UI.
  - ui: add missing "show all" button for machine events (#80)
  - ipmi: use efiboot option in ipmi pxe commands when required (#82)
+ - preseeds: return HTTP 400 when a syntax or template exception is raised (#98).
 
 ## v0.2.9 (2018-02-16)
 
