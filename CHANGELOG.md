@@ -8,6 +8,7 @@ Bug fixes:
  - ui: add missing "show all" button for machine events (#80)
  - ipmi: use efiboot option in ipmi pxe commands when required (#82)
  - preseeds: return HTTP 400 when a syntax or template exception is raised (#98).
+ - examples: improve systemd examples for tftp, ws
 
 ## v0.2.9 (2018-02-16)
 
