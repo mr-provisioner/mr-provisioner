@@ -2,6 +2,10 @@
 
 ## v0.3.1 (unreleased)
 
+Features:
+
+ - ui: set `<title>` for console page based on current machine name
+
 Docs:
  - Upgrade documentation
 
