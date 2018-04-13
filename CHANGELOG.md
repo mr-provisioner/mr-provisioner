@@ -2,6 +2,9 @@
 
 ## v0.3.1 (unreleased)
 
+Docs:
+ - Upgrade documentation
+
 ## v0.3.0 (2018-04-11)
 
 Bug fixes:
