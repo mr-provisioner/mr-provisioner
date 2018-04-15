@@ -16,57 +16,6 @@ import itertools
 import re
 
 
-class BMC(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    ip = db.Column(db.String, unique=True, nullable=False)
-    name = db.Column(db.String, unique=True, nullable=False)
-    username = db.Column(db.String)
-    password = db.Column(db.String)
-    privilege_level = db.Column(db.String)
-    bmc_type = db.Column(db.String)
-    machines = db.relationship("Machine", back_populates="bmc", passive_deletes=True)
-
-    def __init__(self, ip, name, username, password, privilege_level, bmc_type):
-        self.ip = ip
-        self.name = name
-        self.username = username
-        self.password = password
-        self.privilege_level = privilege_level
-        self.bmc_type = bmc_type
-
-    @property
-    def serialize(self):
-        """Return object data in serialized format"""
-        return {
-            'ip': self.ip,
-            'name': self.name,
-            'username': self.username,
-            'password': self.password,
-            'privilege_level': self.privilege_level,
-            'bmc_type': self.bmc_type
-        }
-
-    @property
-    def type_inst(self):
-        return resolve_bmc_type(self.bmc_type)
-
-    def check_permission(self, user, min_priv_level='any'):
-        if user.admin:
-            return True
-        elif min_priv_level == 'admin':
-            return False
-
-        return False
-
-    @staticmethod
-    def can_create(user):
-        return True if user.admin else False
-
-    @staticmethod
-    def list_types():
-        return [t.name for t in list_bmc_types()]
-
-
 class DiscoveredMAC(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     mac = db.Column(MACADDR, unique=True, nullable=False)
@@ -118,20 +67,22 @@ def set_lease_mac(target, value, oldvalue, initiator):
 
 class Interface(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    mac = db.Column(MACADDR, unique=True, nullable=False)
+    mac = db.Column(MACADDR, unique=True, nullable=True)
     identifier = db.Column(db.String, nullable=True)
     dhcpv4 = db.Column(db.Boolean)
     static_ipv4 = db.Column(INET, nullable=True)
     reserved_ipv4 = db.Column(INET, nullable=True)
-    machine_id = db.Column(db.Integer, db.ForeignKey("machine.id", ondelete="CASCADE"))
+    machine_id = db.Column(db.Integer, db.ForeignKey("machine.id", ondelete="CASCADE"), nullable=True)
     machine = db.relationship("Machine", passive_deletes=True)
+    bmc_id = db.Column(db.Integer, db.ForeignKey("BMC.id", ondelete="CASCADE"), nullable=True)
+    bmc = db.relationship("BMC", passive_deletes=True)
     network_id = db.Column(db.Integer, db.ForeignKey("network.id", ondelete="SET NULL"), nullable=True)
     network = db.relationship("Network", passive_deletes=True)
     __table_args__ = (UniqueConstraint('static_ipv4', 'network_id'),
                       UniqueConstraint('reserved_ipv4', 'network_id'),)
 
-    def __init__(self, *, mac, machine_id, network_id=None, dhcpv4=True, identifier=None,
-                 static_ipv4=None, reserved_ipv4=None):
+    def __init__(self, *, mac=None, machine_id=None, network_id=None, dhcpv4=True, identifier=None,
+                 static_ipv4=None, reserved_ipv4=None, bmc_id=None):
         self.mac = mac
         self.identifier = identifier
         self.dhcpv4 = dhcpv4
@@ -139,6 +90,7 @@ class Interface(db.Model):
         self.reserved_ipv4 = reserved_ipv4
         self.machine_id = machine_id
         self.network_id = network_id
+        self.bmc_id = bmc_id
 
     @property
     def lease(self):
@@ -189,6 +141,78 @@ def interface_after_update(mapper, connection, target):
 @event.listens_for(Interface, 'after_insert')
 def interface_after_insert(mapper, connection, target):
     Interface.update_discovery(connection, target)
+
+
+class BMC(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, unique=True, nullable=False)
+    username = db.Column(db.String)
+    password = db.Column(db.String)
+    privilege_level = db.Column(db.String)
+    bmc_type = db.Column(db.String)
+    machines = db.relationship("Machine", back_populates="bmc", passive_deletes=True)
+    interfaces = db.relationship("Interface", back_populates="bmc", passive_deletes=True)
+
+    def __init__(self, name, username, password, privilege_level, bmc_type):
+        self.name = name
+        self.username = username
+        self.password = password
+        self.privilege_level = privilege_level
+        self.bmc_type = bmc_type
+
+    @property
+    def serialize(self):
+        """Return object data in serialized format"""
+        return {
+            'name': self.name,
+            'username': self.username,
+            'password': self.password,
+            'privilege_level': self.privilege_level,
+            'bmc_type': self.bmc_type
+        }
+
+    @property
+    def type_inst(self):
+        return resolve_bmc_type(self.bmc_type)
+
+    @property
+    def macs(self):
+        return map(lambda i: i.mac, self.interfaces)
+
+    @property
+    def interface(self):
+        if len(self.interfaces) > 0:
+            return self.interfaces[0]
+        else:
+            return None
+
+    # XXX: temporary backwards compatibility property - should be removed
+    @property
+    def ip(self):
+        return self.interface.static_ipv4
+
+    @property
+    def mac(self):
+        if len(self.macs) > 0:
+            return self.macs[0]
+        else:
+            return None
+
+    def check_permission(self, user, min_priv_level='any'):
+        if user.admin:
+            return True
+        elif min_priv_level == 'admin':
+            return False
+
+        return False
+
+    @staticmethod
+    def can_create(user):
+        return True if user.admin else False
+
+    @staticmethod
+    def list_types():
+        return [t.name for t in list_bmc_types()]
 
 
 class Machine(db.Model):

@@ -621,12 +621,17 @@ class CreateBMC(graphene.Mutation):
         if ok:
             bmc = BMC(name=args.get('name'),
                       bmc_type=args.get('bmc_type'),
-                      ip=trim_to_none(args.get('ip', None)),
                       privilege_level='admin',
                       username=args.get('username', None),
                       password=args.get('password', None))
 
             db.session.add(bmc)
+
+            interface = Interface(bmc_id=bmc.id)
+            interface.static_ipv4 = trim_to_none(args.get('ip', None))
+
+            db.session.add(interface)
+
             try:
                 db.session.commit()
                 db.session.refresh(bmc)
@@ -687,12 +692,14 @@ class ChangeBMC(graphene.Mutation):
                 bmc.name = args.get('name')
             if 'bmc_type' in args:
                 bmc.bmc_type = args.get('bmc_type')
-            if 'ip' in args:
-                bmc.ip = args.get('ip')
             if 'username' in args:
                 bmc.username = args.get('username')
             if 'password' in args:
                 bmc.password = args.get('password')
+
+            if 'ip' in args:
+                interface = bmc.interface
+                interface.static_ipv4 = args.get('ip')
 
             try:
                 db.session.commit()
