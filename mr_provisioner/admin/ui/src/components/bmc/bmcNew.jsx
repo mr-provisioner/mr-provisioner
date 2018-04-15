@@ -103,6 +103,10 @@ const formFields = {
   ip: { defaultValue: '', accessor: e => e.target.value },
   username: { defaultValue: '', accessor: e => e.target.value },
   password: { defaultValue: '', accessor: e => e.target.value },
+  mac: {
+    defaultValue: props => (props.addWithMac ? props.addWithMac : ''),
+    accessor: e => e.target.value,
+  },
 }
 
 const validationRules = {

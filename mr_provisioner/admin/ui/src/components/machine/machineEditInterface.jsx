@@ -19,7 +19,7 @@ import { withHandlers, compose } from 'recompose'
 import { connect } from 'react-redux'
 import { bindActionCreators } from 'redux'
 import { Validator, ArrayValidator } from '../../util/validation'
-import { netConfigType } from './machine'
+import { netConfigType, netConfigIpv4, netName } from '../../util/net'
 import {
   validateLength,
   validateMacField,

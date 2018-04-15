@@ -5,13 +5,27 @@ export const bmcGQL = gql`
     bmc(id: $id) {
       id
       name
-      ip
       bmcType
       username
       password
       machines {
         id
         name
+      }
+      interface {
+        id
+        mac
+        network {
+          id
+          name
+          subnet
+        }
+        staticIpv4
+        reservedIpv4
+        lease {
+          ipv4
+          lastSeen
+        }
       }
     }
   }
@@ -22,8 +36,17 @@ export const bmcsListGQL = gql`
     bmcs {
       id
       name
-      ip
       bmcType
+      interface {
+        id
+        mac
+        staticIpv4
+        reservedIpv4
+        lease {
+          ipv4
+          lastSeen
+        }
+      }
     }
   }
 `

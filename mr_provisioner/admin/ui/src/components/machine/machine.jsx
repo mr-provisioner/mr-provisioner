@@ -57,6 +57,7 @@ import withOwnUser from '../../hoc/withOwnUser'
 import withLayerState from '../../hoc/withLayerState'
 import { BMCInfo } from './bmcInfoField'
 import * as comparators from '../../util/comparators'
+import { netConfigType, netConfigIpv4, netName } from '../../util/net'
 
 function MachineOverview({ machine, onEdit }) {
   return (
@@ -207,21 +208,6 @@ function MachineProvisioning({ machine, ownUser, onEdit, onNetbootChange }) {
     </Section>
   )
 }
-
-export const netConfigType = intf =>
-  intf.network && intf.staticIpv4
-    ? 'static'
-    : intf.network && intf.reservedIpv4 ? 'dynamic-reserved' : 'dynamic'
-
-export const netConfigIpv4 = intf => {
-  const configType = netConfigType(intf)
-  return configType === 'static'
-    ? intf.staticIpv4 || ''
-    : configType === 'dynamic-reserved' ? intf.reservedIpv4 || '' : ''
-}
-
-const netName = intf =>
-  intf.network ? `${intf.network.name} (${intf.network.subnet})` : ''
 
 const sortByIdentifier = comparators.string(['identifier'])
 const sortByMac = comparators.string(['mac'])

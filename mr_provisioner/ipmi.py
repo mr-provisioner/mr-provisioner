@@ -28,6 +28,8 @@ def build_command(cmd, *, host=None, username=None, password=None, privilege_lev
     command = [IPMITOOL_CMD, "-I", interface]
     if host:
         command += ["-H", host]
+    else:
+        raise IPMIError("IPMI error: No IP provided")
     if username:
         command += ["-U", username]
     if password:

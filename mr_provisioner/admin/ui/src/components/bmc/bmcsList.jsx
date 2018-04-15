@@ -57,7 +57,11 @@ class BmcsList_ extends React.Component {
           align="right"
         >
           <Box pad="medium">
-            <BmcNew onDone={props.closeForm} />
+            <BmcNew
+              addWithMac={props.query.addWithMac}
+              query={props.query}
+              onDone={props.closeForm}
+            />
           </Box>
         </Layer>
       </div>
@@ -67,7 +71,11 @@ class BmcsList_ extends React.Component {
 
 export const BmcsList = compose(
   graphql(bmcsListGQL, { options: { notifyOnNetworkStatusChange: true } }),
-  withLayerState(['form']),
+  withProps(ownProps => ({
+    query: parse(ownProps.location.search),
+    queryString: ownProps.location.search,
+  })),
+  withLayerState([['form', null, ({ query }) => query.addWithMac || false]]),
   withApolloStatus(NetworkLoading, NetworkError)
 )(BmcsList_)
 

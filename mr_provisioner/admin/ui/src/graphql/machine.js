@@ -4,7 +4,6 @@ export const machineNewGQL = gql`
   {
     bmcs {
       id
-      ip
       name
       bmcType
     }
@@ -358,7 +357,6 @@ export const machineGQL = gql`
         id
         name
         bmcType
-        ip
         username
         password
       }

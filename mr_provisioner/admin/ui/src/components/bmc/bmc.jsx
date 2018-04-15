@@ -11,6 +11,7 @@ import Split from 'grommet/components/Split'
 import Sidebar from 'grommet/components/Sidebar'
 import Columns from 'grommet/components/Columns'
 import Heading from 'grommet/components/Heading'
+import Timestamp from 'grommet/components/Timestamp'
 import Section from 'grommet/components/Section'
 import Label from 'grommet/components/Label'
 import Anchor from 'grommet/components/Anchor'
@@ -29,65 +30,122 @@ import BmcDelete from './bmcDelete'
 import { check, perms, Check } from '../../util/permissions'
 import withLayerState from '../../hoc/withLayerState'
 import MachineTiles from '../machine/machineTiles'
+import { netConfigType, netConfigIpv4, netName } from '../../util/net'
 
 function BmcOverview({ bmc, onEdit }) {
   return (
-    <Section>
-      <Box align="center" direction="row">
-        <Heading tag="h3" style={{ marginBottom: 0 }}>
-          Overview
-        </Heading>
-        <Check permission={perms.BMC_ADMIN}>
-          <Button icon={<EditIcon />} onClick={onEdit} />
-        </Check>
-      </Box>
-      <Columns maxCount={2} size="medium" justify="between" responsive={false}>
-        <Box pad={{ horizontal: 'medium', vertical: 'small' }}>
-          <Box justify="between" direction="row" pad="small">
-            <span>
-              <Label>Type</Label>
-            </span>
-            <span className="secondary">
-              {bmc.bmcType}
-            </span>
-          </Box>
-        </Box>
-        <Box pad={{ horizontal: 'medium', vertical: 'small' }}>
-          <Box justify="between" direction="row" pad="small">
-            <span>
-              <Label>IP</Label>
-            </span>
-            <span className="secondary">
-              <Anchor href={`http://${bmc.ip}`}>
-                {bmc.ip}
-              </Anchor>
-            </span>
-          </Box>
-
+    <div>
+      <Section>
+        <Box align="center" direction="row">
+          <Heading tag="h3" style={{ marginBottom: 0 }}>
+            Overview
+          </Heading>
           <Check permission={perms.BMC_ADMIN}>
-            <Box justify="between" direction="row" pad="small">
-              <span>
-                <Label>Username</Label>
-              </span>
-              <span className="secondary">
-                {bmc.username}
-              </span>
-            </Box>
-          </Check>
-
-          <Check permission={perms.BMC_ADMIN}>
-            <Box justify="between" direction="row" pad="small">
-              <span>
-                <Label>Password</Label>
-              </span>
-              <span className="secondary">
-                {bmc.password}
-              </span>
-            </Box>
+            <Button icon={<EditIcon />} onClick={onEdit} />
           </Check>
         </Box>
-      </Columns>
-    </Section>
+        <Columns maxCount={2} size="medium" justify="between" responsive={false}>
+          <Box pad={{ horizontal: 'medium', vertical: 'small' }}>
+            <Box justify="between" direction="row" pad="small">
+              <span>
+                <Label>Type</Label>
+              </span>
+              <span className="secondary">
+                {bmc.bmcType}
+              </span>
+            </Box>
+
+            <Check permission={perms.BMC_ADMIN}>
+              <Box justify="between" direction="row" pad="small">
+                <span>
+                  <Label>Username</Label>
+                </span>
+                <span className="secondary">
+                  {bmc.username}
+                </span>
+              </Box>
+            </Check>
+
+            <Check permission={perms.BMC_ADMIN}>
+              <Box justify="between" direction="row" pad="small">
+                <span>
+                  <Label>Password</Label>
+                </span>
+                <span className="secondary">
+                  {bmc.password}
+                </span>
+              </Box>
+            </Check>
+          </Box>
+        </Columns>
+      </Section>
+      <Section>
+        <Box align="center" direction="row">
+          <Heading tag="h3" style={{ marginBottom: 0 }}>
+            Network
+          </Heading>
+          <Check permission={perms.BMC_ADMIN}>
+            <Button icon={<EditIcon />} onClick={onEdit} />
+          </Check>
+        </Box>
+        <Columns maxCount={2} size="medium" justify="between" responsive={false}>
+          <Box pad={{ horizontal: 'medium', vertical: 'small' }}>
+            <Box justify="between" direction="row" pad="small">
+              <span>
+                <Label>MAC</Label>
+              </span>
+              <span className="secondary">
+                {bmc.interface.mac}
+              </span>
+            </Box>
+            <Box justify="between" direction="row" pad="small">
+              <span>
+                <Label>Network</Label>
+              </span>
+              <span className="secondary">
+                {netName(bmc.interface)}
+              </span>
+            </Box>
+            <Box justify="between" direction="row" pad="small">
+              <span>
+                <Label>Configuration type</Label>
+              </span>
+              <span className="secondary">
+                {netConfigType(bmc.interface, true)}
+              </span>
+            </Box>
+            <Box justify="between" direction="row" pad="small">
+              <span>
+                <Label>Configuration IPv4</Label>
+              </span>
+              <span className="secondary">
+                <Anchor href={`http://${netConfigIpv4(bmc.interface, true)}`}>
+                  {netConfigIpv4(bmc.interface, true)}
+                </Anchor>
+              </span>
+            </Box>
+            <Box justify="between" direction="row" pad="small">
+              <span>
+                <Label>Lease IPv4</Label>
+              </span>
+              <span className="secondary">
+                <Anchor href={`http://${bmc.interface.lease && bmc.interface.lease.ipv4}`}>
+                  {bmc.interface.lease && bmc.interface.lease.ipv4}
+                </Anchor>
+              </span>
+            </Box>
+            <Box justify="between" direction="row" pad="small">
+              <span>
+                <Label>Last seen</Label>
+              </span>
+              <span className="secondary">
+                {bmc.interface.lease && <Timestamp value={bmc.interface.lease.lastSeen}/>}
+              </span>
+            </Box>
+          </Box>
+        </Columns>
+      </Section>
+    </div>
   )
 }
 

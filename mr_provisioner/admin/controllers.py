@@ -125,12 +125,12 @@ def get_ws_subprocess_command():
 
 class BMCType(graphene.ObjectType):
     id = graphene.ID()
-    ip = graphene.String()
     name = graphene.String()
     bmc_type = graphene.String()
     username = graphene.String()
     password = graphene.String()
     machines = graphene.Dynamic(lambda: graphene.List(MachineType))
+    interface = graphene.Dynamic(lambda: graphene.Field(InterfaceType))
 
     def resolve_username(self, args, context, info):
         return self.username if self.check_permission(g.user, 'admin') else ""

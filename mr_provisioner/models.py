@@ -98,7 +98,7 @@ class Interface(db.Model):
 
     @property
     def config_type_v4(self):
-        if self.network and self.static_ipv4:
+        if (self.network or self.bmc_id) and self.static_ipv4:
             return 'static'
         elif self.network and self.reserved_ipv4:
             return 'dynamic-reserved'
@@ -113,6 +113,13 @@ class Interface(db.Model):
             return self.reserved_ipv4
         else:
             return None
+
+    @property
+    def ipv4(self):
+        configured_ip = self.configured_ipv4
+        if not configured_ip and self.lease:
+            return self.lease.ipv4
+        return configured_ip
 
     @staticmethod
     def by_mac(mac):
@@ -186,10 +193,9 @@ class BMC(db.Model):
         else:
             return None
 
-    # XXX: temporary backwards compatibility property - should be removed
     @property
     def ip(self):
-        return self.interface.static_ipv4
+        return self.interface.ipv4
 
     @property
     def mac(self):

@@ -126,6 +126,13 @@ function DiscoveredList_({ data, layers, history, ...props }) {
                     Add to existing
                   </Anchor>
                 </span>
+                <span style={{ marginRight: '2em', padding: '8px 0px' }}>
+                  <Anchor
+                    onClick={() => history.push(`/bmcs${buildQueryStr(d)}`)}
+                  >
+                    New BMC
+                  </Anchor>
+                </span>
               </Box>
 
               <Box
