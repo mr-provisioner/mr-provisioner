@@ -68,6 +68,8 @@ def get_preseed(machine_id):
     ssh_key = assignees[0].ssh_key if len(assignees) > 0 else ''
     ssh_keys = [u.ssh_key for u in assignees]
 
+    kernel_opts = machine.kernel_opts
+
     interfaces = [PInterface(name=i.identifier,
                              static_ipv4=i.static_ipv4,
                              prefix=i.network.prefix,
@@ -91,7 +93,8 @@ def get_preseed(machine_id):
         return Response(
             template.render(ssh_key=ssh_key, ssh_keys=ssh_keys,
                             hostname=machine.hostname, interfaces=interfaces,
-                            kernel=kernel, initrd=initrd),
+                            kernel=kernel, initrd=initrd,
+                            kernel_options=kernel_opts),
             mimetype='text/plain')
     except jinja2.TemplateSyntaxError as e:
         MachineEvent.preseed_error(machine.id, None, request.remote_addr, e.message, e.lineno)

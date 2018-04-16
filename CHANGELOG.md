@@ -6,6 +6,10 @@ Bug fixes:
 
  - ui: set `<title>` for console page based on current machine name
 
+Features:
+
+ - ui: Include kernel_options templating into preseed (#62) 
+
 Docs:
 
  - Upgrade documentation
