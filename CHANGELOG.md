@@ -6,6 +6,10 @@ Bug fixes:
 
  - ui: set `<title>` for console page based on current machine name
 
+Features:
+
+ - provisioning: options=efiboot handling extended to all bootdev commands (#107)
+
 Docs:
 
  - Upgrade documentation
