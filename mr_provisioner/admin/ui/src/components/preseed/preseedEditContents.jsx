@@ -47,6 +47,13 @@ function PreseedEditContents_(props) {
         </dt>
         <dd>is the machine (host)name.</dd>
         <dt>
+          <code>kernel_options</code>
+        </dt>
+        <dd>
+          is a string containing the kernel options passed to the machine
+          through the provisioning UI.
+        </dd>
+        <dt>
           <code>kernel</code>
         </dt>
         <dd>
