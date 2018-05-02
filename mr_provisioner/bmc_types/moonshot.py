@@ -30,7 +30,7 @@ class MoonshotBMC(BMCType):
         bmc = machine.bmc
 
         opts = None
-        if bootdev == "pxe" and machine.subarch and machine.subarch.efiboot:
+        if machine.subarch and machine.subarch.efiboot:
             opts = "efiboot"
 
         try:
