@@ -34,8 +34,7 @@ matrix:
 
     - language: node_js
       node_js:
-        - node
-        - 7
+        - 9
       install:
         - make -C mr_provisioner/admin/ui dist
       before_script:
@@ -46,8 +45,7 @@ matrix:
 
     - language: node_js
       node_js:
-        - node
-        - 7
+        - 9
       script:
         - make apidocs
       deploy:
