@@ -6,6 +6,7 @@ Bug fixes:
 
  - ui: set `<title>` for console page based on current machine name
  - provisioning: options=efiboot handling extended to all bootdev commands (#107)
+ - ui: fix the missing newline characters in console log download
 
 Features:
 
