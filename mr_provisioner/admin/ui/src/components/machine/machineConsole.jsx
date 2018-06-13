@@ -106,7 +106,14 @@ class MachineConsole_ extends React.Component {
 
   handleOpenLog = ev => {
     ev.preventDefault()
-    window.open().document.write(this.log)
+
+    let win = window.open('', 'CONSOLELOG')
+    let doc = win.document
+    doc.open()
+    doc.write('<pre>')
+    doc.write(this.log)
+    doc.write('</pre>')
+    doc.close()
   }
 
   render() {
