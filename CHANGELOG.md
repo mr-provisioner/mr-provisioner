@@ -1,6 +1,16 @@
 # CHANGELOG
 
-## v0.3.1 (unreleased)
+## v0.3.2 (unreleased)
+
+Features:
+
+ -
+
+Bug fixes:
+
+ -
+
+## v0.3.1 (2018-06-15)
 
 Bug fixes:
 
@@ -10,11 +20,11 @@ Bug fixes:
 
 Features:
 
- - ui: Include kernel_options templating into preseed (#62) 
+ - ui: Include kernel_options templating into preseed (#62)
 
 Docs:
 
- - Upgrade documentation
+ - Update documentation
 
 ## v0.3.0 (2018-04-11)
 
