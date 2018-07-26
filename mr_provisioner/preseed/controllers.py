@@ -13,7 +13,7 @@ mod = Blueprint('preseed', __name__, template_folder='templates')
 logger = logging.getLogger('preseed')
 
 
-PInterface = namedtuple('object', ['name', 'static_ipv4', 'prefix', 'netmask'])
+PInterface = namedtuple('object', ['name', 'static_ipv4', 'prefix', 'netmask', 'mac'])
 PImage = namedtuple('object', ['filename', 'description', 'known_good'])
 
 
@@ -73,7 +73,8 @@ def get_preseed(machine_id):
     interfaces = [PInterface(name=i.identifier,
                              static_ipv4=i.static_ipv4,
                              prefix=i.network.prefix,
-                             netmask=i.network.netmask) for i in machine.interfaces if i.static_ipv4]
+                             netmask=i.network.netmask,
+                             mac=i.mac) for i in machine.interfaces if i.static_ipv4]
 
     kernel = None
     if machine.kernel:

@@ -4,7 +4,7 @@
 
 Features:
 
- -
+ - ui: Include interface mac address as part of the preseed templating options (#129)
 
 Bug fixes:
 

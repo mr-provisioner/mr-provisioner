@@ -40,7 +40,8 @@ function PreseedEditContents_(props) {
           is a list of interfaces of a machine that have a static IP configured.
           Each interface in the list has a <i>name</i> attribute matching the
           interface identifier, <i>static_ipv4</i> attribute with the configured
-          static IPv4 and a <i>netmask</i> attribute with the netmask.
+          static IPv4 a <i>netmask</i> attribute with the netmask and the
+          interface <i>mac</i> address.
         </dd>
         <dt>
           <code>hostname</code>
