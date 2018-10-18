@@ -562,7 +562,7 @@ def machine_power_post(id):
 
     MachineEvent.power_changed(machine.id, g.user, data['state'])
 
-    return '', 202
+    return jsonify({'state': machine.power_state}), 202
 
 
 @mod.route('/machine/reservation', methods=['POST'])
