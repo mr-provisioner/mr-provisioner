@@ -105,8 +105,10 @@ class CreatePreseedForm(Form):
                                               Length(min=3, max=256)])
     file_content = TextAreaField("Contents", [InputRequired()])
     file_type = SelectField("Type", [InputRequired(),
-                                     AnyOf(["kickstart", "preseed"])],
-                            choices=[("kickstart", "kickstart"), ("preseed", "Debian Preseed")])
+                                     AnyOf(["kickstart", "preseed", "autoyast"])],
+                            choices=[("kickstart", "kickstart"),
+                                     ("preseed", "Debian Preseed"),
+                                     ("autoyast", "autoyast")])
     known_good = BooleanField("Known good?", false_values=('false', '', '0'))
     public = BooleanField("Public?", false_values=('false', '', '0'))
 
@@ -116,8 +118,10 @@ class ChangePreseedForm(Form):
                                               Length(min=3, max=256)])
     file_content = TextAreaField("Contents", [InputRequired()])
     file_type = SelectField("Type", [InputRequired(),
-                                     AnyOf(["kickstart", "preseed"])],
-                            choices=[("kickstart", "kickstart"), ("preseed", "Debian Preseed")])
+                                     AnyOf(["kickstart", "preseed", "autoyast"])],
+                            choices=[("kickstart", "kickstart"),
+                                     ("preseed", "Debian Preseed"),
+                                     ("autoyast", "autoyast")])
     known_good = BooleanField("Known good?", false_values=('false', '', '0'))
     public = BooleanField("Public?", false_values=('false', '', '0'))
 
