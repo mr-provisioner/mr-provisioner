@@ -934,6 +934,12 @@ class Preseed(db.Model):
             if config['PRESEED_DNS']:
                 options += " dns=%s" % (config['PRESEED_DNS'])
 
+        elif self.file_type == "autoyast":
+            options = "autoyast=%s" % self.preseed_url(machine, config)
+
+            if config['PRESEED_DNS']:
+                options += " nameserver=%s" % (config['PRESEED_DNS'])
+
         return options
 
     def serialize(self):
@@ -977,7 +983,7 @@ class Preseed(db.Model):
 
     @staticmethod
     def list_types():
-        return ['preseed', 'kickstart']
+        return ['preseed', 'kickstart', 'autoyast']
 
 
 class Network(db.Model):

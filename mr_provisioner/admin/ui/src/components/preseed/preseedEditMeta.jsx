@@ -48,7 +48,11 @@ function PreseedEditMeta_({ fields, fieldErrors, ...props }) {
             >
               <Select
                 required={true}
-                options={[{ name: 'kickstart' }, { name: 'preseed' }]}
+                options={[
+                  { name: 'kickstart' },
+                  { name: 'preseed' },
+                  { name: 'autoyast' },
+                ]}
                 value={fields.fileType}
                 searchKeys={['name']}
                 onChange={props.onChangeFileType}

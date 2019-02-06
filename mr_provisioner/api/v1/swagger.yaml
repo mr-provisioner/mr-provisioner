@@ -995,7 +995,7 @@ definitions:
         type: string
       type:
         type: string
-        enum: [preseed, kickstart]
+        enum: [preseed, kickstart, autoyast]
       content:
         type: string
       user:
@@ -1013,7 +1013,7 @@ definitions:
         type: string
       type:
         type: string
-        enum: [preseed, kickstart]
+        enum: [preseed, kickstart, autoyast]
       content:
         type: string
       known_good:
