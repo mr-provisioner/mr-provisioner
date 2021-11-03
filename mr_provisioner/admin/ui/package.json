@@ -43,7 +43,7 @@
     "redux-localstorage": "^0.4.1",
     "redux-logger": "^3.0.6",
     "redux-loop": "^2.2.2",
-    "validator": "^7.0.0",
+    "validator": "^13.7.0",
     "xterm": "^2.7.0"
   },
   "devDependencies": {
