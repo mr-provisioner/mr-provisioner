@@ -21,7 +21,7 @@
     "graphql-tag": "^2.4.0",
     "grommet": "^1.5.0",
     "ipaddr.js": "^1.4.0",
-    "moment": "^2.18.1",
+    "moment": "^2.29.4",
     "prop-types": "^15.5.10",
     "query-string": "^4.3.4",
     "ramda": "^0.24.1",
